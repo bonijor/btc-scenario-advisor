@@ -69,7 +69,8 @@
 <script>
 const $=id=>document.getElementById(id);
 const BASE_TRIAL={trialId:'btc-shadow-90d-20260817T173948Z',requiredDays:90,completedDays:0,firstCompleteDay:'2026-08-18',manifestDigest:'757422dbd20fead8503f0545766f06b5df020c78eab2bf036d72c5f72ef9fd03',status:'INITIALIZED'};
-const API_BASE=(new URLSearchParams(location.search).get('api')||localStorage.getItem('btcModelApiBase')||'').replace(/\/$/,'');
+const DEFAULT_API_BASE='https://btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app';
+const API_BASE=(new URLSearchParams(location.search).get('api')||localStorage.getItem('btcModelApiBase')||DEFAULT_API_BASE).replace(/\/$/,'');
 let marketTimer=null;
 function fmtUsd(v){return Number.isFinite(+v)?new Intl.NumberFormat('es-AR',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(+v):'--'}
 function fmtTime(v){if(!v)return'--';let d=new Date(v);return Number.isFinite(d.getTime())?d.toLocaleString('es-AR',{hour12:false}):'--'}
