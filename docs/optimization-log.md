@@ -2,16 +2,26 @@
 
 ## Registro 2026-08-17 - Fase 1 PRO
 
-Estado: **EN DESARROLLO / NO PUBLICADO**
+Estado: **PUBLICADO / VALIDADO**
 
-Rama: `agent/dashboard-pro-phase1`
+Rama de implementación: `agent/dashboard-pro-phase1`
 
 Baseline público congelado para esta fase:
 
-- `main`: `ee4253d7a2aac8a1a47809800d45091bcfac9ede`
+- `main` inicial: `ee4253d7a2aac8a1a47809800d45091bcfac9ede`
 - dashboard backend: `btc-shadow-dashboard-api-00002-6zb`
 - runtime Quant: `btc-shadow-engine-90d-00003-9nq`
 - trial: `btc-shadow-90d-20260817T173948Z`
+
+Publicación Fase 1 PRO:
+
+- PR: `#2`
+- head validado: `c7b00f653f971e133ab50776764422ff7fdef705`
+- merge commit: `c9f4c423eedcbad1224380f70b15d478504b11a1`
+- CI PR run `#5` / `32066743243`: `SUCCESS`
+- CI main run `#6` / `32067301007`: `SUCCESS`
+- GitHub Pages run `#4` / `32067298693`: `SUCCESS`
+- URL pública: `https://bonijor.github.io/btc-scenario-advisor/`
 
 ## Objetivo
 
@@ -31,6 +41,7 @@ Convertir el dashboard público actual en una interfaz preparada para escalar a 
 10. Navegación móvil dedicada.
 11. Sección de arquitectura preparada para cuenta, alertas, membresías y agentes, todavía deshabilitadas.
 12. Refuerzo de CI para frontend modular y controles de seguridad.
+13. Validación de contrato DOM: sin IDs duplicados, referencias JS faltantes ni vistas huérfanas.
 
 ## Guardrails que NO cambian
 
@@ -45,16 +56,20 @@ Convertir el dashboard público actual en una interfaz preparada para escalar a 
 - no se modifica el trial 90d
 - no se crean checkpoints desde el dashboard
 
-## Criterio de publicación
+## Evidencia de publicación
 
-La Fase 1 no se mergea a `main` hasta cumplir simultáneamente:
+La Fase 1 fue publicada únicamente después de cumplir:
 
 - JavaScript syntax PASS
+- DOM contract PASS
 - safety assertions PASS
-- PR revisable y mergeable
-- API read-only continúa operativa
-- no aparecen endpoints de escritura ni secretos
+- guardrail assertions PASS
+- PR mergeable
+- API read-only operativa
+- ausencia de endpoints de escritura y secretos
 - autorización explícita para publicación
+- CI de `main` SUCCESS
+- GitHub Pages deployment SUCCESS
 
 ## Próximas fases propuestas
 
