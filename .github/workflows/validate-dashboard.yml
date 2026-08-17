@@ -31,6 +31,25 @@ jobs:
       - name: Syntax-check browser JavaScript
         run: node --check assets/app.js
 
+      - name: Validate DOM contract
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          html = Path('index.html').read_text(encoding='utf-8')
+          js = Path('assets/app.js').read_text(encoding='utf-8')
+          ids = re.findall(r'\bid=["\']([^"\']+)["\']', html)
+          duplicates = sorted({x for x in ids if ids.count(x) > 1})
+          assert not duplicates, f'IDs duplicados: {duplicates}'
+          idset = set(ids)
+          refs = set(re.findall(r"\$\(['\"]([^'\"]+)['\"]\)", js))
+          missing = sorted(refs - idset)
+          assert not missing, f'IDs usados por JS pero ausentes en HTML: {missing}'
+          views = set(re.findall(r'data-view=["\']([^"\']+)["\']', html))
+          missing_views = sorted(views - idset)
+          assert not missing_views, f'Vistas sin sección destino: {missing_views}'
+          print(f'PASS_DOM_CONTRACT ids={len(idset)} jsRefs={len(refs)} views={len(views)}')
+
       - name: Safety assertions
         shell: bash
         run: |
@@ -39,7 +58,6 @@ jobs:
           grep -q 'SPOT_ONLY' index.html
           grep -q 'API READ-ONLY' index.html
           grep -q 'btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app' assets/app.js
-          grep -q 'automaticExecution' docs/optimization-log.md || true
 
           if grep -RniE -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:|BINANCE_API_SECRET|EXCHANGE_API_SECRET' . --exclude-dir=.git; then
             echo 'Material sensible detectado.'
