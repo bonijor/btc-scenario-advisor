@@ -1,0 +1,40 @@
+name: Validate dashboard
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Extract and syntax-check browser JavaScript
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          html=Path('index.html').read_text(encoding='utf-8')
+          blocks=re.findall(r'<script>(.*?)</script>',html,re.S|re.I)
+          assert blocks, 'No se encontró script'
+          Path('/tmp/dashboard.js').write_text('\n'.join(blocks),encoding='utf-8')
+      - run: node --check /tmp/dashboard.js
+      - name: Safety assertions
+        shell: bash
+        run: |
+          grep -q 'btc-shadow-90d-20260817T173948Z' index.html
+          grep -q 'SHADOW' index.html
+          grep -q 'SPOT_ONLY' index.html
+          grep -q 'API READ-ONLY' index.html
+          if grep -nE -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:' ./* 2>/dev/null; then
+            echo 'Material sensible detectado.'
+            exit 1
+          fi
