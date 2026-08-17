@@ -1,88 +1,200 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#050b14">
-<title>BTC Scenario Advisor · 90D Shadow Trial</title>
-<style>
-:root{--bg:#050b14;--panel:#0b1625;--panel2:#0f2034;--line:#203a59;--text:#f4f8fd;--muted:#8197b2;--blue:#57a7ff;--green:#2bd48a;--amber:#f6c95e;--red:#ff6677;--violet:#9b83ff;--shadow:0 18px 55px #0005}*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;color:var(--text);background:radial-gradient(circle at 18% -5%,#1b416d 0,transparent 28%),radial-gradient(circle at 88% 8%,#241d5a55 0,transparent 25%),var(--bg);font:14px Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}.app{display:grid;grid-template-columns:245px 1fr;min-height:100vh}aside{position:sticky;top:0;height:100vh;padding:24px 16px;border-right:1px solid var(--line);background:#06101ddd;backdrop-filter:blur(18px);display:flex;flex-direction:column}.brand{display:flex;align-items:center;gap:12px;padding:0 7px 24px}.coin{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#ffd86a,#f49a24);color:#160e02;font-weight:950;font-size:23px;box-shadow:0 10px 30px #f49a2440}.brand b{display:block;font-size:15px}.brand small,.muted{color:var(--muted)}nav{display:grid;gap:5px}nav button{border:1px solid transparent;background:transparent;color:var(--muted);padding:11px 12px;border-radius:11px;text-align:left;cursor:pointer;font-weight:700}nav button:hover,nav button.active{color:white;background:#57a7ff16;border-color:#57a7ff26}.sideStatus{margin-top:auto;border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:14px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:7px;box-shadow:0 0 13px currentColor}.dot.ok{background:var(--green)}.dot.bad{background:var(--red)}.tiny{font-size:10px;color:var(--muted);line-height:1.5}main{padding:24px 28px 40px;min-width:0}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px}.ey{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:900}.top h1{margin:5px 0 3px;font-size:26px}.topActions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--panel);color:white;border-radius:11px;padding:9px 12px;cursor:pointer;text-decoration:none;font-weight:800}.btn.primary{border:0;background:linear-gradient(135deg,#428fe9,#765ee9)}.gridTop{display:grid;grid-template-columns:1.45fr repeat(3,.7fr);gap:11px}.panel{border:1px solid #8eabcd22;background:linear-gradient(180deg,#11243aee,#091524f5);border-radius:19px;box-shadow:var(--shadow)}.asset{padding:17px;display:flex;justify-content:space-between;align-items:center}.assetInfo{display:flex;align-items:center;gap:11px}.round{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:#f5a623;color:#160e02;font-size:22px;font-weight:950}.big{font-size:25px;font-weight:950}.metric{padding:16px}.metric span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}.metric strong{display:block;font-size:20px;margin-top:7px}.metric small{display:block;color:var(--muted);margin-top:5px}.runtimeBanner{margin-top:11px;padding:16px 18px;display:grid;grid-template-columns:1.2fr repeat(4,.55fr);gap:10px;align-items:center;background:linear-gradient(105deg,#2bd48a14,#57a7ff13,#9b83ff12),linear-gradient(#11243a,#091524)}.runtimeBanner h2{margin:5px 0 3px;font-size:20px}.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#050b1466;border-radius:999px;padding:7px 9px;font-size:10px;font-weight:900}.chip.good{color:var(--green);border-color:#2bd48a44}.chip.warn{color:var(--amber);border-color:#f6c95e44}.rMetric{border-left:1px solid var(--line);padding-left:13px}.rMetric small{display:block;color:var(--muted);font-size:9px;text-transform:uppercase}.rMetric b{display:block;margin-top:5px;font-size:12px}.mainGrid{display:grid;grid-template-columns:1.35fr .85fr;gap:11px;margin-top:11px}.box{padding:17px}.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:13px}.head h3{margin:4px 0 0;font-size:17px}.trialHero{display:grid;grid-template-columns:150px 1fr;gap:17px;align-items:center}.ring{width:138px;height:138px;border-radius:50%;display:grid;place-items:center;position:relative;background:conic-gradient(var(--blue) 0 var(--trial-pct,0%),#13253d var(--trial-pct,0%) 100%)}.ring:after{content:"";position:absolute;inset:12px;border-radius:50%;background:#091524}.ringInner{z-index:1;text-align:center}.ringInner strong{display:block;font-size:28px}.ringInner small{color:var(--muted)}.progress{height:9px;border-radius:999px;background:#08111e;overflow:hidden;margin:12px 0}.progress i{display:block;height:100%;width:var(--trial-pct,0%);background:linear-gradient(90deg,var(--blue),var(--violet));border-radius:999px}.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.kv div{border:1px solid var(--line);background:#050b1455;border-radius:12px;padding:10px}.kv small{display:block;color:var(--muted);font-size:9px;text-transform:uppercase}.kv b{display:block;margin-top:5px;font-size:11px;word-break:break-word}.decisionGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.decisionCard{border:1px solid var(--line);background:#050b1455;border-radius:14px;padding:13px;min-height:145px}.decisionCard .tf{color:var(--blue);font-weight:950}.decisionCard h4{font-size:18px;margin:8px 0 5px}.reason{font-size:10px;color:var(--muted);line-height:1.45}.decisionCard .levels{display:grid;gap:5px;margin-top:10px}.decisionCard .levels div{display:flex;justify-content:space-between;gap:8px;font-size:10px}.decisionCard .levels span{color:var(--muted)}.lower{display:grid;grid-template-columns:1.4fr .7fr;gap:11px;margin-top:11px}.tableWrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:710px}th,td{padding:10px 8px;border-bottom:1px solid #203a5988;text-align:left;font-size:10px}th{color:var(--muted);font-size:9px;text-transform:uppercase}.pill{display:inline-flex;padding:5px 8px;border-radius:999px;font-weight:950}.pill.no{color:var(--amber);background:#f6c95e18}.pill.buy{color:var(--green);background:#2bd48a18}.pill.block{color:var(--red);background:#ff667718}.paperStats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.paperStats div{border:1px solid var(--line);background:#050b1455;border-radius:12px;padding:12px}.paperStats span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase}.paperStats strong{display:block;font-size:21px;margin-top:5px}.bannerNote{margin-top:10px;border:1px solid #f6c95e33;background:#f6c95e0b;border-radius:12px;padding:11px;color:#d8c898;font-size:10px;line-height:1.5}.view{display:none}.view.active{display:block}.content{padding:19px}.content h2{margin-top:4px}.architecture{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}.architecture div{border:1px solid var(--line);background:#050b1455;border-radius:13px;padding:12px;text-align:center;font-size:10px}.architecture b{display:block;font-size:12px;margin-bottom:5px}.repoCards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.repoCards a{border:1px solid var(--line);background:#050b1455;border-radius:14px;padding:13px;text-decoration:none;color:white}.repoCards a small{display:block;color:var(--muted);margin-top:5px;line-height:1.4}.foot{margin-top:25px;text-align:center;color:var(--muted);font-size:10px}@media(max-width:1100px){.gridTop{grid-template-columns:repeat(2,1fr)}.asset{grid-column:1/-1}.runtimeBanner{grid-template-columns:1fr 1fr}.runtimeBanner>div:first-child{grid-column:1/-1}.mainGrid,.lower{grid-template-columns:1fr}.architecture{grid-template-columns:repeat(2,1fr)}}@media(max-width:760px){.app{grid-template-columns:1fr}aside{display:none}main{padding:16px}.top{flex-wrap:wrap}.topActions{width:100%}.gridTop{grid-template-columns:1fr}.asset{grid-column:auto}.runtimeBanner{grid-template-columns:1fr}.runtimeBanner>div:first-child{grid-column:auto}.rMetric{border-left:0;border-top:1px solid var(--line);padding:9px 0 0}.trialHero{grid-template-columns:1fr}.ring{margin:auto}.decisionGrid,.repoCards{grid-template-columns:1fr}.architecture{grid-template-columns:1fr}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#050a12">
+  <meta name="description" content="BTC Scenario Advisor: dashboard probabilístico SHADOW con decisiones 5m/15m, trial auditado de 90 días y runtime read-only.">
+  <title>BTC Scenario Advisor PRO · 90D Shadow Trial</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <script src="assets/app.js" defer></script>
 </head>
 <body>
 <div class="app">
-<aside>
-  <div class="brand"><div class="coin">₿</div><div><b>BTC Scenario</b><small>Advisor · Shadow Lab</small></div></div>
-  <nav>
-    <button class="active" data-view="overview">▦ Overview</button>
-    <button data-view="paper">◎ Paper Trading</button>
-    <button data-view="trial">◷ Trial 90 días</button>
-    <button data-view="system">⌁ Sistema</button>
-  </nav>
-  <div class="sideStatus"><div><i class="dot" id="sideDot"></i><b id="sideConn">Mercado conectando</b></div><p class="tiny" id="sideDetail">La API del modelo es sólo lectura y nunca ejecuta órdenes.</p></div>
-</aside>
-<main>
-<header class="top"><div><div class="ey">Centro de observación probabilística · SHADOW</div><h1>BTC/USDT</h1><div class="muted">Trial auditado de 90 días · sin órdenes reales</div></div><div class="topActions"><a class="btn" href="https://docs.google.com/spreadsheets/d/1mbkbLb_kAR8fyAEaE9TLljhxcTbZ9LpbEXhTxAhpsv0/edit#gid=1900100001" target="_blank" rel="noopener">Abrir BI Trading</a><button class="btn primary" id="refresh">↻ Actualizar</button></div></header>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brandMark">₿</div>
+      <div><strong>BTC Scenario</strong><small>Advisor PRO · Shadow Lab</small></div>
+    </div>
+    <nav class="nav" aria-label="Navegación principal">
+      <button class="active" data-view="overview">▦ Overview</button>
+      <button data-view="analytics">⌁ Analytics</button>
+      <button data-view="paper">◎ Paper Trading</button>
+      <button data-view="trial">◷ Trial 90 días</button>
+      <button data-view="system">⚙ Sistema</button>
+    </nav>
+    <div class="sideStatus">
+      <div><i class="dot" id="sideDot"></i><b id="sideConn">Mercado conectando</b></div>
+      <p class="tiny" id="sideDetail">API READ-ONLY. SHADOW y SPOT_ONLY. Sin ejecución real.</p>
+    </div>
+  </aside>
 
-<section class="view active" id="overview">
-  <div class="gridTop">
-    <article class="panel asset"><div class="assetInfo"><div class="round">₿</div><div><div class="ey">Bitcoin · Binance Spot</div><b>BTC/USDT</b></div></div><div style="text-align:right"><div class="big" id="price">Cargando…</div><small class="muted" id="priceMeta">Mercado público</small></div></article>
-    <article class="panel metric"><span>Motor</span><strong id="engineState">--</strong><small id="engineMeta">Esperando API</small></article>
-    <article class="panel metric"><span>Trial</span><strong id="trialCounter">0 / 90</strong><small>Primer día: 18/08/2026</small></article>
-    <article class="panel metric"><span>Modo</span><strong>SHADOW</strong><small>SPOT_ONLY · no SELL · no shorts</small></article>
-  </div>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="ey">Centro de observación probabilística · SHADOW</div>
+        <h1>BTC/USDT</h1>
+        <div class="tiny">Trial auditado de 90 días · motor V5.9.0 · sin órdenes reales</div>
+      </div>
+      <div class="topActions">
+        <a class="btn" href="https://docs.google.com/spreadsheets/d/1mbkbLb_kAR8fyAEaE9TLljhxcTbZ9LpbEXhTxAhpsv0/edit#gid=1900100001" target="_blank" rel="noopener">Abrir BI Trading</a>
+        <button class="btn primary" id="refresh">↻ Actualizar</button>
+      </div>
+    </header>
 
-  <article class="panel runtimeBanner">
-    <div><span class="chip warn" id="runtimeChip">● API READ-ONLY PENDIENTE</span><h2>V5.9.0-SPOT-HIGH-CONVICTION</h2><div class="tiny" id="runtimeText">El dashboard no inventa estado. Hasta conectar la API read-only, el motor se valida en Cloud Run y Google Sheets.</div></div>
-    <div class="rMetric"><small>Contrato</small><b>2.0</b></div>
-    <div class="rMetric"><small>Runtime</small><b id="revision">adc-v2</b></div>
-    <div class="rMetric"><small>Último ciclo</small><b id="lastCycle">--</b></div>
-    <div class="rMetric"><small>Errores</small><b id="errorState">--</b></div>
-  </article>
+    <div class="statusStrip" aria-label="Estado del sistema">
+      <div class="statusCell"><span>Frescura de datos</span><b class="freshness" id="dataFreshness">--</b><small class="tiny" id="freshnessDetail">esperando runtime</small></div>
+      <div class="statusCell"><span>API read-only</span><b id="apiStatus">--</b><small class="tiny" id="apiGenerated">--</small></div>
+      <div class="statusCell"><span>Trial evidence</span><b id="trialHealth">INITIALIZED</b><small class="tiny">fail-closed</small></div>
+      <div class="statusCell"><span>Mercado público</span><b id="marketStatus">--</b><small class="tiny">Binance Spot</small></div>
+    </div>
 
-  <div class="mainGrid">
-    <article class="panel box">
-      <div class="head"><div><div class="ey">Ensayo inmutable</div><h3>Progreso 90 días</h3></div><span class="chip good">BUCKET LOCK</span></div>
-      <div class="trialHero"><div class="ring" id="trialRing"><div class="ringInner"><strong id="trialPct">0%</strong><small id="trialDays">0 de 90</small></div></div><div><div class="progress"><i id="trialBar"></i></div><p class="muted" id="trialStatus">Inicializado. Sólo cuentan días completos con evidencia fail-closed.</p><div class="kv"><div><small>Trial ID</small><b id="trialId">btc-shadow-90d-20260817T173948Z</b></div><div><small>Primer día elegible</small><b id="firstDay">2026-08-18</b></div><div><small>Manifest digest</small><b id="manifest">757422db…f9fd03</b></div><div><small>Estado</small><b id="trialState">INITIALIZED · 0/90</b></div></div></div></div>
-    </article>
-    <article class="panel box">
-      <div class="head"><div><div class="ey">Motor Quant</div><h3>Decisión actual</h3></div><span class="chip" id="decisionSource">sin API</span></div>
-      <div class="decisionGrid"><div class="decisionCard"><span class="tf">5m</span><h4 id="d5">Esperando datos</h4><p class="reason" id="r5">La decisión oficial vendrá del runtime, no del navegador.</p><div class="levels"><div><span>Activación</span><b id="a5">--</b></div><div><span>Invalidación</span><b id="i5">--</b></div></div></div><div class="decisionCard"><span class="tf">15m</span><h4 id="d15">Esperando datos</h4><p class="reason" id="r15">La decisión oficial vendrá del runtime, no del navegador.</p><div class="levels"><div><span>Activación</span><b id="a15">--</b></div><div><span>Invalidación</span><b id="i15">--</b></div></div></div></div>
-    </article>
-  </div>
+    <section class="view active" id="overview">
+      <div class="metricGrid">
+        <article class="panel assetCard">
+          <div class="assetInfo"><div class="coin">₿</div><div><div class="ey">Bitcoin · Binance Spot</div><b>BTC/USDT</b></div></div>
+          <div style="text-align:right"><div class="price" id="price">Cargando…</div><small class="tiny" id="priceMeta">Mercado público</small></div>
+        </article>
+        <article class="panel metricCard"><span>Motor</span><strong id="engineState">--</strong><small id="engineMeta">Esperando API</small></article>
+        <article class="panel metricCard"><span>Trial</span><strong id="trialCounter">0 / 90</strong><small>Primer día: 18/08/2026</small></article>
+        <article class="panel metricCard"><span>Paper trades</span><strong id="pTrades">0</strong><small>sólo verificados</small></article>
+        <article class="panel metricCard"><span>Modo</span><strong>SHADOW</strong><small>SPOT_ONLY · no SELL · no shorts</small></article>
+      </div>
 
-  <div class="lower">
-    <article class="panel box"><div class="head"><div><div class="ey">Últimas decisiones oficiales</div><h3>Historial del motor</h3></div><small class="muted">read-only</small></div><div class="tableWrap"><table><thead><tr><th>Hora</th><th>TF</th><th>Decisión</th><th>Calidad</th><th>Estado modelo</th><th>Motivo principal</th></tr></thead><tbody id="decisionsBody"><tr><td colspan="6" class="muted">Esperando conexión con la API read-only del motor.</td></tr></tbody></table></div></article>
-    <article class="panel box"><div class="ey">Paper Trading</div><h3>Resultados simulados</h3><div class="paperStats"><div><span>Operaciones</span><strong id="pTrades">0</strong></div><div><span>Win rate</span><strong id="pWin">--</strong></div><div><span>P&L teórico</span><strong id="pPnl">--</strong></div><div><span>Drawdown</span><strong id="pDd">--</strong></div></div><div class="bannerNote" id="paperNote">SHADOW_MODE bloquea ejecución real. Si todavía no existe una entrada/salida simulada validada, el dashboard muestra 0 y no fabrica P&L.</div></article>
-  </div>
-</section>
+      <article class="panel runtimeBanner">
+        <div>
+          <span class="chip warn" id="runtimeChip">● API READ-ONLY PENDIENTE</span>
+          <h2>V5.9.0-SPOT-HIGH-CONVICTION</h2>
+          <div class="tiny" id="runtimeText">El dashboard no inventa estado. Esperando runtime validado.</div>
+        </div>
+        <div class="rMetric"><small>Contrato</small><b>2.0</b></div>
+        <div class="rMetric"><small>Runtime</small><b id="revision">--</b></div>
+        <div class="rMetric"><small>Último ciclo</small><b id="lastCycle">--</b></div>
+        <div class="rMetric"><small>Error state</small><b id="errorState">--</b></div>
+      </article>
 
-<section class="view" id="paper"><article class="panel content"><div class="ey">Paper Trading</div><h2>Libro de operaciones simuladas</h2><p class="muted">Esta vista sólo debe mostrar operaciones simuladas que tengan entrada, salida, costos y evidencia asociada. Las abstenciones y señales bloqueadas se muestran como decisiones, no como trades.</p><div class="tableWrap"><table><thead><tr><th>Fecha</th><th>TF</th><th>Entrada</th><th>Salida</th><th>Resultado</th><th>P&L neto</th><th>Evidencia</th></tr></thead><tbody id="tradesBody"><tr><td colspan="7" class="muted">Sin trades simulados publicados por la API read-only.</td></tr></tbody></table></div></article></section>
+      <div class="proGrid">
+        <article class="panel chartPanel">
+          <div class="head">
+            <div><div class="ey">Mercado en vivo</div><h3>BTC/USDT · velas públicas</h3></div>
+            <div class="tfButtons" aria-label="Timeframe del gráfico">
+              <button class="tfButton" data-interval="1m">1m</button>
+              <button class="tfButton active" data-interval="5m">5m</button>
+              <button class="tfButton" data-interval="15m">15m</button>
+              <button class="tfButton" data-interval="1h">1h</button>
+            </div>
+          </div>
+          <div class="chartWrap">
+            <canvas id="priceChart" aria-label="Gráfico de velas BTCUSDT"></canvas>
+            <div class="chartOverlay"><span class="marketBadge">TF <b id="chartTf">5m</b></span><span class="marketBadge">Fuente: Binance pública</span></div>
+          </div>
+          <div class="chartFooter">
+            <div class="chartStat"><span>Open</span><b id="candleOpen">--</b></div>
+            <div class="chartStat"><span>High</span><b id="candleHigh">--</b></div>
+            <div class="chartStat"><span>Low</span><b id="candleLow">--</b></div>
+            <div class="chartStat"><span>Close</span><b id="candleClose">--</b></div>
+          </div>
+        </article>
 
-<section class="view" id="trial"><article class="panel content"><div class="ey">Trial 90 días</div><h2>Contrato de evidencia</h2><p class="muted">El contador formal no avanza por reloj. Cada día debe completar evidencia del motor y continuidad del ledger. El manifiesto está bloqueado con SHA-256 y el Bucket Lock es irreversible.</p><div class="architecture"><div><b>Cloud Run</b>Motor Quant continuo</div><div><b>Google Sheets</b>Predicciones y evaluación</div><div><b>GCS</b>Ledger append-only</div><div><b>Bucket Lock</b>Retención 180d</div><div><b>Dashboard</b>Sólo lectura</div></div></article></section>
+        <article class="panel decisionPanel">
+          <div class="head"><div><div class="ey">Motor Quant</div><h3>Decisión actual</h3></div><span class="chip" id="decisionSource">sin API</span></div>
+          <div class="decisionGrid">
+            <div class="decisionCard">
+              <div class="decisionTop"><span class="tf">5m</span><span class="chip">elegible</span></div>
+              <h4 id="d5">Esperando datos</h4><p class="reason" id="r5">La decisión oficial viene del runtime, no del navegador.</p>
+              <div class="levels"><div><span>Activación</span><b id="a5">--</b></div><div><span>Invalidación</span><b id="i5">--</b></div></div>
+              <div class="modelMetrics"><div><span>Calidad</span><b id="q5">--</b></div><div><span>BA</span><b id="ba5">--</b></div><div><span>BSS</span><b id="bss5">--</b></div><div><span>ECE</span><b id="ece5">--</b></div></div>
+            </div>
+            <div class="decisionCard">
+              <div class="decisionTop"><span class="tf">15m</span><span class="chip">elegible</span></div>
+              <h4 id="d15">Esperando datos</h4><p class="reason" id="r15">La decisión oficial viene del runtime, no del navegador.</p>
+              <div class="levels"><div><span>Activación</span><b id="a15">--</b></div><div><span>Invalidación</span><b id="i15">--</b></div></div>
+              <div class="modelMetrics"><div><span>Calidad</span><b id="q15">--</b></div><div><span>BA</span><b id="ba15">--</b></div><div><span>BSS</span><b id="bss15">--</b></div><div><span>ECE</span><b id="ece15">--</b></div></div>
+            </div>
+          </div>
+        </article>
+      </div>
 
-<section class="view" id="system"><article class="panel content"><div class="ey">Arquitectura supervisora</div><h2>Escalado seguro con agentes</h2><p class="muted">Los agentes no ejecutan trading. Se reservan para auditoría, explicación, observabilidad, análisis de incidentes y propuestas de mejora sometidas a PR.</p><div class="repoCards"><a href="https://github.com/google/agents-cli" target="_blank" rel="noopener"><b>google/agents-cli</b><small>Lifecycle de agentes en Google Cloud: scaffold, eval, deploy, publish y observe.</small></a><a href="https://github.com/google/adk-samples" target="_blank" rel="noopener"><b>google/adk-samples</b><small>Patrones oficiales de ADK, incluidos flujos multiagente y auditor.</small></a><a href="https://github.com/Google-Cloud-AI/agent-platform" target="_blank" rel="noopener"><b>Google-Cloud-AI/agent-platform</b><small>Recursos y tutoriales de Agent Platform.</small></a><a href="https://docs.github.com/en/copilot/concepts/agents/about-github-agentic-workflows" target="_blank" rel="noopener"><b>GitHub Agentic Workflows</b><small>Automatización agentic read-only por defecto y safe outputs controlados.</small></a></div></article></section>
+      <div class="lowerGrid">
+        <article class="panel box">
+          <div class="head"><div><div class="ey">Ensayo inmutable</div><h3>Progreso formal 90 días</h3></div><span class="chip good">BUCKET LOCK</span></div>
+          <div class="trialHero">
+            <div class="ring"><div class="ringInner"><strong id="trialPct">0%</strong><small id="trialDays">0 de 90</small></div></div>
+            <div><div class="progress"><i></i></div><p class="tiny" id="trialStatus">Sólo cuentan días completos con evidencia fail-closed.</p>
+              <div class="kv"><div><small>Trial ID</small><b id="trialId">btc-shadow-90d-20260817T173948Z</b></div><div><small>Primer día elegible</small><b id="firstDay">2026-08-18</b></div><div><small>Manifest digest</small><b id="manifest">757422db…f9fd03</b></div><div><small>Estado</small><b id="trialState">INITIALIZED · 0/90</b></div></div>
+            </div>
+          </div>
+        </article>
+        <article class="panel box">
+          <div class="ey">Paper Trading</div><h3>Resultados simulados</h3>
+          <div class="paperStats"><div><span>Win rate</span><strong id="pWin">--</strong></div><div><span>P&L neto</span><strong id="pPnl">--</strong></div><div><span>Drawdown</span><strong id="pDd">--</strong></div><div><span>24h High</span><strong id="marketHigh">--</strong></div></div>
+          <div class="bannerNote" id="paperNote">SHADOW_MODE bloquea ejecución real. Sin entrada y salida simulada verificadas no se publica P&L.</div>
+        </article>
+      </div>
+    </section>
 
-<div class="foot">BTC Scenario Advisor · información probabilística · SHADOW only · no ejecuta órdenes reales.</div>
-</main>
+    <section class="view" id="analytics">
+      <article class="panel content">
+        <div class="ey">Calidad del modelo</div><h2>Analytics 5m / 15m</h2>
+        <p class="tiny">Estas métricas vienen de la API read-only. No se recalibran ni modifican parámetros del modelo durante el trial.</p>
+        <div class="analyticsGrid">
+          <div class="analyticsCard"><span>Balanced Accuracy media</span><strong id="analyticsBA">--</strong></div>
+          <div class="analyticsCard"><span>ECE medio</span><strong id="analyticsECE">--</strong></div>
+          <div class="analyticsCard"><span>Brier Skill Score medio</span><strong id="analyticsBSS">--</strong></div>
+          <div class="analyticsCard"><span>Muestras evaluadas</span><strong id="analyticsSamples">--</strong></div>
+        </div>
+        <div class="analyticsGrid">
+          <div class="analyticsCard"><span>Execution gate</span><strong id="analyticsGate">--</strong></div>
+          <div class="analyticsCard"><span>24h Low</span><strong id="marketLow">--</strong></div>
+          <div class="analyticsCard"><span>Volumen 24h</span><strong id="marketVolume">--</strong></div>
+          <div class="analyticsCard"><span>Modelo congelado</span><strong>V5.9.0</strong></div>
+        </div>
+        <div class="head"><div><div class="ey">Últimas decisiones oficiales</div><h3>Historial del motor</h3></div><span class="chip">read-only</span></div>
+        <div class="tableWrap"><table><thead><tr><th>Hora</th><th>TF</th><th>Decisión</th><th>Calidad</th><th>Viabilidad</th><th>Estado modelo</th><th>Motivos</th></tr></thead><tbody id="decisionsBody"><tr><td colspan="7">Esperando API.</td></tr></tbody></table></div>
+      </article>
+    </section>
+
+    <section class="view" id="paper">
+      <article class="panel content">
+        <div class="ey">Paper Trading</div><h2>Libro de operaciones simuladas verificadas</h2>
+        <p class="tiny">Las abstenciones y señales bloqueadas son decisiones, no trades. Sólo aparecen operaciones cuando existe entrada, salida, costos y evidencia.</p>
+        <div class="tableWrap"><table><thead><tr><th>Fecha</th><th>TF</th><th>Entrada</th><th>Salida</th><th>Resultado</th><th>P&L neto</th><th>Evidencia</th></tr></thead><tbody id="tradesBody"><tr><td colspan="7">Sin trades simulados verificados.</td></tr></tbody></table></div>
+      </article>
+    </section>
+
+    <section class="view" id="trial">
+      <article class="panel content">
+        <div class="ey">Trial 90 días</div><h2>Contrato de evidencia</h2>
+        <p class="tiny">El contador formal no avanza por reloj. Debe existir continuidad verificable del ledger y evidencia del runtime. Bucket Lock mantiene retención de 180 días.</p>
+        <div class="pipeline"><div><b>Cloud Run</b>Motor Quant continuo</div><div><b>Google Sheets</b>Predicciones y evaluación</div><div><b>GCS</b>Ledger append-only</div><div><b>Bucket Lock</b>Evidencia inmutable</div><div><b>Dashboard</b>Sólo lectura</div></div>
+      </article>
+    </section>
+
+    <section class="view" id="system">
+      <article class="panel content">
+        <div class="ey">Arquitectura y escalado</div><h2>Sistema</h2>
+        <div class="analyticsGrid">
+          <div class="analyticsCard"><span>Runtime revision</span><strong id="systemRuntime">--</strong></div>
+          <div class="analyticsCard"><span>Dashboard API</span><strong id="systemApi">--</strong></div>
+          <div class="analyticsCard"><span>Modo</span><strong id="systemMode">--</strong></div>
+          <div class="analyticsCard"><span>Frontend</span><strong>GitHub Pages</strong></div>
+        </div>
+        <h3>Próxima capa de producto</h3>
+        <div class="accountGrid">
+          <div class="lockedFeature"><b>🔐 Cuenta de usuario</b><small>Preparado para autenticación y preferencias. Todavía no habilitado en esta fase pública.</small></div>
+          <div class="lockedFeature"><b>🔔 Alertas configurables</b><small>Preparado para web, email y WhatsApp. No envía alertas hasta implementar identidad, consentimiento y cuotas.</small></div>
+          <div class="lockedFeature"><b>💳 Membresías</b><small>Free / Pro / Premium como fase posterior, separada del motor Quant.</small></div>
+          <div class="lockedFeature"><b>🤖 Agentes supervisores</b><small>Auditoría, explicación y research sin acceso a ejecución, secretos o cambios del modelo congelado.</small></div>
+        </div>
+      </article>
+    </section>
+
+    <footer class="footer">BTC Scenario Advisor PRO · información probabilística · SHADOW only · no ejecuta órdenes reales.</footer>
+  </main>
 </div>
-<script>
-const $=id=>document.getElementById(id);
-const BASE_TRIAL={trialId:'btc-shadow-90d-20260817T173948Z',requiredDays:90,completedDays:0,firstCompleteDay:'2026-08-18',manifestDigest:'757422dbd20fead8503f0545766f06b5df020c78eab2bf036d72c5f72ef9fd03',status:'INITIALIZED'};
-const DEFAULT_API_BASE='https://btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app';
-const API_BASE=(new URLSearchParams(location.search).get('api')||localStorage.getItem('btcModelApiBase')||DEFAULT_API_BASE).replace(/\/$/,'');
-let marketTimer=null;
-function fmtUsd(v){return Number.isFinite(+v)?new Intl.NumberFormat('es-AR',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(+v):'--'}
-function fmtTime(v){if(!v)return'--';let d=new Date(v);return Number.isFinite(d.getTime())?d.toLocaleString('es-AR',{hour12:false}):'--'}
-function setTrial(t){t={...BASE_TRIAL,...(t||{})};let done=Math.max(0,Math.min(t.requiredDays||90,t.completedDays||0)),req=t.requiredDays||90,pct=req?done/req*100:0;document.documentElement.style.setProperty('--trial-pct',pct+'%');$('trialCounter').textContent=`${done} / ${req}`;$('trialPct').textContent=`${pct.toFixed(pct<10?1:0)}%`;$('trialDays').textContent=`${done} de ${req}`;$('trialId').textContent=t.trialId;$('firstDay').textContent=t.firstCompleteDay;$('manifest').textContent=(t.manifestDigest||'').slice(0,10)+'…'+(t.manifestDigest||'').slice(-6);$('trialState').textContent=`${t.status||'UNKNOWN'} · ${done}/${req}`;$('trialStatus').textContent=t.message||'Sólo cuentan días completos con evidencia fail-closed.'}
-async function loadMarket(){try{let r=await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT',{cache:'no-store'});if(!r.ok)throw Error('market');let d=await r.json();$('price').textContent=fmtUsd(d.lastPrice);let c=+d.priceChangePercent;$('priceMeta').textContent=`24h ${c>=0?'+':''}${c.toFixed(2)}% · Binance público`;$('sideDot').className='dot ok';$('sideConn').textContent='Mercado público online'}catch(e){$('priceMeta').textContent='Mercado público no disponible';$('sideDot').className='dot bad';$('sideConn').textContent='Mercado sin conexión'}}
-function decisionPill(x){let d=(x||'').toUpperCase();if(d.includes('NO_ACTUAR')||d.includes('SIN OPER'))return'<span class="pill no">'+(x||'NO ACTUAR')+'</span>';if(d.includes('BUY')||d.includes('COMPR'))return'<span class="pill buy">'+x+'</span>';return'<span class="pill block">'+(x||'BLOQUEADA')+'</span>'}
-function setDecisionCard(tf,row){let id=tf==='5m'?'5':'15';if(!row){$('d'+id).textContent='Sin registro';$('r'+id).textContent='No se recibió una decisión oficial para este horizonte.';return}$('d'+id).textContent=row.decision||row.Decision||row['Decisión']||'--';$('r'+id).textContent=row.reason||row.reasons||row['Motivos_Abstención']||'Sin motivo publicado';$('a'+id).textContent=row.activation||row['Activación']||'--';$('i'+id).textContent=row.invalidation||row['Invalidación']||'--'}
-function renderDecisions(rows){rows=Array.isArray(rows)?rows:[];let byTf=tf=>rows.find(x=>(x.horizon||x.Horizonte)===tf);setDecisionCard('5m',byTf('5m'));setDecisionCard('15m',byTf('15m'));$('decisionsBody').innerHTML=rows.length?rows.slice(0,12).map(x=>`<tr><td>${fmtTime(x.timestamp||x.Timestamp)}</td><td>${x.horizon||x.Horizonte||'--'}</td><td>${decisionPill(x.decision||x['Decisión'])}</td><td>${x.signalQuality||x['Calidad_Señal']||'--'}</td><td>${x.modelState||x['Estado_Modelo']||'--'}</td><td>${String(x.reason||x['Motivos_Abstención']||'--').split(',').slice(0,2).join(', ')}</td></tr>`).join(''):'<tr><td colspan="6" class="muted">Sin decisiones publicadas.</td></tr>';$('decisionSource').textContent=rows.length?'motor live':'sin datos'}
-function renderPaper(p){p=p||{};$('pTrades').textContent=p.simulatedTrades??0;$('pWin').textContent=Number.isFinite(+p.winRatePct)?(+p.winRatePct).toFixed(1)+'%':'--';$('pPnl').textContent=Number.isFinite(+p.netPnlPct)?(+p.netPnlPct).toFixed(2)+'%':'--';$('pDd').textContent=Number.isFinite(+p.drawdownPct)?(+p.drawdownPct).toFixed(2)+'%':'--';if(p.note)$('paperNote').textContent=p.note;let tr=Array.isArray(p.trades)?p.trades:[];$('tradesBody').innerHTML=tr.length?tr.map(x=>`<tr><td>${fmtTime(x.closedAt||x.timestamp)}</td><td>${x.horizon||'--'}</td><td>${fmtUsd(x.entryPrice)}</td><td>${fmtUsd(x.exitPrice)}</td><td>${x.result||'--'}</td><td>${Number.isFinite(+x.netPnlPct)?(+x.netPnlPct).toFixed(2)+'%':'--'}</td><td>${x.evidenceRef||'--'}</td></tr>`).join(''):'<tr><td colspan="7" class="muted">Sin trades simulados publicados por la API read-only.</td></tr>'}
-async function loadModel(){if(!API_BASE){$('engineState').textContent='PENDIENTE';$('engineMeta').textContent='Falta API read-only';$('runtimeChip').className='chip warn';$('runtimeChip').textContent='● API READ-ONLY PENDIENTE';setTrial(BASE_TRIAL);return}try{let r=await fetch(API_BASE+'/api/v1/dashboard',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);let d=await r.json(),rt=d.runtime||{};$('engineState').textContent=rt.ready?'ONLINE':'NOT READY';$('engineMeta').textContent=rt.ready?'Ciclo validado':'Fail-closed';$('runtimeChip').className='chip '+(rt.ready?'good':'warn');$('runtimeChip').textContent=rt.ready?'● MOTOR ONLINE':'● MOTOR NOT READY';$('runtimeText').textContent=`${rt.modelVersion||'modelo'} · ${rt.operationMode||'--'} · SHADOW=${rt.shadowMode===true?'true':'--'}`;$('revision').textContent=rt.revision||'--';$('lastCycle').textContent=fmtTime(rt.lastSuccessfulCycleAt);$('errorState').textContent=rt.errorState||'NONE';setTrial(d.trial);renderDecisions(d.decisions);renderPaper(d.paper);$('sideDetail').textContent='Motor y trial servidos por API pública sanitizada, sólo lectura.'}catch(e){$('engineState').textContent='SIN API';$('engineMeta').textContent='No disponible';$('runtimeChip').className='chip warn';$('runtimeChip').textContent='● API READ-ONLY OFFLINE';$('runtimeText').textContent='El dashboard mantiene el estado fail-closed y no sustituye datos faltantes.';$('sideDetail').textContent='La API read-only no respondió. No se muestran datos inventados.'}}
-async function refreshAll(){await Promise.allSettled([loadMarket(),loadModel()])}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$(b.dataset.view).classList.add('active')});$('refresh').onclick=refreshAll;setTrial(BASE_TRIAL);refreshAll();marketTimer=setInterval(loadMarket,15000);setInterval(loadModel,30000);
-</script>
+
+<nav class="mobileNav" aria-label="Navegación móvil">
+  <button class="active" data-view="overview">Inicio</button><button data-view="analytics">Analytics</button><button data-view="paper">Paper</button><button data-view="trial">90D</button><button data-view="system">Sistema</button>
+</nav>
 </body>
 </html>
