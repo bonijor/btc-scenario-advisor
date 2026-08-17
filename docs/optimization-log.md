@@ -71,6 +71,56 @@ La Fase 1 fue publicada únicamente después de cumplir:
 - CI de `main` SUCCESS
 - GitHub Pages deployment SUCCESS
 
+## Registro 2026-08-17 - Fase 1.1 Responsive Hardening
+
+Estado: **EN VALIDACIÓN**
+
+Rama: `agent/dashboard-responsive-hardening`
+
+Baseline: `main` en `dc76d921154288739e0d69a5340ff753fd1c3be1`.
+
+### Objetivo
+
+Garantizar que todo el dashboard, especialmente los gráficos y paneles analíticos, se adapte a distintos navegadores, tamaños, densidades de píxel y orientaciones sin desbordar el viewport ni comprimir ilegiblemente la información.
+
+### Cambios responsive
+
+1. Espaciados, tipografías, alturas y padding fluidos mediante `clamp()`.
+2. Breakpoints progresivos para desktop ancho, notebook, tablet, mobile y mobile estrecho.
+3. Navegación inferior activada también para tablets y viewport angosto.
+4. Safe areas con `env(safe-area-inset-*)` para dispositivos con notch y barras del sistema.
+5. Grids definidos con `minmax(0,1fr)` y `min-width:0` para evitar overflow de cards y textos largos.
+6. Tablas con scroll táctil horizontal contenido, sin expandir el viewport global.
+7. Canvas BTC dimensionado por tamaño real del contenedor y densidad de píxel, limitado a DPR 3.
+8. Densidad dinámica de velas: aproximadamente 42 en pantallas muy estrechas, 54/68 en móviles, 90 en tablet, 120 en notebook y hasta 140 en desktop ancho.
+9. Escala del gráfico adaptativa para padding, tipografía y cantidad de líneas horizontales.
+10. `ResizeObserver` sobre el contenedor del gráfico para redibujar ante cambios reales de layout.
+11. Redibujado ante `resize`, `orientationchange` y cambios de `visualViewport`.
+12. Tratamiento especial para dispositivos en landscape de baja altura.
+13. Soporte `prefers-reduced-motion` y targets táctiles más grandes.
+14. El gráfico vuelve a recalcularse al regresar a Overview y al volver la pestaña a primer plano.
+
+### Seguridad y alcance
+
+- cambio sólo de frontend;
+- no modifica API;
+- no modifica motor Quant;
+- no modifica trial 90d;
+- no modifica Bucket Lock;
+- no añade métodos de escritura;
+- no añade secretos ni credenciales;
+- conserva SHADOW, SPOT_ONLY, sin SELL y sin shorts.
+
+### Criterio de publicación Fase 1.1
+
+- JavaScript syntax PASS;
+- DOM contract PASS;
+- responsive contract PASS;
+- safety assertions PASS;
+- guardrail assertions PASS;
+- PR mergeable;
+- publicación únicamente después del PASS completo.
+
 ## Próximas fases propuestas
 
 ### Fase 2 - Producto autenticado
