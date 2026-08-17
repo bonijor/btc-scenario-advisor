@@ -50,6 +50,25 @@ jobs:
           assert not missing_views, f'Vistas sin sección destino: {missing_views}'
           print(f'PASS_DOM_CONTRACT ids={len(idset)} jsRefs={len(refs)} views={len(views)}')
 
+      - name: Validate responsive contract
+        shell: bash
+        run: |
+          grep -q 'ResizeObserver' assets/app.js
+          grep -q 'orientationchange' assets/app.js
+          grep -q 'visualViewport' assets/app.js
+          grep -q 'chartViewportProfile' assets/app.js
+          grep -q 'requestAnimationFrame' assets/app.js
+          grep -q 'devicePixelRatio' assets/app.js
+          grep -q 'clamp(' assets/styles.css
+          grep -q 'minmax(0,1fr)' assets/styles.css
+          grep -q 'safe-area-inset-bottom' assets/styles.css
+          grep -q '@media(max-width:520px)' assets/styles.css
+          grep -q '@media(max-width:380px)' assets/styles.css
+          grep -q 'orientation:landscape' assets/styles.css
+          grep -q 'prefers-reduced-motion' assets/styles.css
+          grep -q 'overflow-x:auto' assets/styles.css
+          echo 'PASS_RESPONSIVE_CONTRACT'
+
       - name: Safety assertions
         shell: bash
         run: |
