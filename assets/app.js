@@ -8,6 +8,7 @@ const CONFIG = Object.freeze({
   marketSymbol: 'BTCUSDT',
   marketRefreshMs: 15000,
   modelRefreshMs: 30000,
+  marketCandleLimit: 160,
 });
 
 const BASE_TRIAL = Object.freeze({
@@ -24,6 +25,9 @@ let modelState = null;
 let marketTimer = null;
 let modelTimer = null;
 let freshnessTimer = null;
+let chartResizeObserver = null;
+let chartResizeRaf = 0;
+let visualViewportHandler = null;
 
 function parseNum(value) {
   if (typeof value === 'number') return value;
@@ -92,7 +96,7 @@ function setTrial(input) {
   document.documentElement.style.setProperty('--trial-pct', `${pct}%`);
   $('trialCounter').textContent = validDone ? `${done} / ${req}` : `-- / ${req}`;
   $('trialPct').textContent = validDone ? `${pct.toFixed(pct < 10 ? 1 : 0)}%` : '--';
-  $('trialDays').textContent = validDone ? `${done} de ${req}` : `evidencia bloqueada`;
+  $('trialDays').textContent = validDone ? `${done} de ${req}` : 'evidencia bloqueada';
   $('trialId').textContent = t.trialId || CONFIG.trialId;
   $('firstDay').textContent = t.firstCompleteDay || '--';
   const digest = t.manifestDigest || '';
@@ -122,7 +126,7 @@ async function loadTicker() {
 async function loadCandles(interval = chartState.interval) {
   chartState.interval = interval;
   document.querySelectorAll('.tfButton').forEach((button) => button.classList.toggle('active', button.dataset.interval === interval));
-  const rows = await fetchJson(`https://api.binance.com/api/v3/klines?symbol=${CONFIG.marketSymbol}&interval=${encodeURIComponent(interval)}&limit=120`);
+  const rows = await fetchJson(`https://api.binance.com/api/v3/klines?symbol=${CONFIG.marketSymbol}&interval=${encodeURIComponent(interval)}&limit=${CONFIG.marketCandleLimit}`);
   chartState.candles = rows.map((r) => ({ time: Number(r[0]), open: Number(r[1]), high: Number(r[2]), low: Number(r[3]), close: Number(r[4]), volume: Number(r[5]) }));
   $('chartTf').textContent = interval;
   const last = chartState.candles.at(-1);
@@ -132,42 +136,93 @@ async function loadCandles(interval = chartState.interval) {
     $('candleLow').textContent = fmtUsd(last.low);
     $('candleClose').textContent = fmtUsd(last.close);
   }
-  drawChart();
+  scheduleChartDraw();
+}
+
+function chartViewportProfile(width, height) {
+  let candleCount = 140;
+  let gridLines = 5;
+  let fontSize = 9;
+  let rightPad = 64;
+
+  if (width < 380) {
+    candleCount = 42;
+    gridLines = 3;
+    fontSize = 8;
+    rightPad = 58;
+  } else if (width < 520) {
+    candleCount = 54;
+    gridLines = 4;
+    fontSize = 8;
+    rightPad = 60;
+  } else if (width < 760) {
+    candleCount = 68;
+    gridLines = 4;
+    fontSize = 8;
+    rightPad = 62;
+  } else if (width < 1024) {
+    candleCount = 90;
+    gridLines = 5;
+    fontSize = 9;
+    rightPad = 64;
+  } else if (width < 1440) {
+    candleCount = 120;
+  }
+
+  if (height < 235) gridLines = Math.min(gridLines, 3);
+  return { candleCount, gridLines, fontSize, rightPad };
 }
 
 function drawChart() {
   const canvas = $('priceChart');
   if (!canvas || !chartState.candles.length) return;
   const rect = canvas.getBoundingClientRect();
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-  canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-  canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+  const width = Math.max(1, rect.width);
+  const height = Math.max(1, rect.height);
+  if (width < 40 || height < 40) return;
+
+  const profile = chartViewportProfile(width, height);
+  const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
+  const pixelWidth = Math.max(1, Math.floor(width * dpr));
+  const pixelHeight = Math.max(1, Math.floor(height * dpr));
+  if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
+  if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
+
   const ctx = canvas.getContext('2d');
+  if (!ctx) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const width = rect.width;
-  const height = rect.height;
-  const pad = { top: 24, right: 64, bottom: 24, left: 12 };
-  const plotW = width - pad.left - pad.right;
-  const plotH = height - pad.top - pad.bottom;
-  const candles = chartState.candles;
+
+  const pad = {
+    top: width < 520 ? 21 : 24,
+    right: profile.rightPad,
+    bottom: width < 520 ? 18 : 24,
+    left: width < 520 ? 7 : 12,
+  };
+  const plotW = Math.max(20, width - pad.left - pad.right);
+  const plotH = Math.max(20, height - pad.top - pad.bottom);
+  const candles = chartState.candles.slice(-profile.candleCount);
   const minPrice = Math.min(...candles.map((c) => c.low));
   const maxPrice = Math.max(...candles.map((c) => c.high));
   const span = Math.max(1, maxPrice - minPrice);
   const y = (p) => pad.top + ((maxPrice - p) / span) * plotH;
   const step = plotW / candles.length;
-  const bodyW = Math.max(2, Math.min(7, step * 0.58));
+  const bodyW = Math.max(width < 380 ? 1.5 : 2, Math.min(8, step * 0.62));
 
   ctx.clearRect(0, 0, width, height);
-  ctx.font = '9px system-ui';
+  ctx.font = `${profile.fontSize}px system-ui`;
   ctx.textBaseline = 'middle';
-  for (let i = 0; i <= 5; i += 1) {
-    const gy = pad.top + (plotH / 5) * i;
-    const price = maxPrice - (span / 5) * i;
+
+  for (let i = 0; i <= profile.gridLines; i += 1) {
+    const gy = pad.top + (plotH / profile.gridLines) * i;
+    const price = maxPrice - (span / profile.gridLines) * i;
     ctx.strokeStyle = 'rgba(42,74,108,.35)';
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(width - pad.right, gy); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pad.left, gy);
+    ctx.lineTo(width - pad.right, gy);
+    ctx.stroke();
     ctx.fillStyle = '#7891ad';
-    ctx.fillText(fmtUsd(price), width - pad.right + 7, gy);
+    ctx.fillText(fmtUsd(price), width - pad.right + 6, gy);
   }
 
   candles.forEach((c, i) => {
@@ -175,10 +230,13 @@ function drawChart() {
     const up = c.close >= c.open;
     ctx.strokeStyle = up ? '#29d391' : '#ff6678';
     ctx.fillStyle = up ? '#29d391' : '#ff6678';
-    ctx.beginPath(); ctx.moveTo(x, y(c.high)); ctx.lineTo(x, y(c.low)); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y(c.high));
+    ctx.lineTo(x, y(c.low));
+    ctx.stroke();
     const top = Math.min(y(c.open), y(c.close));
-    const h = Math.max(1, Math.abs(y(c.open) - y(c.close)));
-    ctx.fillRect(x - bodyW / 2, top, bodyW, h);
+    const candleHeight = Math.max(1, Math.abs(y(c.open) - y(c.close)));
+    ctx.fillRect(x - bodyW / 2, top, bodyW, candleHeight);
   });
 
   const last = candles.at(-1);
@@ -186,8 +244,35 @@ function drawChart() {
     const ly = y(last.close);
     ctx.setLineDash([4, 4]);
     ctx.strokeStyle = 'rgba(88,168,255,.75)';
-    ctx.beginPath(); ctx.moveTo(pad.left, ly); ctx.lineTo(width - pad.right, ly); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pad.left, ly);
+    ctx.lineTo(width - pad.right, ly);
+    ctx.stroke();
     ctx.setLineDash([]);
+  }
+}
+
+function scheduleChartDraw() {
+  if (chartResizeRaf) cancelAnimationFrame(chartResizeRaf);
+  chartResizeRaf = requestAnimationFrame(() => {
+    chartResizeRaf = 0;
+    drawChart();
+  });
+}
+
+function initResponsiveChart() {
+  const wrap = document.querySelector('.chartWrap');
+  if (wrap && 'ResizeObserver' in window) {
+    chartResizeObserver = new ResizeObserver(() => scheduleChartDraw());
+    chartResizeObserver.observe(wrap);
+  }
+
+  window.addEventListener('resize', scheduleChartDraw, { passive: true });
+  window.addEventListener('orientationchange', () => setTimeout(scheduleChartDraw, 120), { passive: true });
+
+  if (window.visualViewport) {
+    visualViewportHandler = () => scheduleChartDraw();
+    window.visualViewport.addEventListener('resize', visualViewportHandler, { passive: true });
   }
 }
 
@@ -340,6 +425,7 @@ function selectView(name) {
   document.querySelectorAll('.view').forEach((view) => view.classList.toggle('active', view.id === name));
   document.querySelectorAll('[data-view]').forEach((button) => button.classList.toggle('active', button.dataset.view === name));
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (name === 'overview') setTimeout(scheduleChartDraw, 0);
 }
 
 function initNavigation() {
@@ -352,13 +438,18 @@ function initNavigation() {
 
 function init() {
   initNavigation();
+  initResponsiveChart();
   setTrial(BASE_TRIAL);
   refreshAll();
   marketTimer = setInterval(loadTicker, CONFIG.marketRefreshMs);
   modelTimer = setInterval(loadModel, CONFIG.modelRefreshMs);
   freshnessTimer = setInterval(updateFreshness, 1000);
-  window.addEventListener('resize', drawChart, { passive: true });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshAll(); });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      refreshAll();
+      scheduleChartDraw();
+    }
+  });
 }
 
 window.addEventListener('DOMContentLoaded', init);
