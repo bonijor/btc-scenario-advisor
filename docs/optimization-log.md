@@ -73,11 +73,21 @@ La Fase 1 fue publicada únicamente después de cumplir:
 
 ## Registro 2026-08-17 - Fase 1.1 Responsive Hardening
 
-Estado: **EN VALIDACIÓN**
+Estado: **PUBLICADO / VALIDADO**
 
 Rama: `agent/dashboard-responsive-hardening`
 
 Baseline: `main` en `dc76d921154288739e0d69a5340ff753fd1c3be1`.
+
+Publicación Fase 1.1:
+
+- PR: `#4`
+- head validado: `ce8adb55a6b63451fae4840a94052692e1de56bf`
+- merge commit: `c8d14841c6b900856b5fa7329ad0d2a9679894c1`
+- CI PR run `#9` / `32069089082`: `SUCCESS`
+- CI main run `#10` / `32069161154`: `SUCCESS`
+- GitHub Pages run `#6` / `32069160419`: `SUCCESS`
+- URL pública: `https://bonijor.github.io/btc-scenario-advisor/`
 
 ### Objetivo
 
@@ -111,7 +121,7 @@ Garantizar que todo el dashboard, especialmente los gráficos y paneles analíti
 - no añade secretos ni credenciales;
 - conserva SHADOW, SPOT_ONLY, sin SELL y sin shorts.
 
-### Criterio de publicación Fase 1.1
+### Evidencia de validación Fase 1.1
 
 - JavaScript syntax PASS;
 - DOM contract PASS;
@@ -119,7 +129,8 @@ Garantizar que todo el dashboard, especialmente los gráficos y paneles analíti
 - safety assertions PASS;
 - guardrail assertions PASS;
 - PR mergeable;
-- publicación únicamente después del PASS completo.
+- CI de `main` SUCCESS;
+- GitHub Pages deployment SUCCESS.
 
 ## Próximas fases propuestas
 
