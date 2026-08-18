@@ -60,34 +60,51 @@ async function openAccount(page) {
   await expect(page.locator('#authStatus')).toHaveText('ACTIVO');
 }
 
-test('Phase 2B account shell activates managed identity and remains responsive', async ({ page }) => {
+async function loginEmail(page, email = 'qa-user@example.invalid') {
+  await page.locator('#loginEmail').fill(email);
+  await page.locator('#loginPassword').fill('do-not-store-this-password');
+  await page.locator('[data-auth-form="login"] button[type="submit"]').click();
+  await expect(page.locator('#account')).toHaveClass(/is-authenticated/);
+}
+
+test('Phase 2B account shell activates managed identity and remains responsive', async ({ page }, testInfo) => {
   await openAccount(page);
 
   await expect(page.locator('#productPhase')).toHaveText('FASE 2B');
   await expect(page.locator('#authProvider')).toContainText('Firebase Authentication');
+  await expect(page.locator('#account')).toHaveClass(/is-anonymous/);
+  await expect(page.locator('[data-auth-form="login"]')).toBeVisible();
+  await expect(page.locator('[data-auth-form="register"]')).toBeHidden();
+  await expect(page.locator('#authGoogleButton')).toBeVisible();
+  await expect(page.locator('#authGoogleButton')).toBeEnabled();
+  await expect(page.locator('#authLogoutButton')).toBeHidden();
+  await expect(page.locator('.preferencesCard')).toBeHidden();
+  await expect(page.locator('#account > .lowerGrid')).toBeHidden();
+  await expect(page.locator('.passwordToggle')).toHaveCount(2);
   await expect(page.locator('[data-requires-auth]').first()).toBeEnabled();
   await expect(page.locator('[data-requires-auth]')).toHaveCount(2);
-  await expect(page.locator('#authGateMessage')).toContainText('no persiste contraseñas ni tokens');
+  await expect(page.locator('#authGateMessage')).toContainText('Acceso seguro');
   await expect(page.locator('#membershipState')).toHaveText('DISEÑO');
   await expect(page.locator('#deliveryState')).toHaveText('BLOQUEADO');
-  await expect(page.locator('#authGoogleButton')).toBeEnabled();
 
   const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
   expect(width.scroll).toBeLessThanOrEqual(width.client + 1);
+  await page.screenshot({ path: testInfo.outputPath('account-anonymous.png'), fullPage: true });
 });
 
 test('email login clears password and exposes only safe session state', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes('desktop-chromium'), 'Credential handling gate runs once in Chromium desktop.');
   await openAccount(page);
-
-  await page.locator('#loginEmail').fill('qa-user@example.invalid');
-  await page.locator('#loginPassword').fill('do-not-store-this-password');
-  await page.locator('[data-auth-form="login"] button[type="submit"]').click();
+  await loginEmail(page);
 
   await expect(page.locator('#loginPassword')).toHaveValue('');
   await expect(page.locator('#authSession')).toContainText('QA Email User');
   await expect(page.locator('#authLogoutButton')).toBeVisible();
   await expect(page.locator('#profileState')).toHaveText('AUTENTICADO');
+  await expect(page.locator('.preferencesCard')).toBeVisible();
+  await expect(page.locator('#account > .lowerGrid')).toBeVisible();
+  await expect(page.locator('[data-auth-form="login"]')).toBeHidden();
+  await page.screenshot({ path: testInfo.outputPath('account-authenticated-email.png'), fullPage: true });
 
   const storage = await page.evaluate(() => JSON.stringify(localStorage));
   expect(storage).not.toContain('do-not-store-this-password');
@@ -96,14 +113,18 @@ test('email login clears password and exposes only safe session state', async ({
   await page.locator('#authLogoutButton').click();
   await expect(page.locator('#authFormStatus')).toContainText('Sesión cerrada');
   await expect(page.locator('#profileState')).toHaveText('SIN SESIÓN');
+  await expect(page.locator('#account')).toHaveClass(/is-anonymous/);
   await expect(page.locator('[data-auth-form="login"]')).toBeVisible();
+  await expect(page.locator('.preferencesCard')).toBeHidden();
 });
 
 test('email registration reports verification state without persisting credentials', async ({ page }, testInfo) => {
-  test.skip(!testInfo.project.name.includes('desktop-firefox'), 'Registration flow gate runs once in Firefox desktop.');
+  test.skip(!testInfo.project.name.includes('firefox'), 'Registration flow gate runs once in Firefox.');
   await openAccount(page);
 
   await page.locator('[data-auth-tab="register"]').click();
+  await expect(page.locator('[data-auth-form="login"]')).toBeHidden();
+  await expect(page.locator('[data-auth-form="register"]')).toBeVisible();
   await page.locator('#registerName').fill('QA Registro');
   await page.locator('#registerEmail').fill('qa-register@example.invalid');
   await page.locator('#registerPassword').fill('temporary-password-value');
@@ -112,6 +133,8 @@ test('email registration reports verification state without persisting credentia
   await expect(page.locator('#registerPassword')).toHaveValue('');
   await expect(page.locator('#authSession')).toContainText('pendiente de verificación');
   await expect(page.locator('#authFormStatus')).toContainText('email de verificación');
+  await expect(page.locator('.preferencesCard')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('account-registered-email.png'), fullPage: true });
 
   const storage = await page.evaluate(() => JSON.stringify(localStorage));
   expect(storage).not.toContain('temporary-password-value');
@@ -125,13 +148,17 @@ test('Google sign-in and logout are wired through the managed adapter', async ({
   await page.locator('#authGoogleButton').click();
   await expect(page.locator('#authSession')).toContainText('QA Google User');
   await expect(page.locator('#authFormStatus')).toContainText('Google');
+  await expect(page.locator('.preferencesCard')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('account-authenticated-google.png'), fullPage: true });
   await page.locator('#authLogoutButton').click();
   await expect(page.locator('#authGoogleButton')).toBeVisible();
+  await expect(page.locator('.preferencesCard')).toBeHidden();
 });
 
 test('non-sensitive preview preferences persist without changing model settings', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes('mobile-chromium-390'), 'Preference persistence gate runs once in Chromium mobile.');
   await openAccount(page);
+  await loginEmail(page, 'qa-preferences@example.invalid');
 
   await page.locator('#pref15m').uncheck();
   await page.locator('#prefEmail').check();
@@ -143,6 +170,7 @@ test('non-sensitive preview preferences persist without changing model settings'
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('[data-view="account"]:visible').first().click();
   await expect(page.locator('#authStatus')).toHaveText('ACTIVO');
+  await loginEmail(page, 'qa-preferences@example.invalid');
   await expect(page.locator('#pref15m')).not.toBeChecked();
   await expect(page.locator('#prefEmail')).toBeChecked();
   await expect(page.locator('#prefProbability')).toHaveValue('81');
