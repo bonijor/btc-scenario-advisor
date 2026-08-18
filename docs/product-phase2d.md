@@ -35,10 +35,26 @@ SHADOW · SPOT_ONLY · sin SELL · sin shorts · sin ejecución automática · A
 - ningún dato de usuario modifica V5.9.0.
 - ningún entitlement puede habilitar órdenes de mercado.
 
+## Evidencia de infraestructura
+
+Gate 1: PASS.
+
+- proyecto: `linear-poet-426418-k0`
+- database: `(default)`
+- location: `southamerica-east1`
+- edition: `STANDARD`
+- type: `FIRESTORE_NATIVE`
+- delete protection: `DELETE_PROTECTION_ENABLED`
+- free tier: `true`
+- App Engine: no configurado
+- creado: `2026-08-18T06:55:35.069045Z`
+
+La creación de la base no implica todavía que las reglas de Fase 2D estén publicadas. El frontend permanece sin merge hasta completar reglas + validación.
+
 ## Gate de infraestructura antes de publicar
 
-1. Confirmar si existe Cloud Firestore `(default)` en `linear-poet-426418-k0`.
-2. Si no existe, elegir explícitamente la ubicación antes de crearla.
-3. Desplegar `firestore.rules` e índices.
-4. Validar reglas y realizar un smoke test autenticado.
-5. Mantener el PR sin merge hasta que QA e infraestructura sean PASS.
+1. ✅ Crear/verificar Cloud Firestore `(default)` en `linear-poet-426418-k0` y fijar ubicación `southamerica-east1`.
+2. ⏳ Desplegar `firestore.rules` de Fase 2D.
+3. ⏳ Validar reglas: anónimo denegado, propietario permitido, UID ajeno denegado, entitlements sin escritura cliente.
+4. ⏳ Realizar smoke test autenticado de perfil/preferencias.
+5. ⏳ Mantener el PR sin merge hasta que QA e infraestructura sean PASS.
