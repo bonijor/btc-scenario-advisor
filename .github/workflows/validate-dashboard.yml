@@ -26,6 +26,7 @@ jobs:
           test -s assets/responsive-bootstrap.js
           test -s assets/accessibility.js
           test -s assets/product.js
+          test -s assets/firebase-auth.js
           test -s assets/styles.css
           test -s assets/accessibility.css
           test -s assets/product.css
@@ -53,6 +54,7 @@ jobs:
           node --check assets/responsive-bootstrap.js
           node --check assets/accessibility.js
           node --check assets/product.js
+          node --check assets/firebase-auth.js
           node --check playwright.config.mjs
           node --check tests/e2e/dashboard-responsive.spec.mjs
           node --check tests/e2e/dashboard-accessibility.spec.mjs
@@ -102,6 +104,7 @@ jobs:
           grep -q 'prefers-reduced-motion' assets/styles.css
           grep -q 'overflow-x:auto' assets/styles.css
           grep -q 'repeat(6,minmax(0,1fr))' assets/product.css
+          grep -q 'authFederatedActions' assets/product.css
           echo 'PASS_RESPONSIVE_CONTRACT'
 
       - name: Validate accessibility contract
@@ -125,7 +128,7 @@ jobs:
           grep -q 'contrastRatio' tests/e2e/dashboard-accessibility.spec.mjs
           echo 'PASS_ACCESSIBILITY_CONTRACT'
 
-      - name: Validate Phase 2A product contract
+      - name: Validate Phase 2B identity contract
         shell: bash
         run: |
           grep -q 'id="account"' index.html
@@ -133,17 +136,27 @@ jobs:
           grep -q 'data-auth-form="login"' index.html
           grep -q 'data-auth-form="register"' index.html
           grep -q 'id="preferencesForm"' index.html
-          grep -q 'authEnabled: false' assets/product.js
+          grep -q "phase: '2B'" assets/product.js
+          grep -q 'authEnabled: true' assets/product.js
+          grep -q "import('./firebase-auth.js')" assets/product.js
+          grep -q '__BTC_AUTH_TEST_ADAPTER_FACTORY__' assets/product.js
           grep -q 'serverProfileEnabled: false' assets/product.js
           grep -q 'membershipEnabled: false' assets/product.js
           grep -q 'alertsDeliveryEnabled: false' assets/product.js
-          grep -q 'password.value = ' assets/product.js
+          grep -q 'browserLocalPersistence' assets/firebase-auth.js
+          grep -q 'signInWithEmailAndPassword' assets/firebase-auth.js
+          grep -q 'createUserWithEmailAndPassword' assets/firebase-auth.js
+          grep -q 'sendEmailVerification' assets/firebase-auth.js
+          grep -q 'signInWithPopup' assets/firebase-auth.js
+          grep -q 'signOut(auth)' assets/firebase-auth.js
+          grep -q 'passwordInput.value = ' assets/product.js
           grep -q 'preferenceStorageKey' assets/product.js
           grep -q 'No modifican el modelo Quant' assets/product.js
-          grep -q 'credential fields are never persisted' tests/e2e/product-account.spec.mjs
+          grep -q 'email login clears password' tests/e2e/product-account.spec.mjs
+          grep -q 'Google sign-in and logout' tests/e2e/product-account.spec.mjs
           grep -q 'Firebase Authentication' docs/product-phase2.md
           grep -q 'sin ejecución automática' docs/product-phase2.md
-          echo 'PASS_PRODUCT_PHASE2A_CONTRACT'
+          echo 'PASS_PRODUCT_PHASE2B_CONTRACT'
 
       - name: Validate browser QA contract
         shell: bash
@@ -174,18 +187,18 @@ jobs:
           grep -q 'API READ-ONLY' index.html
           grep -q 'btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app' assets/app.js
 
-          if grep -RniE -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:|BINANCE_API_SECRET|EXCHANGE_API_SECRET|FIREBASE_PRIVATE_KEY|serviceAccountKey' . --exclude-dir=.git --exclude='validate-dashboard.yml'; then
+          if grep -RniE -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:|BINANCE_API_SECRET|EXCHANGE_API_SECRET|FIREBASE_PRIVATE_KEY|serviceAccountKey|GOCSPX-|clientSecret|signerKey|saltSeparator' . --exclude-dir=.git --exclude='validate-dashboard.yml'; then
             echo 'Material sensible detectado.'
             exit 1
           fi
 
           if grep -niE -- "method:[[:space:]]*['\"](POST|PUT|PATCH|DELETE)['\"]|/api/v3/order" assets/app.js assets/accessibility.js assets/responsive-bootstrap.js assets/product.js; then
-            echo 'Se detectó una ruta o método de escritura prohibido en el frontend.'
+            echo 'Se detectó una ruta o método de escritura prohibido en la capa Quant del frontend.'
             exit 1
           fi
 
-          if grep -niE -- 'localStorage\.(setItem|getItem).*password|localStorage\.(setItem|getItem).*token|sessionStorage\.(setItem|getItem).*password|sessionStorage\.(setItem|getItem).*token' assets/product.js; then
-            echo 'Persistencia local prohibida de password/token detectada.'
+          if grep -niE -- 'localStorage\.(setItem|getItem).*password|localStorage\.(setItem|getItem).*token|sessionStorage\.(setItem|getItem).*password|sessionStorage\.(setItem|getItem).*token' assets/product.js assets/firebase-auth.js; then
+            echo 'Persistencia manual prohibida de password/token detectada.'
             exit 1
           fi
 
