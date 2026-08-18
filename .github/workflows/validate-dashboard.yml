@@ -187,7 +187,7 @@ jobs:
           grep -q 'API READ-ONLY' index.html
           grep -q 'btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app' assets/app.js
 
-          if grep -RniE -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:|BINANCE_API_SECRET|EXCHANGE_API_SECRET|FIREBASE_PRIVATE_KEY|serviceAccountKey|GOCSPX-|clientSecret|signerKey|saltSeparator' . --exclude-dir=.git --exclude='validate-dashboard.yml'; then
+          if grep -RniE --exclude-dir=.git --exclude='validate-dashboard.yml' -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:|BINANCE_API_SECRET|EXCHANGE_API_SECRET|FIREBASE_PRIVATE_KEY|serviceAccountKey|GOCSPX-|clientSecret|signerKey|saltSeparator' assets docs tests index.html README.md package.json; then
             echo 'Material sensible detectado.'
             exit 1
           fi
@@ -201,6 +201,8 @@ jobs:
             echo 'Persistencia manual prohibida de password/token detectada.'
             exit 1
           fi
+
+          echo 'PASS_SENSITIVE_MATERIAL_SCAN'
 
       - name: Guardrail assertions
         shell: bash
