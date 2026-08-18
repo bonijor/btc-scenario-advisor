@@ -27,11 +27,17 @@ jobs:
           test -s assets/accessibility.js
           test -s assets/product.js
           test -s assets/firebase-auth.js
+          test -s assets/firebase-profile.js
           test -s assets/styles.css
           test -s assets/accessibility.css
           test -s assets/product.css
+          test -s assets/cloud-profile.css
+          test -s firestore.rules
+          test -s firestore.indexes.json
+          test -s firebase.json
           test -s docs/optimization-log.md
           test -s docs/product-phase2.md
+          test -s docs/product-phase2d.md
           test -s package.json
           test -s playwright.config.mjs
           test -s tests/e2e/dashboard-responsive.spec.mjs
@@ -55,6 +61,7 @@ jobs:
           node --check assets/accessibility.js
           node --check assets/product.js
           node --check assets/firebase-auth.js
+          node --check assets/firebase-profile.js
           node --check playwright.config.mjs
           node --check tests/e2e/dashboard-responsive.spec.mjs
           node --check tests/e2e/dashboard-accessibility.spec.mjs
@@ -75,12 +82,17 @@ jobs:
           assert not duplicates, f'IDs duplicados: {duplicates}'
           idset = set(ids)
           refs = set(re.findall(r"\$\(['\"]([^'\"]+)['\"]\)", js))
-          missing = sorted(refs - idset)
-          assert not missing, f'IDs usados por JS pero ausentes en HTML: {missing}'
+          dynamic = {
+            'authGoogleButton','authLogoutButton','authDivider','authSession',
+            'cloudSyncBadge','cloudProfileStatus','profileStorageState','profilePlanState',
+            'profilePlanSource','cloudStateNote','profileDisplayName','cloudProfileForm'
+          }
+          missing = sorted(refs - idset - dynamic)
+          assert not missing, f'IDs usados por JS pero ausentes en HTML/dynamic UI: {missing}'
           views = set(re.findall(r'data-view=["\']([^"\']+)["\']', html))
           missing_views = sorted(views - idset)
           assert not missing_views, f'Vistas sin sección destino: {missing_views}'
-          print(f'PASS_DOM_CONTRACT ids={len(idset)} jsRefs={len(refs)} views={len(views)}')
+          print(f'PASS_DOM_CONTRACT ids={len(idset)} jsRefs={len(refs)} views={len(views)} dynamic={len(dynamic)}')
 
       - name: Validate responsive contract
         shell: bash
@@ -105,6 +117,7 @@ jobs:
           grep -q 'overflow-x:auto' assets/styles.css
           grep -q 'repeat(6,minmax(0,1fr))' assets/product.css
           grep -q 'authFederatedActions' assets/product.css
+          grep -q '@media(max-width:760px)' assets/cloud-profile.css
           echo 'PASS_RESPONSIVE_CONTRACT'
 
       - name: Validate accessibility contract
@@ -120,15 +133,15 @@ jobs:
           grep -q 'syncNavigationState' assets/accessibility.js
           grep -q 'syncTimeframeState' assets/accessibility.js
           grep -q 'const dashboardFixture' assets/accessibility.js
-          grep -q "/ticker/24hr" assets/accessibility.js
-          grep -q "/klines" assets/accessibility.js
-          grep -q "/api/v1/dashboard" assets/accessibility.js
+          grep -q '/ticker/24hr' assets/accessibility.js
+          grep -q '/klines' assets/accessibility.js
+          grep -q '/api/v1/dashboard' assets/accessibility.js
           grep -q ':focus-visible' assets/accessibility.css
           grep -q '.srOnly' assets/accessibility.css
           grep -q 'contrastRatio' tests/e2e/dashboard-accessibility.spec.mjs
           echo 'PASS_ACCESSIBILITY_CONTRACT'
 
-      - name: Validate Phase 2B identity contract
+      - name: Validate Phase 2D private profile contract
         shell: bash
         run: |
           grep -q 'id="account"' index.html
@@ -136,27 +149,46 @@ jobs:
           grep -q 'data-auth-form="login"' index.html
           grep -q 'data-auth-form="register"' index.html
           grep -q 'id="preferencesForm"' index.html
-          grep -q "phase: '2B'" assets/product.js
+          grep -q "phase: '2D'" assets/product.js
           grep -q 'authEnabled: true' assets/product.js
-          grep -q "import('./firebase-auth.js')" assets/product.js
-          grep -q '__BTC_AUTH_TEST_ADAPTER_FACTORY__' assets/product.js
-          grep -q 'serverProfileEnabled: false' assets/product.js
+          grep -q 'serverProfileEnabled: true' assets/product.js
+          grep -q 'entitlementReadOnly: true' assets/product.js
           grep -q 'membershipEnabled: false' assets/product.js
           grep -q 'alertsDeliveryEnabled: false' assets/product.js
+          grep -q "import('./firebase-auth.js')" assets/product.js
+          grep -q "import('./firebase-profile.js')" assets/product.js
+          grep -q '__BTC_AUTH_TEST_ADAPTER_FACTORY__' assets/product.js
+          grep -q '__BTC_PROFILE_TEST_ADAPTER_FACTORY__' assets/product.js
           grep -q 'browserLocalPersistence' assets/firebase-auth.js
           grep -q 'signInWithEmailAndPassword' assets/firebase-auth.js
           grep -q 'createUserWithEmailAndPassword' assets/firebase-auth.js
           grep -q 'sendEmailVerification' assets/firebase-auth.js
           grep -q 'signInWithPopup' assets/firebase-auth.js
+          grep -q 'updateDisplayName' assets/firebase-auth.js
           grep -q 'signOut(auth)' assets/firebase-auth.js
-          grep -q 'passwordInput.value = ' assets/product.js
+          grep -q "doc(db, 'users', uid)" assets/firebase-profile.js
+          grep -q "doc(db, 'entitlements', uid)" assets/firebase-profile.js
+          grep -q 'serverTimestamp' assets/firebase-profile.js
           grep -q 'preferenceStorageKey' assets/product.js
-          grep -q 'No modifican el modelo Quant' assets/product.js
-          grep -q 'email login clears password' tests/e2e/product-account.spec.mjs
-          grep -q 'Google sign-in and logout' tests/e2e/product-account.spec.mjs
-          grep -q 'Firebase Authentication' docs/product-phase2.md
-          grep -q 'sin ejecución automática' docs/product-phase2.md
-          echo 'PASS_PRODUCT_PHASE2B_CONTRACT'
+          grep -q 'Preferencias sincronizadas en nube' assets/product.js
+          grep -q 'cloud profile name persists' tests/e2e/product-account.spec.mjs
+          grep -q 'preferences synchronize to cloud' tests/e2e/product-account.spec.mjs
+          grep -q 'Cloud Firestore' docs/product-phase2d.md
+          grep -q 'sin ejecución automática' docs/product-phase2d.md
+          echo 'PASS_PRODUCT_PHASE2D_CONTRACT'
+
+      - name: Validate Firestore security contract
+        shell: bash
+        run: |
+          grep -q "rules_version = '2'" firestore.rules
+          grep -q 'request.auth.uid == userId' firestore.rules
+          grep -q 'data.minProbability >= 50' firestore.rules
+          grep -q 'data.minProbability <= 99' firestore.rules
+          grep -q 'match /entitlements/{userId}' firestore.rules
+          grep -q 'allow create, update, delete: if false' firestore.rules
+          grep -q 'match /{document=\*\*}' firestore.rules
+          grep -q '"rules": "firestore.rules"' firebase.json
+          echo 'PASS_FIRESTORE_FAIL_CLOSED_CONTRACT'
 
       - name: Validate browser QA contract
         shell: bash
@@ -187,7 +219,7 @@ jobs:
           grep -q 'API READ-ONLY' index.html
           grep -q 'btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app' assets/app.js
 
-          if grep -RniE --exclude-dir=.git --exclude='validate-dashboard.yml' -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:|BINANCE_API_SECRET|EXCHANGE_API_SECRET|FIREBASE_PRIVATE_KEY|serviceAccountKey|GOCSPX-|clientSecret|signerKey|saltSeparator' assets docs tests index.html README.md package.json; then
+          if grep -RniE --exclude-dir=.git --exclude='validate-dashboard.yml' -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:|BINANCE_API_SECRET|EXCHANGE_API_SECRET|FIREBASE_PRIVATE_KEY|serviceAccountKey|GOCSPX-|clientSecret|signerKey|saltSeparator' assets docs tests index.html README.md package.json firebase.json firestore.rules firestore.indexes.json; then
             echo 'Material sensible detectado.'
             exit 1
           fi
@@ -197,7 +229,7 @@ jobs:
             exit 1
           fi
 
-          if grep -niE -- 'localStorage\.(setItem|getItem).*password|localStorage\.(setItem|getItem).*token|sessionStorage\.(setItem|getItem).*password|sessionStorage\.(setItem|getItem).*token' assets/product.js assets/firebase-auth.js; then
+          if grep -niE -- 'localStorage\.(setItem|getItem).*password|localStorage\.(setItem|getItem).*token|sessionStorage\.(setItem|getItem).*password|sessionStorage\.(setItem|getItem).*token' assets/product.js assets/firebase-auth.js assets/firebase-profile.js; then
             echo 'Persistencia manual prohibida de password/token detectada.'
             exit 1
           fi
@@ -211,7 +243,9 @@ jobs:
           grep -q 'no SELL' index.html
           grep -q 'no shorts' index.html
           grep -q 'API pública sólo lectura' docs/optimization-log.md
-          grep -q 'ningún dato de usuario modifica V5.9.0' docs/product-phase2.md
+          grep -q 'ningún dato de usuario modifica V5.9.0' docs/product-phase2d.md
+          grep -q 'ningún entitlement puede habilitar órdenes de mercado' docs/product-phase2d.md
+          echo 'PASS_PHASE2D_GUARDRAILS'
 
   browser-qa:
     name: Browser QA · Responsive + Accessibility
