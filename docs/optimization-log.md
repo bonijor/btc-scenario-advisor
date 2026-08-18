@@ -132,6 +132,73 @@ Garantizar que todo el dashboard, especialmente los gráficos y paneles analíti
 - CI de `main` SUCCESS;
 - GitHub Pages deployment SUCCESS.
 
+## Registro 2026-08-17 - Fase 1.2 QA de dispositivos y navegadores
+
+Estado: **EN VALIDACIÓN**
+
+Rama: `agent/dashboard-qa-phase1-2`
+
+Baseline: `main` en `4cc975a2c16f07ddc6e4f3d9dd855d534e3d6716`.
+
+### Objetivo
+
+Convertir el responsive de Fase 1.1 en evidencia automática reproducible. Cada cambio de frontend debe demostrar que el dashboard sigue siendo utilizable y contenido en múltiples motores, resoluciones, orientaciones y densidades de píxel antes de poder publicarse.
+
+### Matriz QA automatizada
+
+- Chromium desktop `1920x1080`;
+- Firefox notebook `1366x768`;
+- WebKit tablet `1024x768` con touch;
+- Chromium mobile `390x844` con touch;
+- WebKit mobile `390x844` con touch;
+- WebKit mobile landscape `844x390`;
+- Chromium estrecho `320x568`.
+
+Los proyectos usan motores de navegador reales de Playwright. Los perfiles mobile/tablet son emulación de viewport, densidad, touch y modo mobile, no dispositivos físicos remotos.
+
+### Contratos verificados
+
+1. El documento no puede generar overflow horizontal global.
+2. El canvas BTC debe mantener tamaño utilizable y backing buffer coherente con DPR limitado.
+3. Analytics y Paper Trading deben navegar correctamente en cada proyecto.
+4. Las tablas anchas deben quedar contenidas dentro de `.tableWrap` sin expandir el viewport.
+5. El breakpoint desktop a mobile debe redibujar el canvas y activar navegación mobile.
+6. Motor, mercado, trial y decisiones se prueban con fixtures determinísticos para evitar falsos fallos por Binance o Cloud Run.
+7. Se generan screenshots de Overview y Analytics por proyecto como evidencia de CI.
+8. En fallos se conservan trace, screenshot y video de Playwright.
+9. Los artifacts de QA se retienen 14 días en GitHub Actions.
+10. El QA cross-browser es un job bloqueante posterior a los contratos sintácticos, DOM, responsive, safety y guardrails.
+
+### Seguridad y alcance
+
+- no modifica runtime Quant;
+- no modifica API;
+- no modifica trial 90d;
+- no crea checkpoints;
+- no añade credenciales;
+- no usa endpoints de escritura;
+- fixtures existen sólo dentro del runner de tests y no se incorporan al flujo de datos productivo;
+- conserva SHADOW, SPOT_ONLY, sin SELL y sin shorts.
+
+### Criterio de publicación Fase 1.2
+
+- syntax PASS;
+- DOM contract PASS;
+- responsive contract PASS;
+- browser QA contract PASS;
+- Chromium PASS;
+- Firefox PASS;
+- WebKit PASS;
+- mobile portrait PASS;
+- mobile landscape PASS;
+- 320px narrow viewport PASS;
+- screenshots/artifacts generados;
+- safety PASS;
+- guardrails PASS;
+- PR mergeable;
+- CI de `main` SUCCESS;
+- GitHub Pages SUCCESS.
+
 ## Próximas fases propuestas
 
 ### Fase 2 - Producto autenticado

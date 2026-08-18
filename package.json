@@ -1,0 +1,13 @@
+{
+  "name": "btc-scenario-advisor-dashboard",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "qa:e2e": "playwright test",
+    "qa:list": "playwright test --list"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1"
+  }
+}
