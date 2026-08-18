@@ -1,0 +1,85 @@
+.skipLink{
+  position:fixed;
+  left:12px;
+  top:10px;
+  z-index:1000;
+  transform:translateY(-160%);
+  padding:10px 14px;
+  border:2px solid var(--blue);
+  border-radius:10px;
+  background:#07111e;
+  color:var(--text);
+  font-weight:850;
+  text-decoration:none;
+  box-shadow:var(--shadow);
+}
+.skipLink:focus{transform:translateY(0)}
+
+.srOnly{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  padding:0!important;
+  margin:-1px!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;
+  border:0!important;
+}
+
+:where(a,button,[tabindex]):focus-visible{
+  outline:3px solid var(--blue);
+  outline-offset:3px;
+}
+
+.tableWrap[tabindex="0"]:focus-visible{
+  outline:3px solid var(--blue);
+  outline-offset:3px;
+  border-radius:10px;
+}
+
+.view[aria-hidden="true"]{pointer-events:none}
+
+.tiny,
+.ey,
+.statusCell span,
+.statusCell b,
+.chip,
+.rMetric small,
+.rMetric b,
+.tfButton,
+.marketBadge,
+.chartStat span,
+.chartStat b,
+.reason,
+.levels,
+.levels div,
+.modelMetrics span,
+.modelMetrics b,
+.kv small,
+.kv b,
+.paperStats span,
+.bannerNote,
+th,
+td,
+.analyticsCard span,
+.lockedFeature small,
+.footer{
+  font-size:12px;
+  line-height:1.45;
+}
+
+@media(max-width:520px){
+  .tiny,
+  .ey,
+  .chip,
+  .marketBadge,
+  .reason,
+  th,
+  td{font-size:12px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto!important}
+  .skipLink{transition:none!important}
+}
