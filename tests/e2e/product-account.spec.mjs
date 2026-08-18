@@ -67,7 +67,7 @@ async function loginEmail(page, email = 'qa-user@example.invalid') {
   await expect(page.locator('#account')).toHaveClass(/is-authenticated/);
 }
 
-test('Phase 2B account shell activates managed identity and remains responsive', async ({ page }) => {
+test('Phase 2B account shell activates managed identity and remains responsive', async ({ page }, testInfo) => {
   await openAccount(page);
 
   await expect(page.locator('#productPhase')).toHaveText('FASE 2B');
@@ -89,6 +89,7 @@ test('Phase 2B account shell activates managed identity and remains responsive',
 
   const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
   expect(width.scroll).toBeLessThanOrEqual(width.client + 1);
+  await page.screenshot({ path: testInfo.outputPath('account-anonymous.png'), fullPage: true });
 });
 
 test('email login clears password and exposes only safe session state', async ({ page }, testInfo) => {
@@ -103,6 +104,7 @@ test('email login clears password and exposes only safe session state', async ({
   await expect(page.locator('.preferencesCard')).toBeVisible();
   await expect(page.locator('#account > .lowerGrid')).toBeVisible();
   await expect(page.locator('[data-auth-form="login"]')).toBeHidden();
+  await page.screenshot({ path: testInfo.outputPath('account-authenticated-email.png'), fullPage: true });
 
   const storage = await page.evaluate(() => JSON.stringify(localStorage));
   expect(storage).not.toContain('do-not-store-this-password');
@@ -132,6 +134,7 @@ test('email registration reports verification state without persisting credentia
   await expect(page.locator('#authSession')).toContainText('pendiente de verificación');
   await expect(page.locator('#authFormStatus')).toContainText('email de verificación');
   await expect(page.locator('.preferencesCard')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('account-registered-email.png'), fullPage: true });
 
   const storage = await page.evaluate(() => JSON.stringify(localStorage));
   expect(storage).not.toContain('temporary-password-value');
@@ -146,6 +149,7 @@ test('Google sign-in and logout are wired through the managed adapter', async ({
   await expect(page.locator('#authSession')).toContainText('QA Google User');
   await expect(page.locator('#authFormStatus')).toContainText('Google');
   await expect(page.locator('.preferencesCard')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('account-authenticated-google.png'), fullPage: true });
   await page.locator('#authLogoutButton').click();
   await expect(page.locator('#authGoogleButton')).toBeVisible();
   await expect(page.locator('.preferencesCard')).toBeHidden();
