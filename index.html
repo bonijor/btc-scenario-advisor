@@ -8,8 +8,10 @@
   <title>BTC Scenario Advisor PRO · 90D Shadow Trial</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="assets/accessibility.css">
+  <link rel="stylesheet" href="assets/product.css">
   <script src="assets/accessibility.js" defer></script>
   <script src="assets/app.js" defer></script>
+  <script src="assets/product.js" defer></script>
   <script src="assets/responsive-bootstrap.js" defer></script>
 </head>
 <body>
@@ -26,6 +28,7 @@
       <button data-view="paper">◎ Paper Trading</button>
       <button data-view="trial">◷ Trial 90 días</button>
       <button data-view="system">⚙ Sistema</button>
+      <button data-view="account">◉ Cuenta</button>
     </nav>
     <div class="sideStatus">
       <div><i class="dot" id="sideDot" aria-hidden="true"></i><b id="sideConn">Mercado conectando</b></div>
@@ -186,12 +189,109 @@
         </div>
         <h3>Próxima capa de producto</h3>
         <div class="accountGrid">
-          <div class="lockedFeature"><b>🔐 Cuenta de usuario</b><small>Preparado para autenticación y preferencias. Todavía no habilitado en esta fase pública.</small></div>
-          <div class="lockedFeature"><b>🔔 Alertas configurables</b><small>Preparado para web, email y WhatsApp. No envía alertas hasta implementar identidad, consentimiento y cuotas.</small></div>
-          <div class="lockedFeature"><b>💳 Membresías</b><small>Free / Pro / Premium como fase posterior, separada del motor Quant.</small></div>
+          <div class="lockedFeature"><b>🔐 Cuenta de usuario · Fase 2A</b><small>Shell de producto habilitado en la vista Cuenta. Identidad real permanece bloqueada hasta configurar proveedor gestionado.</small></div>
+          <div class="lockedFeature"><b>🔔 Alertas configurables</b><small>Preferencias en preview local. No envía alertas hasta implementar identidad, consentimiento y cuotas.</small></div>
+          <div class="lockedFeature"><b>💳 Membresías</b><small>Free / Pro / Premium diseñadas como fase posterior, separadas del motor Quant.</small></div>
           <div class="lockedFeature"><b>🤖 Agentes supervisores</b><small>Auditoría, explicación y research sin acceso a ejecución, secretos o cambios del modelo congelado.</small></div>
         </div>
       </article>
+    </section>
+
+    <section class="view" id="account" tabindex="-1" aria-label="Cuenta y preferencias" aria-hidden="true">
+      <div class="productHero">
+        <article class="panel content">
+          <span class="productBadge pending"><span aria-hidden="true">●</span> <span id="productPhase">FASE 2A</span></span>
+          <div class="ey" style="margin-top:12px">Producto autenticado</div>
+          <h2>Cuenta, perfil y preferencias</h2>
+          <p class="productNote">Esta capa prepara BTC Scenario Advisor para usuarios y membresías sin dar acceso de escritura al motor Quant. La identidad real permanece fail-closed hasta conectar el proveedor gestionado.</p>
+        </article>
+        <article class="panel content">
+          <div class="productStatusGrid">
+            <div class="productStatus"><span>Identidad</span><strong id="authStatus">PENDIENTE</strong><small id="authProvider">Firebase Authentication</small></div>
+            <div class="productStatus"><span>Perfil</span><strong id="profileState">PREVIEW LOCAL</strong><small>sin datos sensibles</small></div>
+            <div class="productStatus"><span>Membresías</span><strong id="membershipState">DISEÑO</strong><small>sin cobros</small></div>
+            <div class="productStatus"><span>Alertas</span><strong id="deliveryState">BLOQUEADO</strong><small>sin envíos</small></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="accountLayout">
+        <article class="panel content authCard">
+          <div class="ey">Identidad</div><h3>Ingresar o crear cuenta</h3>
+          <div class="authTabs" role="tablist" aria-label="Acceso a cuenta">
+            <button type="button" class="active" data-auth-tab="login" role="tab" aria-selected="true">Ingresar</button>
+            <button type="button" data-auth-tab="register" role="tab" aria-selected="false">Crear cuenta</button>
+          </div>
+
+          <form class="authForm" data-auth-form="login" aria-label="Formulario de ingreso">
+            <div class="field"><label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="email" inputmode="email" placeholder="tu@email.com"></div>
+            <div class="field"><label for="loginPassword">Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+            <div class="authActions"><button class="btn primary" type="submit" data-requires-auth disabled>Ingresar</button></div>
+          </form>
+
+          <form class="authForm" data-auth-form="register" aria-label="Formulario de registro" hidden aria-hidden="true">
+            <div class="field"><label for="registerName">Nombre</label><input id="registerName" type="text" autocomplete="name" placeholder="Tu nombre"></div>
+            <div class="field"><label for="registerEmail">Email</label><input id="registerEmail" type="email" autocomplete="email" inputmode="email" placeholder="tu@email.com"></div>
+            <div class="field"><label for="registerPassword">Contraseña</label><input id="registerPassword" type="password" autocomplete="new-password" placeholder="mínimo según política del proveedor"></div>
+            <div class="authActions"><button class="btn primary" type="submit" data-requires-auth disabled>Crear cuenta</button></div>
+          </form>
+
+          <p id="authFormStatus" class="tiny" aria-live="polite"></p>
+          <div class="authGate" id="authGateMessage">Identidad todavía no conectada.</div>
+        </article>
+
+        <article class="panel content preferencesCard">
+          <div class="ey">Perfil</div><h3>Preferencias de alertas</h3>
+          <div class="profilePreview">
+            <div class="profileAvatar" aria-hidden="true">👤</div>
+            <div><b>Perfil preview</b><small class="productNote">Las preferencias se guardan únicamente en este navegador durante Fase 2A. No se almacenan credenciales ni modifican parámetros del modelo.</small></div>
+          </div>
+
+          <form id="preferencesForm">
+            <div class="fieldLegend">Horizontes que querés seguir</div>
+            <div class="prefsGrid">
+              <label class="prefItem"><input id="pref5m" type="checkbox" checked><span><b>5 minutos</b><small>Decisiones oficiales del runtime 5m.</small></span></label>
+              <label class="prefItem"><input id="pref15m" type="checkbox" checked><span><b>15 minutos</b><small>Decisiones oficiales del runtime 15m.</small></span></label>
+            </div>
+
+            <div class="fieldLegend">Canales deseados</div>
+            <div class="prefsGrid">
+              <label class="prefItem"><input id="prefWeb" type="checkbox" checked><span><b>Web</b><small>Centro de alertas futuro.</small></span></label>
+              <label class="prefItem"><input id="prefEmail" type="checkbox"><span><b>Email</b><small>Requiere identidad verificada.</small></span></label>
+              <label class="prefItem"><input id="prefWhatsapp" type="checkbox"><span><b>WhatsApp</b><small>Requiere teléfono y consentimiento.</small></span></label>
+              <label class="prefItem"><input id="prefQuiet" type="checkbox"><span><b>Horario silencioso</b><small>Preparado para ventana configurable.</small></span></label>
+            </div>
+
+            <div class="fieldLegend">Umbral personal de notificación</div>
+            <div class="rangeRow"><input id="prefProbability" type="range" min="50" max="99" step="1" value="72" aria-describedby="probabilityHelp"><output id="prefProbabilityValue" for="prefProbability">72%</output></div>
+            <p class="tiny" id="probabilityHelp">Filtra tus futuras notificaciones. No cambia el umbral, pesos ni calibración de V5.9.0.</p>
+            <button class="btn" type="submit">Guardar preview</button>
+            <p id="preferencesStatus" class="tiny" aria-live="polite"></p>
+          </form>
+        </article>
+      </div>
+
+      <div class="lowerGrid">
+        <article class="panel content membershipCard">
+          <div class="ey">Membresías</div><h3>Arquitectura comercial preparada</h3>
+          <div class="membershipGrid">
+            <div class="planCard"><strong>Free</strong><small>Dashboard público, estado del trial y lectura básica.</small></div>
+            <div class="planCard recommended"><strong>Pro</strong><small>Alertas configurables, historial ampliado y analytics personales.</small></div>
+            <div class="planCard"><strong>Premium</strong><small>Research, explicaciones avanzadas y funciones futuras con cuotas.</small></div>
+          </div>
+          <p class="tiny">Planes en diseño. No existen cobros ni checkout en Fase 2A.</p>
+        </article>
+
+        <article class="panel content securityCard">
+          <div class="ey">Contrato de seguridad</div><h3>Lo que una cuenta nunca podrá hacer</h3>
+          <ul class="securityList">
+            <li>Modificar el modelo congelado durante el trial.</li>
+            <li>Enviar órdenes de compra o venta a un exchange.</li>
+            <li>Habilitar SELL, shorts o ejecución automática.</li>
+            <li>Acceder a secretos del runtime o credenciales de mercado.</li>
+          </ul>
+        </article>
+      </div>
     </section>
 
     <footer class="footer">BTC Scenario Advisor PRO · información probabilística · SHADOW only · no ejecuta órdenes reales.</footer>
@@ -199,7 +299,7 @@
 </div>
 
 <nav class="mobileNav" aria-label="Navegación móvil">
-  <button class="active" data-view="overview" aria-current="page">Inicio</button><button data-view="analytics">Analytics</button><button data-view="paper">Paper</button><button data-view="trial">90D</button><button data-view="system">Sistema</button>
+  <button class="active" data-view="overview" aria-current="page">Inicio</button><button data-view="analytics">Analytics</button><button data-view="paper">Paper</button><button data-view="trial">90D</button><button data-view="system">Sistema</button><button data-view="account">Cuenta</button>
 </nav>
 </body>
 </html>
