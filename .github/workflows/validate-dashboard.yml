@@ -29,6 +29,7 @@ jobs:
           test -s package.json
           test -s playwright.config.mjs
           test -s tests/e2e/dashboard-responsive.spec.mjs
+          test -s tests/serve.mjs
           grep -q 'assets/styles.css' index.html
           grep -q 'assets/app.js' index.html
           grep -q 'assets/responsive-bootstrap.js' index.html
@@ -39,6 +40,7 @@ jobs:
           node --check assets/responsive-bootstrap.js
           node --check playwright.config.mjs
           node --check tests/e2e/dashboard-responsive.spec.mjs
+          node --check tests/serve.mjs
 
       - name: Validate DOM contract
         shell: python
@@ -89,6 +91,8 @@ jobs:
           grep -q "browserName: 'firefox'" playwright.config.mjs
           grep -q "browserName: 'webkit'" playwright.config.mjs
           grep -q 'retries: 0' playwright.config.mjs
+          grep -q 'workers: process.env.CI ? 1' playwright.config.mjs
+          grep -q "command: 'node tests/serve.mjs'" playwright.config.mjs
           grep -q 'width: 320' playwright.config.mjs
           grep -q 'width: 1920' playwright.config.mjs
           grep -q 'mobile-webkit-landscape' playwright.config.mjs
@@ -128,18 +132,18 @@ jobs:
     name: Browser QA · Chromium Firefox WebKit
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 12
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --user 1001
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
 
       - name: Install pinned QA dependency
         run: npm install --ignore-scripts --no-audit --no-fund
 
-      - name: Install browser engines
-        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Verify preinstalled browser engines
+        run: npx playwright --version
 
       - name: List QA matrix
         run: npm run qa:list
