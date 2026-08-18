@@ -126,8 +126,6 @@
       form.hidden = !active;
       form.setAttribute('aria-hidden', String(!active));
     });
-    const status = $('authFormStatus');
-    if (status && !currentUser) status.textContent = '';
   }
 
   function decoratePasswordFields() {
@@ -386,7 +384,10 @@
     initialized = true;
     decorateAuthCard();
     ensureAuthControls();
-    document.querySelectorAll('[data-auth-tab]').forEach((button) => button.addEventListener('click', () => setAuthTab(button.dataset.authTab)));
+    document.querySelectorAll('[data-auth-tab]').forEach((button) => button.addEventListener('click', () => {
+      if ($('authFormStatus')) $('authFormStatus').textContent = '';
+      setAuthTab(button.dataset.authTab);
+    }));
     authForms().forEach((form) => {
       form.addEventListener('submit', submitEmailAuth);
       form.querySelectorAll('input').forEach((input) => { input.required = true; });
