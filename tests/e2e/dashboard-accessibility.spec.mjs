@@ -94,6 +94,6 @@ test('deterministic QA blocks external network without breaking the shell', asyn
   await openDeterministicDashboard(page);
   await page.waitForTimeout(300);
   expect(external).toEqual([]);
-  await expect(page.locator('#engineState')).toContainText('SIN API');
+  await expect(page.locator('#engineState')).toContainText('ONLINE');
   await expect(page.locator('#overview')).toBeVisible();
 });
