@@ -7,30 +7,33 @@
   <meta name="description" content="BTC Scenario Advisor: dashboard probabilístico SHADOW con decisiones 5m/15m, trial auditado de 90 días y runtime read-only.">
   <title>BTC Scenario Advisor PRO · 90D Shadow Trial</title>
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/accessibility.css">
+  <script src="assets/accessibility.js" defer></script>
   <script src="assets/app.js" defer></script>
   <script src="assets/responsive-bootstrap.js" defer></script>
 </head>
 <body>
+<a class="skipLink" href="#main-content">Saltar al contenido principal</a>
 <div class="app">
-  <aside class="sidebar">
+  <aside class="sidebar" aria-label="Panel lateral">
     <div class="brand">
-      <div class="brandMark">₿</div>
+      <div class="brandMark" aria-hidden="true">₿</div>
       <div><strong>BTC Scenario</strong><small>Advisor PRO · Shadow Lab</small></div>
     </div>
     <nav class="nav" aria-label="Navegación principal">
-      <button class="active" data-view="overview">▦ Overview</button>
+      <button class="active" data-view="overview" aria-current="page">▦ Overview</button>
       <button data-view="analytics">⌁ Analytics</button>
       <button data-view="paper">◎ Paper Trading</button>
       <button data-view="trial">◷ Trial 90 días</button>
       <button data-view="system">⚙ Sistema</button>
     </nav>
     <div class="sideStatus">
-      <div><i class="dot" id="sideDot"></i><b id="sideConn">Mercado conectando</b></div>
+      <div><i class="dot" id="sideDot" aria-hidden="true"></i><b id="sideConn">Mercado conectando</b></div>
       <p class="tiny" id="sideDetail">API READ-ONLY. SHADOW y SPOT_ONLY. Sin ejecución real.</p>
     </div>
   </aside>
 
-  <main class="main">
+  <main class="main" id="main-content" tabindex="-1">
     <header class="topbar">
       <div>
         <div class="ey">Centro de observación probabilística · SHADOW</div>
@@ -38,8 +41,8 @@
         <div class="tiny">Trial auditado de 90 días · motor V5.9.0 · sin órdenes reales</div>
       </div>
       <div class="topActions">
-        <a class="btn" href="https://docs.google.com/spreadsheets/d/1mbkbLb_kAR8fyAEaE9TLljhxcTbZ9LpbEXhTxAhpsv0/edit#gid=1900100001" target="_blank" rel="noopener">Abrir BI Trading</a>
-        <button class="btn primary" id="refresh">↻ Actualizar</button>
+        <a class="btn" href="https://docs.google.com/spreadsheets/d/1mbkbLb_kAR8fyAEaE9TLljhxcTbZ9LpbEXhTxAhpsv0/edit#gid=1900100001" target="_blank" rel="noopener" aria-label="Abrir BI Trading en una pestaña nueva">Abrir BI Trading</a>
+        <button class="btn primary" id="refresh" aria-label="Actualizar datos del dashboard" aria-busy="false">↻ Actualizar</button>
       </div>
     </header>
 
@@ -47,13 +50,13 @@
       <div class="statusCell"><span>Frescura de datos</span><b class="freshness" id="dataFreshness">--</b><small class="tiny" id="freshnessDetail">esperando runtime</small></div>
       <div class="statusCell"><span>API read-only</span><b id="apiStatus">--</b><small class="tiny" id="apiGenerated">--</small></div>
       <div class="statusCell"><span>Trial evidence</span><b id="trialHealth">INITIALIZED</b><small class="tiny">fail-closed</small></div>
-      <div class="statusCell"><span>Mercado público</span><b id="marketStatus">--</b><small class="tiny">Binance Spot</small></div>
+      <div class="statusCell"><span>Mercado público</span><b id="marketStatus" aria-live="polite">--</b><small class="tiny">Binance Spot</small></div>
     </div>
 
-    <section class="view active" id="overview">
+    <section class="view active" id="overview" tabindex="-1" aria-label="Resumen" aria-hidden="false">
       <div class="metricGrid">
         <article class="panel assetCard">
-          <div class="assetInfo"><div class="coin">₿</div><div><div class="ey">Bitcoin · Binance Spot</div><b>BTC/USDT</b></div></div>
+          <div class="assetInfo"><div class="coin" aria-hidden="true">₿</div><div><div class="ey">Bitcoin · Binance Spot</div><b>BTC/USDT</b></div></div>
           <div style="text-align:right"><div class="price" id="price">Cargando…</div><small class="tiny" id="priceMeta">Mercado público</small></div>
         </article>
         <article class="panel metricCard"><span>Motor</span><strong id="engineState">--</strong><small id="engineMeta">Esperando API</small></article>
@@ -64,7 +67,7 @@
 
       <article class="panel runtimeBanner">
         <div>
-          <span class="chip warn" id="runtimeChip">● API READ-ONLY PENDIENTE</span>
+          <span class="chip warn" id="runtimeChip" aria-live="polite">● API READ-ONLY PENDIENTE</span>
           <h2>V5.9.0-SPOT-HIGH-CONVICTION</h2>
           <div class="tiny" id="runtimeText">El dashboard no inventa estado. Esperando runtime validado.</div>
         </div>
@@ -79,14 +82,15 @@
           <div class="head">
             <div><div class="ey">Mercado en vivo</div><h3>BTC/USDT · velas públicas</h3></div>
             <div class="tfButtons" aria-label="Timeframe del gráfico">
-              <button class="tfButton" data-interval="1m">1m</button>
-              <button class="tfButton active" data-interval="5m">5m</button>
-              <button class="tfButton" data-interval="15m">15m</button>
-              <button class="tfButton" data-interval="1h">1h</button>
+              <button class="tfButton" data-interval="1m" aria-pressed="false">1m</button>
+              <button class="tfButton active" data-interval="5m" aria-pressed="true">5m</button>
+              <button class="tfButton" data-interval="15m" aria-pressed="false">15m</button>
+              <button class="tfButton" data-interval="1h" aria-pressed="false">1h</button>
             </div>
           </div>
           <div class="chartWrap">
-            <canvas id="priceChart" aria-label="Gráfico de velas BTCUSDT"></canvas>
+            <canvas id="priceChart" role="img" aria-label="Gráfico de velas BTCUSDT" aria-describedby="chartA11y">Gráfico de velas BTC/USDT. Los valores numéricos se muestran debajo del gráfico.</canvas>
+            <p class="srOnly" id="chartA11y">Gráfico BTC/USDT 5m. Esperando valores de la última vela.</p>
             <div class="chartOverlay"><span class="marketBadge">TF <b id="chartTf">5m</b></span><span class="marketBadge">Fuente: Binance pública</span></div>
           </div>
           <div class="chartFooter">
@@ -134,7 +138,7 @@
       </div>
     </section>
 
-    <section class="view" id="analytics">
+    <section class="view" id="analytics" tabindex="-1" aria-label="Analytics" aria-hidden="true">
       <article class="panel content">
         <div class="ey">Calidad del modelo</div><h2>Analytics 5m / 15m</h2>
         <p class="tiny">Estas métricas vienen de la API read-only. No se recalibran ni modifican parámetros del modelo durante el trial.</p>
@@ -151,19 +155,19 @@
           <div class="analyticsCard"><span>Modelo congelado</span><strong>V5.9.0</strong></div>
         </div>
         <div class="head"><div><div class="ey">Últimas decisiones oficiales</div><h3>Historial del motor</h3></div><span class="chip">read-only</span></div>
-        <div class="tableWrap"><table><thead><tr><th>Hora</th><th>TF</th><th>Decisión</th><th>Calidad</th><th>Viabilidad</th><th>Estado modelo</th><th>Motivos</th></tr></thead><tbody id="decisionsBody"><tr><td colspan="7">Esperando API.</td></tr></tbody></table></div>
+        <div class="tableWrap" tabindex="0" role="region" aria-label="Tabla de últimas decisiones oficiales"><table><caption class="srOnly">Últimas decisiones oficiales del motor</caption><thead><tr><th>Hora</th><th>TF</th><th>Decisión</th><th>Calidad</th><th>Viabilidad</th><th>Estado modelo</th><th>Motivos</th></tr></thead><tbody id="decisionsBody"><tr><td colspan="7">Esperando API.</td></tr></tbody></table></div>
       </article>
     </section>
 
-    <section class="view" id="paper">
+    <section class="view" id="paper" tabindex="-1" aria-label="Paper Trading" aria-hidden="true">
       <article class="panel content">
         <div class="ey">Paper Trading</div><h2>Libro de operaciones simuladas verificadas</h2>
         <p class="tiny">Las abstenciones y señales bloqueadas son decisiones, no trades. Sólo aparecen operaciones cuando existe entrada, salida, costos y evidencia.</p>
-        <div class="tableWrap"><table><thead><tr><th>Fecha</th><th>TF</th><th>Entrada</th><th>Salida</th><th>Resultado</th><th>P&L neto</th><th>Evidencia</th></tr></thead><tbody id="tradesBody"><tr><td colspan="7">Sin trades simulados verificados.</td></tr></tbody></table></div>
+        <div class="tableWrap" tabindex="0" role="region" aria-label="Tabla de operaciones simuladas verificadas"><table><caption class="srOnly">Operaciones simuladas verificadas</caption><thead><tr><th>Fecha</th><th>TF</th><th>Entrada</th><th>Salida</th><th>Resultado</th><th>P&L neto</th><th>Evidencia</th></tr></thead><tbody id="tradesBody"><tr><td colspan="7">Sin trades simulados verificados.</td></tr></tbody></table></div>
       </article>
     </section>
 
-    <section class="view" id="trial">
+    <section class="view" id="trial" tabindex="-1" aria-label="Trial de 90 días" aria-hidden="true">
       <article class="panel content">
         <div class="ey">Trial 90 días</div><h2>Contrato de evidencia</h2>
         <p class="tiny">El contador formal no avanza por reloj. Debe existir continuidad verificable del ledger y evidencia del runtime. Bucket Lock mantiene retención de 180 días.</p>
@@ -171,7 +175,7 @@
       </article>
     </section>
 
-    <section class="view" id="system">
+    <section class="view" id="system" tabindex="-1" aria-label="Sistema" aria-hidden="true">
       <article class="panel content">
         <div class="ey">Arquitectura y escalado</div><h2>Sistema</h2>
         <div class="analyticsGrid">
@@ -195,7 +199,7 @@
 </div>
 
 <nav class="mobileNav" aria-label="Navegación móvil">
-  <button class="active" data-view="overview">Inicio</button><button data-view="analytics">Analytics</button><button data-view="paper">Paper</button><button data-view="trial">90D</button><button data-view="system">Sistema</button>
+  <button class="active" data-view="overview" aria-current="page">Inicio</button><button data-view="analytics">Analytics</button><button data-view="paper">Paper</button><button data-view="trial">90D</button><button data-view="system">Sistema</button>
 </nav>
 </body>
 </html>
