@@ -11,7 +11,8 @@ test('Phase 2A account shell is responsive and fail-closed', async ({ page }) =>
 
   await expect(page.locator('#authStatus')).toHaveText('PENDIENTE');
   await expect(page.locator('#authProvider')).toContainText('Firebase Authentication');
-  await expect(page.locator('[data-requires-auth]')).toBeDisabled();
+  await expect(page.locator('[data-requires-auth]').first()).toBeDisabled();
+  await expect(page.locator('[data-requires-auth]')).toHaveCount(2);
   await expect(page.locator('#authGateMessage')).toContainText('no simular cuentas');
   await expect(page.locator('#membershipState')).toHaveText('DISEÑO');
   await expect(page.locator('#deliveryState')).toHaveText('BLOQUEADO');
