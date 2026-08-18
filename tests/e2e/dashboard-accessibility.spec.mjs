@@ -41,7 +41,7 @@ test('semantic accessibility contract is present', async ({ page }) => {
   await expect(page.locator('.tfButton.active')).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('keyboard skip link and navigation preserve visible focus', async ({ page }, testInfo) => {
+test('keyboard skip link and visible navigation preserve focus and state', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes('chromium'), 'Keyboard focus gate runs once per Chromium viewport family.');
   await openDeterministicDashboard(page);
 
@@ -50,8 +50,10 @@ test('keyboard skip link and navigation preserve visible focus', async ({ page }
   await page.keyboard.press('Enter');
   await expect(page.locator('#main-content')).toBeFocused();
 
-  const analyticsButton = page.locator('.nav [data-view="analytics"]');
+  const analyticsButton = page.locator('[data-view="analytics"]:visible').first();
+  await expect(analyticsButton).toBeVisible();
   await analyticsButton.focus();
+  await expect(analyticsButton).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(analyticsButton).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('#analytics')).toHaveAttribute('aria-hidden', 'false');
