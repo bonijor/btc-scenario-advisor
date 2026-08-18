@@ -25,11 +25,17 @@ jobs:
           test -s assets/app.js
           test -s assets/styles.css
           test -s docs/optimization-log.md
+          test -s package.json
+          test -s playwright.config.mjs
+          test -s tests/e2e/dashboard-responsive.spec.mjs
           grep -q 'assets/styles.css' index.html
           grep -q 'assets/app.js' index.html
 
-      - name: Syntax-check browser JavaScript
-        run: node --check assets/app.js
+      - name: Syntax-check browser JavaScript and QA files
+        run: |
+          node --check assets/app.js
+          node --check playwright.config.mjs
+          node --check tests/e2e/dashboard-responsive.spec.mjs
 
       - name: Validate DOM contract
         shell: python
@@ -69,6 +75,20 @@ jobs:
           grep -q 'overflow-x:auto' assets/styles.css
           echo 'PASS_RESPONSIVE_CONTRACT'
 
+      - name: Validate browser QA contract
+        shell: bash
+        run: |
+          grep -q "browserName: 'chromium'" playwright.config.mjs
+          grep -q "browserName: 'firefox'" playwright.config.mjs
+          grep -q "browserName: 'webkit'" playwright.config.mjs
+          grep -q 'width: 320' playwright.config.mjs
+          grep -q 'width: 1920' playwright.config.mjs
+          grep -q 'mobile-webkit-landscape' playwright.config.mjs
+          grep -q 'expectNoViewportOverflow' tests/e2e/dashboard-responsive.spec.mjs
+          grep -q 'expectCanvasMatchesContainer' tests/e2e/dashboard-responsive.spec.mjs
+          grep -q 'page.screenshot' tests/e2e/dashboard-responsive.spec.mjs
+          echo 'PASS_BROWSER_QA_CONTRACT'
+
       - name: Safety assertions
         shell: bash
         run: |
@@ -78,7 +98,7 @@ jobs:
           grep -q 'API READ-ONLY' index.html
           grep -q 'btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app' assets/app.js
 
-          if grep -RniE -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:|BINANCE_API_SECRET|EXCHANGE_API_SECRET' . --exclude-dir=.git; then
+          if grep -RniE -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:|BINANCE_API_SECRET|EXCHANGE_API_SECRET' . --exclude-dir=.git --exclude='validate-dashboard.yml'; then
             echo 'Material sensible detectado.'
             exit 1
           fi
@@ -95,3 +115,37 @@ jobs:
           grep -q 'no SELL' index.html
           grep -q 'no shorts' index.html
           grep -q 'API pública sólo lectura' docs/optimization-log.md
+
+  browser-qa:
+    name: Browser QA · Chromium Firefox WebKit
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pinned QA dependency
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: List QA matrix
+        run: npm run qa:list
+
+      - name: Run deterministic responsive and navigation QA
+        run: npm run qa:e2e
+
+      - name: Upload QA screenshots, traces and HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-browser-qa-${{ github.run_id }}
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
