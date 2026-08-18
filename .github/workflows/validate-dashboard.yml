@@ -23,6 +23,7 @@ jobs:
         run: |
           test -s index.html
           test -s assets/app.js
+          test -s assets/responsive-bootstrap.js
           test -s assets/styles.css
           test -s docs/optimization-log.md
           test -s package.json
@@ -30,10 +31,12 @@ jobs:
           test -s tests/e2e/dashboard-responsive.spec.mjs
           grep -q 'assets/styles.css' index.html
           grep -q 'assets/app.js' index.html
+          grep -q 'assets/responsive-bootstrap.js' index.html
 
       - name: Syntax-check browser JavaScript and QA files
         run: |
           node --check assets/app.js
+          node --check assets/responsive-bootstrap.js
           node --check playwright.config.mjs
           node --check tests/e2e/dashboard-responsive.spec.mjs
 
@@ -65,6 +68,10 @@ jobs:
           grep -q 'chartViewportProfile' assets/app.js
           grep -q 'requestAnimationFrame' assets/app.js
           grep -q 'devicePixelRatio' assets/app.js
+          grep -q 'requestAnimationFrame' assets/responsive-bootstrap.js
+          grep -q "addEventListener('load'" assets/responsive-bootstrap.js
+          grep -q "addEventListener('pageshow'" assets/responsive-bootstrap.js
+          grep -q 'document.fonts' assets/responsive-bootstrap.js
           grep -q 'clamp(' assets/styles.css
           grep -q 'minmax(0,1fr)' assets/styles.css
           grep -q 'safe-area-inset-bottom' assets/styles.css
@@ -81,6 +88,7 @@ jobs:
           grep -q "browserName: 'chromium'" playwright.config.mjs
           grep -q "browserName: 'firefox'" playwright.config.mjs
           grep -q "browserName: 'webkit'" playwright.config.mjs
+          grep -q 'retries: 0' playwright.config.mjs
           grep -q 'width: 320' playwright.config.mjs
           grep -q 'width: 1920' playwright.config.mjs
           grep -q 'mobile-webkit-landscape' playwright.config.mjs
@@ -103,7 +111,7 @@ jobs:
             exit 1
           fi
 
-          if grep -niE -- "method:[[:space:]]*['\"](POST|PUT|PATCH|DELETE)['\"]|/api/v3/order" assets/app.js; then
+          if grep -niE -- "method:[[:space:]]*['\"](POST|PUT|PATCH|DELETE)['\"]|/api/v3/order" assets/app.js assets/responsive-bootstrap.js; then
             echo 'Se detectó una ruta o método de escritura prohibido en el frontend.'
             exit 1
           fi
