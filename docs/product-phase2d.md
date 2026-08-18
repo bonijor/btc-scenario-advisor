@@ -30,7 +30,10 @@ Fase 2D prepara lectura de entitlements, pero no activa pagos ni checkout. Ningu
 
 ## Guardrails inmutables
 
-SHADOW · SPOT_ONLY · sin SELL · sin shorts · sin ejecución automática · API Quant read-only · V5.9.0 congelado durante el trial. Ningún dato de usuario modifica V5.9.0 y ningún entitlement puede habilitar órdenes de mercado.
+SHADOW · SPOT_ONLY · sin SELL · sin shorts · sin ejecución automática · API Quant read-only · V5.9.0 congelado durante el trial.
+
+- ningún dato de usuario modifica V5.9.0.
+- ningún entitlement puede habilitar órdenes de mercado.
 
 ## Gate de infraestructura antes de publicar
 
