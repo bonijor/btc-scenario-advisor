@@ -129,8 +129,8 @@ async function expectNoViewportOverflow(page) {
   expect(geometry.bodyScrollWidth).toBeLessThanOrEqual(geometry.innerWidth + 1);
 }
 
-async function expectCanvasMatchesContainer(page) {
-  const metrics = await page.locator('#priceChart').evaluate((canvas) => {
+async function readCanvasMetrics(page) {
+  return page.locator('#priceChart').evaluate((canvas) => {
     const rect = canvas.getBoundingClientRect();
     const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
     return {
@@ -141,14 +141,28 @@ async function expectCanvasMatchesContainer(page) {
       expectedWidth: Math.floor(rect.width * dpr),
       expectedHeight: Math.floor(rect.height * dpr),
       viewportWidth: window.innerWidth,
+      dpr,
     };
   });
+}
+
+async function expectCanvasMatchesContainer(page) {
+  let metrics = null;
+  await expect.poll(async () => {
+    metrics = await readCanvasMetrics(page);
+    return Math.max(
+      Math.abs(metrics.backingWidth - metrics.expectedWidth),
+      Math.abs(metrics.backingHeight - metrics.expectedHeight),
+    );
+  }, {
+    timeout: 5_000,
+    intervals: [50, 100, 200, 400, 800],
+    message: 'El backing buffer del canvas debe estabilizarse con su tamaño CSS y DPR actual',
+  }).toBeLessThanOrEqual(3);
 
   expect(metrics.width).toBeGreaterThan(200);
   expect(metrics.height).toBeGreaterThan(180);
   expect(metrics.width).toBeLessThanOrEqual(metrics.viewportWidth);
-  expect(Math.abs(metrics.backingWidth - metrics.expectedWidth)).toBeLessThanOrEqual(3);
-  expect(Math.abs(metrics.backingHeight - metrics.expectedHeight)).toBeLessThanOrEqual(3);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -184,21 +198,14 @@ test('navigation, analytics and wide tables remain contained', async ({ page }) 
 test('responsive breakpoint redraws canvas after live resize', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium-1920', 'Live resize gate runs once on Chromium desktop.');
 
-  const before = await page.locator('#priceChart').evaluate((canvas) => ({
-    cssWidth: canvas.getBoundingClientRect().width,
-    backingWidth: canvas.width,
-  }));
-
+  const before = await readCanvasMetrics(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.mobileNav')).toBeVisible();
-  await expect.poll(async () => page.locator('#priceChart').evaluate((canvas) => canvas.getBoundingClientRect().width)).toBeLessThan(before.cssWidth);
+  await expect.poll(async () => page.locator('#priceChart').evaluate((canvas) => canvas.getBoundingClientRect().width)).toBeLessThan(before.width);
   await expectNoViewportOverflow(page);
   await expectCanvasMatchesContainer(page);
 
-  const after = await page.locator('#priceChart').evaluate((canvas) => ({
-    cssWidth: canvas.getBoundingClientRect().width,
-    backingWidth: canvas.width,
-  }));
+  const after = await readCanvasMetrics(page);
   expect(after.backingWidth).not.toBe(before.backingWidth);
 });
 
