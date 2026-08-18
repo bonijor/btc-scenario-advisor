@@ -17,7 +17,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
-  workers: process.env.CI ? 3 : undefined,
+  workers: process.env.CI ? 1 : undefined,
   reporter: [
     ['list'],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
@@ -54,7 +54,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'python3 -m http.server 4173 --bind 127.0.0.1',
+    command: 'node tests/serve.mjs',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 20_000,
