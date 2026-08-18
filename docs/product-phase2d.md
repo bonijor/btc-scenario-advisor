@@ -49,12 +49,22 @@ Gate 1: PASS.
 - App Engine: no configurado
 - creado: `2026-08-18T06:55:35.069045Z`
 
-La creación de la base no implica todavía que las reglas de Fase 2D estén publicadas. El frontend permanece sin merge hasta completar reglas + validación.
+Gate 2: PASS.
+
+- Firebase CLI: `15.27.0`
+- candidate commit desplegado: `3ef2614aba181e0dc7873f95ff9e8268204b5c53`
+- target: proyecto `linear-poet-426418-k0`, database `(default)`
+- alcance del deploy: `firestore:rules` solamente
+- compilación: PASS
+- publicación: `firestore.rules` liberadas correctamente a Cloud Firestore
+- Hosting, Quant runtime, trial y exchange gateway: no modificados por este deploy
+
+La base y las reglas ya están publicadas, pero el frontend de Fase 2D permanece sin merge hasta completar validación efectiva de reglas y smoke test autenticado.
 
 ## Gate de infraestructura antes de publicar
 
 1. ✅ Crear/verificar Cloud Firestore `(default)` en `linear-poet-426418-k0` y fijar ubicación `southamerica-east1`.
-2. ⏳ Desplegar `firestore.rules` de Fase 2D.
+2. ✅ Desplegar `firestore.rules` de Fase 2D.
 3. ⏳ Validar reglas: anónimo denegado, propietario permitido, UID ajeno denegado, entitlements sin escritura cliente.
 4. ⏳ Realizar smoke test autenticado de perfil/preferencias.
 5. ⏳ Mantener el PR sin merge hasta que QA e infraestructura sean PASS.
