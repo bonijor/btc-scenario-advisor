@@ -4,11 +4,51 @@
 
   if (qaMode === 'performance' || qaMode === 'a11y') {
     const nativeFetch = window.fetch.bind(window);
+    const now = Date.now();
+    const jsonResponse = (payload) => Promise.resolve(new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'content-type': 'application/json; charset=utf-8' },
+    }));
+
+    const dashboardFixture = {
+      generatedAt: new Date(now).toISOString(),
+      mode: 'SHADOW',
+      spotOnly: true,
+      runtime: {
+        ready: true,
+        shadowMode: true,
+        operationMode: 'SPOT_ONLY',
+        allowShort: false,
+        modelVersion: 'V5.9.0-SPOT-HIGH-CONVICTION',
+        revision: 'qa-deterministic',
+        lastSuccessfulCycleAt: now,
+        errorState: 'NONE',
+      },
+      trial: {
+        trialId: 'btc-shadow-90d-20260817T173948Z',
+        requiredDays: 90,
+        completedDays: 0,
+        firstCompleteDay: '2026-08-18',
+        manifestDigest: '757422dbd20fead8503f0545766f06b5df020c78eab2bf036d72c5f72ef9fd03',
+        status: 'INITIALIZED',
+      },
+      decisions: [],
+      paper: { simulatedTrades: 0, trades: [], note: 'QA determinístico. Sin operaciones inferidas.' },
+    };
+
+    const candles = Array.from({ length: 80 }, (_, index) => {
+      const base = 116000 + index * 4;
+      return [now - (80 - index) * 300000, String(base), String(base + 55), String(base - 45), String(base + 15), '10'];
+    });
+
     window.fetch = (input, init) => {
       const raw = typeof input === 'string' ? input : input?.url;
       const url = new URL(raw || '', location.href);
       if (url.origin === location.origin) return nativeFetch(input, init);
-      return Promise.reject(new DOMException('External network disabled during deterministic QA', 'AbortError'));
+      if (url.pathname.includes('/ticker/24hr')) return jsonResponse({ lastPrice: '116320', priceChangePercent: '1.25', highPrice: '117200', lowPrice: '114900', quoteVolume: '1800000000' });
+      if (url.pathname.includes('/klines')) return jsonResponse(candles);
+      if (url.pathname.includes('/api/v1/dashboard')) return jsonResponse(dashboardFixture);
+      return jsonResponse({});
     };
   }
 
