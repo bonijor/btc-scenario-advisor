@@ -25,20 +25,26 @@ jobs:
           test -s assets/app.js
           test -s assets/responsive-bootstrap.js
           test -s assets/accessibility.js
+          test -s assets/product.js
           test -s assets/styles.css
           test -s assets/accessibility.css
+          test -s assets/product.css
           test -s docs/optimization-log.md
+          test -s docs/product-phase2.md
           test -s package.json
           test -s playwright.config.mjs
           test -s tests/e2e/dashboard-responsive.spec.mjs
           test -s tests/e2e/dashboard-accessibility.spec.mjs
+          test -s tests/e2e/product-account.spec.mjs
           test -s tests/performance/static-budget.mjs
           test -s tests/performance/run-lighthouse.mjs
           test -s tests/serve.mjs
           grep -q 'assets/styles.css' index.html
           grep -q 'assets/accessibility.css' index.html
+          grep -q 'assets/product.css' index.html
           grep -q 'assets/accessibility.js' index.html
           grep -q 'assets/app.js' index.html
+          grep -q 'assets/product.js' index.html
           grep -q 'assets/responsive-bootstrap.js' index.html
 
       - name: Syntax-check browser JavaScript and QA files
@@ -46,9 +52,11 @@ jobs:
           node --check assets/app.js
           node --check assets/responsive-bootstrap.js
           node --check assets/accessibility.js
+          node --check assets/product.js
           node --check playwright.config.mjs
           node --check tests/e2e/dashboard-responsive.spec.mjs
           node --check tests/e2e/dashboard-accessibility.spec.mjs
+          node --check tests/e2e/product-account.spec.mjs
           node --check tests/performance/static-budget.mjs
           node --check tests/performance/run-lighthouse.mjs
           node --check tests/serve.mjs
@@ -59,7 +67,7 @@ jobs:
           from pathlib import Path
           import re
           html = Path('index.html').read_text(encoding='utf-8')
-          js = Path('assets/app.js').read_text(encoding='utf-8')
+          js = Path('assets/app.js').read_text(encoding='utf-8') + '\n' + Path('assets/product.js').read_text(encoding='utf-8')
           ids = re.findall(r'\bid=["\']([^"\']+)["\']', html)
           duplicates = sorted({x for x in ids if ids.count(x) > 1})
           assert not duplicates, f'IDs duplicados: {duplicates}'
@@ -93,6 +101,7 @@ jobs:
           grep -q 'orientation:landscape' assets/styles.css
           grep -q 'prefers-reduced-motion' assets/styles.css
           grep -q 'overflow-x:auto' assets/styles.css
+          grep -q 'repeat(6,minmax(0,1fr))' assets/product.css
           echo 'PASS_RESPONSIVE_CONTRACT'
 
       - name: Validate accessibility contract
@@ -115,6 +124,26 @@ jobs:
           grep -q '.srOnly' assets/accessibility.css
           grep -q 'contrastRatio' tests/e2e/dashboard-accessibility.spec.mjs
           echo 'PASS_ACCESSIBILITY_CONTRACT'
+
+      - name: Validate Phase 2A product contract
+        shell: bash
+        run: |
+          grep -q 'id="account"' index.html
+          grep -q 'data-view="account"' index.html
+          grep -q 'data-auth-form="login"' index.html
+          grep -q 'data-auth-form="register"' index.html
+          grep -q 'id="preferencesForm"' index.html
+          grep -q 'authEnabled: false' assets/product.js
+          grep -q 'serverProfileEnabled: false' assets/product.js
+          grep -q 'membershipEnabled: false' assets/product.js
+          grep -q 'alertsDeliveryEnabled: false' assets/product.js
+          grep -q 'password.value = ' assets/product.js
+          grep -q 'preferenceStorageKey' assets/product.js
+          grep -q 'No modifican el modelo Quant' assets/product.js
+          grep -q 'credential fields are never persisted' tests/e2e/product-account.spec.mjs
+          grep -q 'Firebase Authentication' docs/product-phase2.md
+          grep -q 'sin ejecución automática' docs/product-phase2.md
+          echo 'PASS_PRODUCT_PHASE2A_CONTRACT'
 
       - name: Validate browser QA contract
         shell: bash
@@ -145,13 +174,18 @@ jobs:
           grep -q 'API READ-ONLY' index.html
           grep -q 'btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app' assets/app.js
 
-          if grep -RniE -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:|BINANCE_API_SECRET|EXCHANGE_API_SECRET' . --exclude-dir=.git --exclude='validate-dashboard.yml'; then
+          if grep -RniE -- 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|"private_key"[[:space:]]*:|BINANCE_API_SECRET|EXCHANGE_API_SECRET|FIREBASE_PRIVATE_KEY|serviceAccountKey' . --exclude-dir=.git --exclude='validate-dashboard.yml'; then
             echo 'Material sensible detectado.'
             exit 1
           fi
 
-          if grep -niE -- "method:[[:space:]]*['\"](POST|PUT|PATCH|DELETE)['\"]|/api/v3/order" assets/app.js assets/accessibility.js assets/responsive-bootstrap.js; then
+          if grep -niE -- "method:[[:space:]]*['\"](POST|PUT|PATCH|DELETE)['\"]|/api/v3/order" assets/app.js assets/accessibility.js assets/responsive-bootstrap.js assets/product.js; then
             echo 'Se detectó una ruta o método de escritura prohibido en el frontend.'
+            exit 1
+          fi
+
+          if grep -niE -- 'localStorage\.(setItem|getItem).*password|localStorage\.(setItem|getItem).*token|sessionStorage\.(setItem|getItem).*password|sessionStorage\.(setItem|getItem).*token' assets/product.js; then
+            echo 'Persistencia local prohibida de password/token detectada.'
             exit 1
           fi
 
@@ -162,6 +196,7 @@ jobs:
           grep -q 'no SELL' index.html
           grep -q 'no shorts' index.html
           grep -q 'API pública sólo lectura' docs/optimization-log.md
+          grep -q 'ningún dato de usuario modifica V5.9.0' docs/product-phase2.md
 
   browser-qa:
     name: Browser QA · Responsive + Accessibility
@@ -183,7 +218,7 @@ jobs:
       - name: List QA matrix
         run: npm run qa:list
 
-      - name: Run deterministic responsive accessibility and navigation QA
+      - name: Run deterministic responsive accessibility navigation and product QA
         run: npm run qa:e2e
 
       - name: Upload QA screenshots traces and HTML report
