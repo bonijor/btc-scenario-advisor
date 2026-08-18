@@ -13,6 +13,7 @@
 
   const $ = (id) => document.getElementById(id);
   const authForms = () => [...document.querySelectorAll('[data-auth-form]')];
+  let initialized = false;
 
   function safeLoadPreferences() {
     try {
@@ -51,8 +52,7 @@
       control.setAttribute('aria-disabled', String(!PRODUCT.authEnabled));
     });
 
-    const gate = $('authGateMessage');
-    gate.textContent = PRODUCT.authEnabled
+    $('authGateMessage').textContent = PRODUCT.authEnabled
       ? 'Proveedor de identidad configurado. La sesión se resolverá mediante el adaptador seguro.'
       : 'Identidad todavía no conectada. Registro e ingreso permanecen bloqueados para no simular cuentas ni almacenar credenciales localmente.';
   }
@@ -95,15 +95,16 @@
 
   function blockCredentialSubmission(event) {
     event.preventDefault();
-    const form = event.currentTarget;
-    const password = form.querySelector('input[type="password"]');
+    const password = event.currentTarget.querySelector('input[type="password"]');
     if (password) password.value = '';
     $('authFormStatus').textContent = PRODUCT.authEnabled
       ? 'El adaptador de autenticación aún no está conectado en Fase 2A.'
       : 'Acceso bloqueado hasta configurar el proveedor de identidad gestionado. No se guardó ninguna contraseña.';
   }
 
-  function init() {
+  function initAccount() {
+    if (initialized) return;
+    initialized = true;
     document.querySelectorAll('[data-auth-tab]').forEach((button) => {
       button.addEventListener('click', () => setAuthTab(button.dataset.authTab));
     });
@@ -115,8 +116,16 @@
     setAuthTab('login');
     renderProductState();
     loadPreferencesIntoForm();
-    window.BTC_PRODUCT = PRODUCT;
   }
 
-  window.addEventListener('DOMContentLoaded', init);
+  function boot() {
+    document.querySelectorAll('[data-view="account"]').forEach((button) => {
+      button.addEventListener('click', initAccount, { once: true });
+    });
+    if ($('account')?.classList.contains('active')) initAccount();
+  }
+
+  window.BTC_PRODUCT = PRODUCT;
+  if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', boot, { once: true });
+  else boot();
 })();
