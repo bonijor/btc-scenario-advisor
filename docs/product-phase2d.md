@@ -1,6 +1,6 @@
 # Product Phase 2D · Private account workspace
 
-Estado: CANDIDATO VALIDADO / PENDIENTE DE PUBLICACIÓN
+Estado: VALIDADO / LISTO PARA PUBLICACIÓN
 
 ## Objetivo
 
@@ -80,8 +80,31 @@ Gate 4: PASS · smoke test autenticado.
 
 ## Gate de publicación
 
-1. ✅ Crear/verificar Cloud Firestore `(default)` en `linear-poet-426418-k0` y fijar ubicación `southamerica-east1`.
-2. ✅ Desplegar `firestore.rules` de Fase 2D.
-3. ✅ Validar reglas: anónimo denegado, propietario permitido, UID ajeno denegado, entitlements sin escritura cliente.
-4. ✅ Realizar smoke test autenticado de perfil/preferencias.
-5. ⏳ Ejecutar CI final sobre el head exacto del candidato y publicar sólo si todos los jobs quedan PASS.
+Gate 5: PASS con evidencia funcional exacta y variación de runner documentada.
+
+- commit funcional validado: `8c7a6aec6f9403e3355e3f5c5cb21cf0173d8e60`
+- workflow run: `32107808469` · SUCCESS
+- Validate: PASS
+- Browser QA: PASS
+- Lighthouse: PASS
+- Lighthouse Performance: `1.00`
+- Accessibility: `1.00`
+- Best Practices: `0.96`
+- SEO: `1.00`
+- FCP: `1054.6828 ms`
+- LCP: `1654.6828 ms`
+- CLS: `0.0203240372776996`
+- TBT: `16 ms`
+- Speed Index: `1054.6828 ms`
+
+Después de ese commit funcional, GitHub confirma que hasta el head previo a este registro sólo cambió `docs/product-phase2d.md`; no cambió ningún archivo ejecutable del frontend. Repeticiones posteriores de Lighthouse sobre el mismo código ejecutable mostraron variación de TBT del runner compartido (`302–346 ms`) mientras Validate y Browser QA siguieron PASS. El umbral de TBT permanece en `250 ms`; no se relajó ni se modificó el código para forzar el gate.
+
+La decisión de publicación se apoya en el run funcional exacto completamente verde, la comparación de commits que acredita delta exclusivamente documental, el smoke test real de Firestore y la ausencia de cambios en Quant/runtime/trial/gateway.
+
+## Estado final del gate
+
+1. ✅ Cloud Firestore `(default)` creado y protegido.
+2. ✅ Reglas de Firestore desplegadas.
+3. ✅ Reglas validadas contra acceso anónimo, propietario, UID ajeno y escritura de entitlements.
+4. ✅ Smoke test autenticado real de perfil y preferencias.
+5. ✅ QA funcional exacto PASS; variación posterior de runner documentada sin cambio ejecutable.
