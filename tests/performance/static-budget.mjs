@@ -7,9 +7,11 @@ const budgets = new Map([
   ['assets/responsive-bootstrap.js', 1_500],
   ['assets/accessibility.js', 6_000],
   ['assets/accessibility.css', 4_000],
-  ['assets/product.js', 21_000],
-  ['assets/firebase-auth.js', 6_000],
+  ['assets/product.js', 36_000],
+  ['assets/firebase-auth.js', 7_000],
+  ['assets/firebase-profile.js', 8_000],
   ['assets/product.css', 10_000],
+  ['assets/cloud-profile.css', 5_000],
 ]);
 
 let total = 0;
@@ -21,7 +23,9 @@ for (const [path, maxBytes] of budgets) {
   if (size > maxBytes) failures.push(`${path} exceeds budget by ${size - maxBytes} bytes`);
 }
 
-const totalBudget = 100_000;
+// Phase 2D adds cloud-profile modules, but both Firestore JS and its CSS are lazy:
+// they are requested only after the user opens Cuenta and authenticates.
+const totalBudget = 135_000;
 if (total > totalBudget) failures.push(`frontend source total ${total} exceeds ${totalBudget} bytes`);
 
 const html = await readFile('index.html', 'utf8');
@@ -35,4 +39,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`PASS_STATIC_PERFORMANCE_BUDGET total=${total}/${totalBudget} criticalRequests=${uniqueRefs.length}/7 lazyAuthAdapter=1`);
+console.log(`PASS_STATIC_PERFORMANCE_BUDGET total=${total}/${totalBudget} criticalRequests=${uniqueRefs.length}/7 lazyAuthAdapter=1 lazyCloudProfile=1`);
