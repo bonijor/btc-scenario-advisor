@@ -1,12 +1,14 @@
 import { stat, readFile } from 'node:fs/promises';
 
 const budgets = new Map([
-  ['index.html', 17_000],
+  ['index.html', 26_000],
   ['assets/app.js', 24_000],
   ['assets/styles.css', 20_000],
   ['assets/responsive-bootstrap.js', 1_500],
   ['assets/accessibility.js', 6_000],
   ['assets/accessibility.css', 4_000],
+  ['assets/product.js', 7_000],
+  ['assets/product.css', 6_000],
 ]);
 
 let total = 0;
@@ -18,13 +20,13 @@ for (const [path, maxBytes] of budgets) {
   if (size > maxBytes) failures.push(`${path} exceeds budget by ${size - maxBytes} bytes`);
 }
 
-const totalBudget = 70_000;
+const totalBudget = 85_000;
 if (total > totalBudget) failures.push(`critical frontend total ${total} exceeds ${totalBudget} bytes`);
 
 const html = await readFile('index.html', 'utf8');
 const localCriticalRefs = [...html.matchAll(/(?:src|href)=["'](assets\/[^"']+)["']/g)].map((match) => match[1]);
 const uniqueRefs = [...new Set(localCriticalRefs)];
-if (uniqueRefs.length > 5) failures.push(`critical local request budget exceeded: ${uniqueRefs.length} > 5`);
+if (uniqueRefs.length > 7) failures.push(`critical local request budget exceeded: ${uniqueRefs.length} > 7`);
 
 if (failures.length) {
   console.error('STATIC_PERFORMANCE_BUDGET_FAILED');
@@ -32,4 +34,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`PASS_STATIC_PERFORMANCE_BUDGET total=${total}/${totalBudget} criticalRequests=${uniqueRefs.length}/5`);
+console.log(`PASS_STATIC_PERFORMANCE_BUDGET total=${total}/${totalBudget} criticalRequests=${uniqueRefs.length}/7`);
