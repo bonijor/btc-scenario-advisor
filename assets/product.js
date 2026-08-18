@@ -2,12 +2,14 @@
   'use strict';
 
   const PRODUCT = Object.freeze({
-    phase: '2B',
+    phase: '2D',
     uxRevision: '2C',
     authProvider: 'Firebase Authentication',
+    profileProvider: 'Cloud Firestore',
     authEnabled: true,
+    serverProfileEnabled: true,
+    entitlementReadOnly: true,
     membershipEnabled: false,
-    serverProfileEnabled: false,
     alertsDeliveryEnabled: false,
     preferenceStorageKey: 'btcScenarioPreferencesPreviewV1',
   });
@@ -16,15 +18,30 @@
   const authForms = () => [...document.querySelectorAll('[data-auth-form]')];
   let initialized = false;
   let authAdapter = null;
+  let profileAdapter = null;
   let authState = 'idle';
   let authError = null;
+  let cloudState = 'idle';
+  let cloudError = null;
+  let cloudWorkspace = null;
   let currentUser = null;
+  let loadedUid = null;
   let activeAuthTab = 'login';
   let paperObserver = null;
 
   function setText(selector, text) {
     const el = document.querySelector(selector);
     if (el) el.textContent = text;
+  }
+
+  function ensureStylesheet(href) {
+    if ([...document.styleSheets].some((sheet) => String(sheet.href || '').endsWith(href))) return;
+    if (document.querySelector(`link[data-product-style="${href}"]`)) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    link.dataset.productStyle = href;
+    document.head.appendChild(link);
   }
 
   function syncNavigationCopy() {
@@ -65,18 +82,22 @@
   }
 
   function syncPhaseCopy() {
-    if ($('productPhase')) $('productPhase').textContent = 'FASE 2B';
+    if ($('productPhase')) $('productPhase').textContent = `FASE ${PRODUCT.phase}`;
     const systemIdentity = document.querySelector('#system .lockedFeature');
     if (systemIdentity) {
       const title = systemIdentity.querySelector('b');
       const note = systemIdentity.querySelector('small');
-      if (title) title.textContent = '🔐 Cuenta de usuario · activa';
-      if (note) note.textContent = 'Firebase Authentication conectado. Perfil persistente y autorización por membresía permanecen reservados para fases posteriores.';
+      if (title) title.textContent = '🔐 Cuenta privada · perfil en nube';
+      if (note) note.textContent = 'Firebase Authentication identifica al usuario y Cloud Firestore guarda sólo perfil y preferencias. El motor Quant permanece aislado.';
     }
+    const heroEy = document.querySelector('#account .productHero .ey');
+    if (heroEy) heroEy.textContent = 'Espacio privado de usuario';
+    const heroTitle = document.querySelector('#account .productHero h2');
+    if (heroTitle) heroTitle.textContent = 'Cuenta, perfil y preferencias en nube';
     const heroNote = document.querySelector('#account .productHero .productNote');
-    if (heroNote) heroNote.textContent = 'Tu identidad se gestiona de forma separada del motor Quant. Una cuenta nunca obtiene permisos para modificar el modelo ni ejecutar operaciones.';
+    if (heroNote) heroNote.textContent = 'Tu identidad y preferencias viven en una capa de producto separada. Ningún dato de cuenta puede modificar V5.9.0 ni habilitar ejecución de mercado.';
     const planNote = document.querySelector('#account .membershipCard > p.tiny');
-    if (planNote) planNote.textContent = 'Planes en diseño. No existen cobros ni checkout en esta fase.';
+    if (planNote) planNote.textContent = 'La lectura de plan está preparada como autoridad de servidor. El navegador no puede crear ni modificar membresías y todavía no existen cobros.';
     syncNavigationCopy();
     syncInformationCopy();
   }
@@ -111,6 +132,46 @@
     } catch {
       return {};
     }
+  }
+
+  function cachePreferences(preferences) {
+    try { localStorage.setItem(PRODUCT.preferenceStorageKey, JSON.stringify(preferences)); } catch { /* cache best effort */ }
+  }
+
+  function defaultPreferences() {
+    return {
+      horizon5m: true,
+      horizon15m: true,
+      web: true,
+      email: false,
+      whatsapp: false,
+      minProbability: 72,
+      quietHours: false,
+    };
+  }
+
+  function preferencesFromForm() {
+    return {
+      horizon5m: $('pref5m').checked,
+      horizon15m: $('pref15m').checked,
+      web: $('prefWeb').checked,
+      email: $('prefEmail').checked,
+      whatsapp: $('prefWhatsapp').checked,
+      minProbability: Number($('prefProbability').value),
+      quietHours: $('prefQuiet').checked,
+    };
+  }
+
+  function applyPreferences(preferences = {}) {
+    const prefs = { ...defaultPreferences(), ...preferences };
+    $('pref5m').checked = prefs.horizon5m === true;
+    $('pref15m').checked = prefs.horizon15m === true;
+    $('prefWeb').checked = prefs.web === true;
+    $('prefEmail').checked = prefs.email === true;
+    $('prefWhatsapp').checked = prefs.whatsapp === true;
+    $('prefProbability').value = String(Math.max(50, Math.min(99, Number(prefs.minProbability) || 72)));
+    $('prefProbabilityValue').textContent = `${$('prefProbability').value}%`;
+    $('prefQuiet').checked = prefs.quietHours === true;
   }
 
   function setAuthTab(name) {
@@ -154,7 +215,7 @@
     const heading = card.querySelector('h3');
     if (heading) heading.textContent = 'Accedé a tu cuenta';
     if (!card.querySelector('.authIntro') && heading) {
-      heading.insertAdjacentHTML('afterend', '<p class="authIntro">Ingresá para acceder a tu perfil y preferencias. Podés usar Google o tu email.</p>');
+      heading.insertAdjacentHTML('afterend', '<p class="authIntro">Ingresá para abrir tu espacio privado. Podés usar Google o tu email.</p>');
     }
     decoratePasswordFields();
   }
@@ -172,6 +233,37 @@
     `);
   }
 
+  function ensureCloudWorkspaceUi() {
+    ensureStylesheet('assets/cloud-profile.css');
+    const card = document.querySelector('#account .preferencesCard');
+    const preview = card?.querySelector('.profilePreview');
+    if (!card || !preview || document.getElementById('cloudProfilePanel')) return;
+
+    preview.insertAdjacentHTML('beforebegin', `
+      <div class="privateWorkspaceBanner" id="privateWorkspaceBanner">
+        <div><b>🔐 Espacio privado</b><small>Perfil y preferencias sincronizados por usuario. Esta capa no tiene permisos sobre el motor Quant.</small></div>
+        <span class="cloudSyncBadge warn" id="cloudSyncBadge">NUBE PENDIENTE</span>
+      </div>
+      <div class="cloudProfilePanel" id="cloudProfilePanel">
+        <div class="cloudProfileHead"><strong>Perfil de usuario</strong><span class="tiny" id="cloudProfileStatus" aria-live="polite">Preparando sincronización…</span></div>
+        <form class="cloudProfileForm" id="cloudProfileForm">
+          <div class="field"><label for="profileDisplayName">Nombre visible</label><input id="profileDisplayName" type="text" maxlength="80" autocomplete="name" placeholder="Tu nombre"></div>
+          <button class="btn" type="submit">Guardar perfil</button>
+        </form>
+        <div class="cloudMeta">
+          <div><span>Persistencia</span><strong id="profileStorageState">PENDIENTE</strong><small>Cloud Firestore</small></div>
+          <div><span>Plan visible</span><strong id="profilePlanState">FREE</strong><small id="profilePlanSource">sin entitlement pago</small></div>
+        </div>
+        <div class="cloudStateNote" id="cloudStateNote">Tus preferencias mantienen una caché local para resiliencia, pero la fuente persistente será la nube.</div>
+      </div>
+    `);
+
+    const membershipCard = document.querySelector('#account .membershipCard');
+    if (membershipCard && !membershipCard.querySelector('.planAuthorityNote')) {
+      membershipCard.insertAdjacentHTML('beforeend', '<div class="planAuthorityNote"><b>Autoridad de membresía:</b> cualquier entitlement futuro será sólo lectura en el navegador y deberá ser emitido por backend. Nunca habilitará órdenes de mercado.</div>');
+    }
+  }
+
   function setAuthControlsReady(ready) {
     document.querySelectorAll('[data-requires-auth]').forEach((control) => {
       control.disabled = !ready || Boolean(currentUser);
@@ -184,13 +276,69 @@
     }
   }
 
+  function cloudPlan() {
+    const plan = String(cloudWorkspace?.entitlement?.plan || 'free').toLowerCase();
+    return ['free', 'pro', 'premium'].includes(plan) ? plan : 'free';
+  }
+
+  function renderCloudState() {
+    const badge = $('cloudSyncBadge');
+    const status = $('cloudProfileStatus');
+    const storage = $('profileStorageState');
+    const planState = $('profilePlanState');
+    const planSource = $('profilePlanSource');
+    const note = $('cloudStateNote');
+    const profileInput = $('profileDisplayName');
+
+    if (planState) planState.textContent = cloudPlan().toUpperCase();
+    if (planSource) planSource.textContent = cloudWorkspace?.entitlement ? 'entitlement de servidor · sólo lectura' : 'sin entitlement pago';
+
+    const stateMap = {
+      idle: ['NUBE PENDIENTE', 'warn', 'PENDIENTE'],
+      loading: ['SINCRONIZANDO', 'warn', 'SINCRONIZANDO'],
+      ready: ['EN NUBE', 'good', 'CLOUD FIRESTORE'],
+      degraded: ['MODO LOCAL', 'warn', 'CACHÉ LOCAL'],
+      error: ['ERROR NUBE', 'bad', 'NO DISPONIBLE'],
+    };
+    const [label, className, storageLabel] = stateMap[cloudState] || stateMap.error;
+    if (badge) {
+      badge.textContent = label;
+      badge.className = `cloudSyncBadge ${className}`;
+    }
+    if (storage) storage.textContent = storageLabel;
+
+    if (status) {
+      if (cloudState === 'ready') status.textContent = 'Sincronizado';
+      else if (cloudState === 'loading') status.textContent = 'Sincronizando…';
+      else if (cloudState === 'degraded') status.textContent = 'Nube pendiente · usando caché local';
+      else if (cloudState === 'error') status.textContent = 'No pudimos abrir la nube';
+      else status.textContent = 'Preparando sincronización…';
+    }
+    if (note) {
+      note.textContent = cloudState === 'ready'
+        ? 'Perfil y preferencias se guardan por UID. La caché local sólo acelera recuperación y nunca contiene contraseñas ni tokens.'
+        : 'Tus cambios pueden mantenerse localmente mientras la persistencia en nube no esté disponible.';
+    }
+
+    if (profileInput && currentUser && document.activeElement !== profileInput) {
+      profileInput.value = cloudWorkspace?.profile?.displayName || currentUser.displayName || '';
+    }
+
+    if ($('profileState')) {
+      $('profileState').textContent = currentUser
+        ? (cloudState === 'ready' ? 'EN NUBE' : cloudState === 'loading' ? 'SINCRONIZANDO' : 'AUTENTICADO')
+        : 'SIN SESIÓN';
+    }
+    if ($('membershipState')) $('membershipState').textContent = currentUser ? cloudPlan().toUpperCase() : 'DISEÑO';
+  }
+
   function renderAuthSession() {
     const account = $('account');
     const tabs = document.querySelector('.authTabs');
-    const googleButton = document.getElementById('authGoogleButton');
-    const logoutButton = document.getElementById('authLogoutButton');
-    const divider = document.getElementById('authDivider');
-    const session = document.getElementById('authSession');
+    const googleButton = $('authGoogleButton');
+    const logoutButton = $('authLogoutButton');
+    const divider = $('authDivider');
+    const session = $('authSession');
     const profileTitle = document.querySelector('.profilePreview b');
     const profileNote = document.querySelector('.profilePreview .productNote');
     const avatar = document.querySelector('.profileAvatar');
@@ -201,23 +349,26 @@
     account?.classList.toggle('is-anonymous', !currentUser);
 
     if (currentUser) {
+      const displayName = cloudWorkspace?.profile?.displayName || currentUser.displayName || '';
       if (tabs) tabs.hidden = true;
       authForms().forEach((form) => { form.hidden = true; form.setAttribute('aria-hidden', 'true'); });
       if (googleButton) googleButton.hidden = true;
       if (divider) divider.hidden = true;
       if (logoutButton) logoutButton.hidden = false;
       if (authHeading) authHeading.textContent = 'Tu cuenta';
-      if (authIntro) authIntro.textContent = 'Sesión iniciada. Tu identidad permanece separada del motor Quant y de cualquier ejecución de mercado.';
+      if (authIntro) authIntro.textContent = 'Sesión iniciada. Tu espacio privado está separado del motor Quant y de cualquier ejecución de mercado.';
       if (session) {
         session.hidden = false;
-        const identity = currentUser.displayName || currentUser.email || 'Usuario autenticado';
+        const identity = displayName || currentUser.email || 'Usuario autenticado';
         const verification = currentUser.email ? (currentUser.emailVerified ? 'Email verificado' : 'Email pendiente de verificación') : 'Cuenta federada';
         session.textContent = `${identity} · ${verification}`;
       }
-      if (profileTitle) profileTitle.textContent = currentUser.displayName || 'Perfil autenticado';
-      if (profileNote) profileNote.textContent = `${currentUser.email || 'Cuenta Google'} · identidad gestionada de forma segura. Las preferencias continúan locales hasta una fase posterior.`;
-      if (avatar) avatar.textContent = String(currentUser.displayName || currentUser.email || 'U').trim().slice(0, 1).toUpperCase();
-      $('profileState').textContent = 'AUTENTICADO';
+      if (profileTitle) profileTitle.textContent = displayName || 'Perfil autenticado';
+      if (profileNote) {
+        const storageText = cloudState === 'ready' ? 'perfil y preferencias sincronizados en nube' : 'persistencia en nube pendiente';
+        profileNote.textContent = `${currentUser.email || 'Cuenta Google'} · ${storageText}.`;
+      }
+      if (avatar) avatar.textContent = String(displayName || currentUser.email || 'U').trim().slice(0, 1).toUpperCase();
     } else {
       if (tabs) tabs.hidden = false;
       if (googleButton) googleButton.hidden = false;
@@ -225,60 +376,49 @@
       if (logoutButton) logoutButton.hidden = true;
       if (session) session.hidden = true;
       if (authHeading) authHeading.textContent = 'Accedé a tu cuenta';
-      if (authIntro) authIntro.textContent = 'Ingresá para acceder a tu perfil y preferencias. Podés usar Google o tu email.';
+      if (authIntro) authIntro.textContent = 'Ingresá para abrir tu espacio privado. Podés usar Google o tu email.';
       if (profileTitle) profileTitle.textContent = 'Sin sesión';
       if (profileNote) profileNote.textContent = 'Ingresá para asociar una identidad.';
       if (avatar) avatar.textContent = 'U';
-      $('profileState').textContent = 'SIN SESIÓN';
       setAuthTab(activeAuthTab);
     }
   }
 
   function renderProductState() {
-    $('productPhase').textContent = `FASE ${PRODUCT.phase}`;
-    $('authProvider').textContent = PRODUCT.authProvider;
+    if ($('productPhase')) $('productPhase').textContent = `FASE ${PRODUCT.phase}`;
+    if ($('authProvider')) $('authProvider').textContent = PRODUCT.authProvider;
     const statusMap = {
       idle: ['CONFIGURADO', 'goodText'], loading: ['CONECTANDO', 'warnText'],
       ready: ['ACTIVO', 'goodText'], error: ['ERROR', 'badText'],
     };
     const [label, className] = statusMap[authState] || statusMap.error;
-    $('authStatus').textContent = label;
-    $('authStatus').className = className;
-    $('membershipState').textContent = PRODUCT.membershipEnabled ? 'ACTIVO' : 'DISEÑO';
-    $('deliveryState').textContent = PRODUCT.alertsDeliveryEnabled ? 'ACTIVO' : 'BLOQUEADO';
+    if ($('authStatus')) {
+      $('authStatus').textContent = label;
+      $('authStatus').className = className;
+    }
+    if ($('deliveryState')) $('deliveryState').textContent = PRODUCT.alertsDeliveryEnabled ? 'ACTIVO' : 'BLOQUEADO';
     setAuthControlsReady(authState === 'ready');
 
-    if (currentUser) $('authGateMessage').textContent = 'Sesión protegida. Tus credenciales de acceso no se guardan manualmente en este sitio.';
-    else if (authState === 'ready') $('authGateMessage').textContent = 'Acceso seguro disponible. Nunca te pediremos claves de exchange ni credenciales de trading.';
-    else if (authState === 'error') $('authGateMessage').textContent = 'No pudimos conectar con el servicio de acceso. Intentá nuevamente en unos minutos.';
-    else $('authGateMessage').textContent = 'Preparando acceso seguro…';
+    if ($('authGateMessage')) {
+      if (currentUser) $('authGateMessage').textContent = 'Sesión protegida. Contraseñas y tokens no se guardan manualmente en este sitio.';
+      else if (authState === 'ready') $('authGateMessage').textContent = 'Acceso seguro disponible. Nunca te pediremos claves de exchange ni credenciales de trading.';
+      else if (authState === 'error') $('authGateMessage').textContent = 'No pudimos conectar con el servicio de acceso. Intentá nuevamente en unos minutos.';
+      else $('authGateMessage').textContent = 'Preparando acceso seguro…';
+    }
     renderAuthSession();
+    renderCloudState();
   }
 
   function loadPreferencesIntoForm() {
-    const prefs = {
-      horizon5m: true, horizon15m: true, web: true, email: false, whatsapp: false,
-      minProbability: 72, quietHours: false, ...safeLoadPreferences(),
-    };
-    $('pref5m').checked = prefs.horizon5m === true;
-    $('pref15m').checked = prefs.horizon15m === true;
-    $('prefWeb').checked = prefs.web === true;
-    $('prefEmail').checked = prefs.email === true;
-    $('prefWhatsapp').checked = prefs.whatsapp === true;
-    $('prefProbability').value = String(Math.max(50, Math.min(99, Number(prefs.minProbability) || 72)));
-    $('prefProbabilityValue').textContent = `${$('prefProbability').value}%`;
-    $('prefQuiet').checked = prefs.quietHours === true;
+    applyPreferences({ ...defaultPreferences(), ...safeLoadPreferences() });
   }
 
-  function savePreferences(event) {
-    event.preventDefault();
-    const prefs = {
-      horizon5m: $('pref5m').checked, horizon15m: $('pref15m').checked, web: $('prefWeb').checked,
-      email: $('prefEmail').checked, whatsapp: $('prefWhatsapp').checked,
-      minProbability: Number($('prefProbability').value), quietHours: $('prefQuiet').checked,
-    };
-    localStorage.setItem(PRODUCT.preferenceStorageKey, JSON.stringify(prefs));
-    $('preferencesStatus').textContent = 'Preferencias guardadas sólo en este navegador. No modifican el modelo Quant.';
+  function cloudMessage(error) {
+    const code = String(error?.code || '');
+    if (code.includes('permission-denied')) return 'La nube rechazó el acceso. La cuenta sigue abierta, pero la sincronización está bloqueada.';
+    if (code.includes('not-found')) return 'Cloud Firestore todavía no está disponible para este proyecto.';
+    if (code.includes('unavailable')) return 'Cloud Firestore está temporalmente no disponible.';
+    return 'No pudimos sincronizar con la nube. Se mantiene una caché local no sensible.';
   }
 
   function authMessage(error) {
@@ -298,16 +438,79 @@
     return messages[code] || 'No pudimos completar el acceso. Intentá nuevamente.';
   }
 
+  async function loadProfileAdapter() {
+    if (profileAdapter) return profileAdapter;
+    const testFactory = window.__BTC_PROFILE_TEST_ADAPTER_FACTORY__;
+    if (typeof testFactory === 'function') profileAdapter = await testFactory();
+    else {
+      const module = await import('./firebase-profile.js');
+      profileAdapter = await module.createFirebaseProfileAdapter();
+    }
+    return profileAdapter;
+  }
+
+  async function loadCloudWorkspace(user) {
+    if (!user?.uid || loadedUid === user.uid && cloudState === 'ready') return;
+    const targetUid = user.uid;
+    cloudState = 'loading';
+    cloudError = null;
+    renderProductState();
+    try {
+      const adapter = await loadProfileAdapter();
+      const ensured = await adapter.ensureProfile({ uid: targetUid, displayName: user.displayName || '' });
+      const workspace = await adapter.loadWorkspace(targetUid);
+      if (!currentUser || currentUser.uid !== targetUid) return;
+      cloudWorkspace = Object.freeze({
+        profile: workspace.profile || ensured,
+        preferences: workspace.preferences || null,
+        entitlement: workspace.entitlement || null,
+      });
+      loadedUid = targetUid;
+      if (cloudWorkspace.preferences) {
+        applyPreferences(cloudWorkspace.preferences);
+        cachePreferences(cloudWorkspace.preferences);
+        if ($('preferencesStatus')) $('preferencesStatus').textContent = 'Preferencias cargadas desde la nube.';
+      } else {
+        loadPreferencesIntoForm();
+        if ($('preferencesStatus')) $('preferencesStatus').textContent = 'Todavía no hay preferencias en nube. Guardá una vez para sincronizarlas.';
+      }
+      cloudState = 'ready';
+      renderProductState();
+    } catch (error) {
+      if (!currentUser || currentUser.uid !== targetUid) return;
+      cloudError = error;
+      cloudState = 'degraded';
+      cloudWorkspace = null;
+      loadPreferencesIntoForm();
+      if ($('preferencesStatus')) $('preferencesStatus').textContent = cloudMessage(error);
+      renderProductState();
+    }
+  }
+
+  function resetCloudWorkspace() {
+    cloudWorkspace = null;
+    cloudError = null;
+    cloudState = 'idle';
+    loadedUid = null;
+    loadPreferencesIntoForm();
+    renderCloudState();
+  }
+
   function handleAuthState(user, error) {
+    const previousUid = currentUser?.uid || null;
     currentUser = user || null;
     authError = error || null;
     if (error) authState = 'error';
+    if (!currentUser) resetCloudWorkspace();
     renderProductState();
+    if (currentUser && (previousUid !== currentUser.uid || cloudState !== 'ready')) void loadCloudWorkspace(currentUser);
   }
 
   async function loadAuthAdapter() {
     if (authAdapter || authState === 'loading') return authAdapter;
-    authState = 'loading'; authError = null; renderProductState();
+    authState = 'loading';
+    authError = null;
+    renderProductState();
     try {
       const testFactory = window.__BTC_AUTH_TEST_ADAPTER_FACTORY__;
       if (typeof testFactory === 'function') authAdapter = await testFactory({ onState: handleAuthState });
@@ -318,17 +521,21 @@
       authState = 'ready';
       currentUser = authAdapter.getCurrentUser?.() || currentUser;
       renderProductState();
+      if (currentUser) void loadCloudWorkspace(currentUser);
       return authAdapter;
     } catch (error) {
-      authState = 'error'; authError = error;
-      $('authFormStatus').textContent = authMessage(error);
+      authState = 'error';
+      authError = error;
+      if ($('authFormStatus')) $('authFormStatus').textContent = authMessage(error);
       renderProductState();
       return null;
     }
   }
 
   function setBusy(form, busy) {
-    form?.querySelectorAll('button, input').forEach((control) => { if (control.type === 'submit') control.disabled = busy; });
+    form?.querySelectorAll('button, input').forEach((control) => {
+      if (control.type === 'submit') control.disabled = busy;
+    });
     form?.setAttribute('aria-busy', String(busy));
   }
 
@@ -344,39 +551,115 @@
     const password = String(passwordInput?.value || '');
     const name = String(nameInput?.value || '').trim();
     if (passwordInput) passwordInput.value = '';
-    if (!email || !password) { $('authFormStatus').textContent = 'Completá email y contraseña.'; return; }
+    if (!email || !password) {
+      if ($('authFormStatus')) $('authFormStatus').textContent = 'Completá email y contraseña.';
+      return;
+    }
 
     setBusy(form, true);
-    $('authFormStatus').textContent = mode === 'register' ? 'Creando cuenta…' : 'Ingresando…';
+    if ($('authFormStatus')) $('authFormStatus').textContent = mode === 'register' ? 'Creando cuenta…' : 'Ingresando…';
     try {
       if (mode === 'register') {
         await authAdapter.registerEmail({ name, email, password });
-        $('authFormStatus').textContent = 'Cuenta creada. Enviamos un email de verificación.';
+        if ($('authFormStatus')) $('authFormStatus').textContent = 'Cuenta creada. Enviamos un email de verificación.';
       } else {
         await authAdapter.signInEmail({ email, password });
-        $('authFormStatus').textContent = 'Sesión iniciada correctamente.';
+        if ($('authFormStatus')) $('authFormStatus').textContent = 'Sesión iniciada correctamente.';
       }
-    } catch (error) { $('authFormStatus').textContent = authMessage(error); }
-    finally { setBusy(form, false); renderProductState(); }
+    } catch (error) {
+      if ($('authFormStatus')) $('authFormStatus').textContent = authMessage(error);
+    } finally {
+      setBusy(form, false);
+      renderProductState();
+    }
   }
 
   async function signInGoogle() {
     if (!authAdapter || authState !== 'ready') return;
-    const button = document.getElementById('authGoogleButton');
+    const button = $('authGoogleButton');
     if (button) button.disabled = true;
-    $('authFormStatus').textContent = 'Abriendo Google…';
-    try { await authAdapter.signInGoogle(); $('authFormStatus').textContent = 'Sesión iniciada con Google.'; }
-    catch (error) { $('authFormStatus').textContent = authMessage(error); }
-    finally { if (button && !currentUser) button.disabled = false; renderProductState(); }
+    if ($('authFormStatus')) $('authFormStatus').textContent = 'Abriendo Google…';
+    try {
+      await authAdapter.signInGoogle();
+      if ($('authFormStatus')) $('authFormStatus').textContent = 'Sesión iniciada con Google.';
+    } catch (error) {
+      if ($('authFormStatus')) $('authFormStatus').textContent = authMessage(error);
+    } finally {
+      if (button && !currentUser) button.disabled = false;
+      renderProductState();
+    }
   }
 
   async function signOutAccount() {
     if (!authAdapter || authState !== 'ready') return;
-    const button = document.getElementById('authLogoutButton');
+    const button = $('authLogoutButton');
     if (button) button.disabled = true;
-    try { await authAdapter.signOut(); $('authFormStatus').textContent = 'Sesión cerrada.'; }
-    catch (error) { $('authFormStatus').textContent = authMessage(error); }
-    finally { if (button) button.disabled = false; renderProductState(); }
+    try {
+      await authAdapter.signOut();
+      if ($('authFormStatus')) $('authFormStatus').textContent = 'Sesión cerrada.';
+    } catch (error) {
+      if ($('authFormStatus')) $('authFormStatus').textContent = authMessage(error);
+    } finally {
+      if (button) button.disabled = false;
+      renderProductState();
+    }
+  }
+
+  async function saveProfile(event) {
+    event.preventDefault();
+    if (!currentUser || cloudState !== 'ready') {
+      if ($('cloudProfileStatus')) $('cloudProfileStatus').textContent = 'La nube todavía no está disponible.';
+      return;
+    }
+    const form = event.currentTarget;
+    const displayName = String($('profileDisplayName')?.value || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+    if (!displayName) {
+      if ($('cloudProfileStatus')) $('cloudProfileStatus').textContent = 'Ingresá un nombre visible.';
+      return;
+    }
+    setBusy(form, true);
+    if ($('cloudProfileStatus')) $('cloudProfileStatus').textContent = 'Guardando…';
+    try {
+      const adapter = await loadProfileAdapter();
+      const profile = await adapter.saveProfile({ uid: currentUser.uid, displayName });
+      if (typeof authAdapter?.updateDisplayName === 'function') await authAdapter.updateDisplayName(displayName);
+      cloudWorkspace = Object.freeze({ ...(cloudWorkspace || {}), profile });
+      if ($('cloudProfileStatus')) $('cloudProfileStatus').textContent = 'Perfil sincronizado.';
+      renderProductState();
+    } catch (error) {
+      cloudError = error;
+      if ($('cloudProfileStatus')) $('cloudProfileStatus').textContent = cloudMessage(error);
+    } finally {
+      setBusy(form, false);
+    }
+  }
+
+  async function savePreferences(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const prefs = preferencesFromForm();
+    cachePreferences(prefs);
+
+    if (!currentUser || cloudState !== 'ready') {
+      if ($('preferencesStatus')) $('preferencesStatus').textContent = 'Guardadas en caché local. La sincronización en nube está pendiente.';
+      return;
+    }
+
+    setBusy(form, true);
+    if ($('preferencesStatus')) $('preferencesStatus').textContent = 'Sincronizando preferencias…';
+    try {
+      const adapter = await loadProfileAdapter();
+      const saved = await adapter.savePreferences(currentUser.uid, prefs);
+      cloudWorkspace = Object.freeze({ ...(cloudWorkspace || {}), preferences: saved });
+      cachePreferences(saved);
+      if ($('preferencesStatus')) $('preferencesStatus').textContent = 'Preferencias sincronizadas en nube. No modifican el modelo Quant.';
+      renderCloudState();
+    } catch (error) {
+      cloudError = error;
+      if ($('preferencesStatus')) $('preferencesStatus').textContent = `${cloudMessage(error)} Los cambios quedaron en caché local.`;
+    } finally {
+      setBusy(form, false);
+    }
   }
 
   function initAccount() {
@@ -384,6 +667,7 @@
     initialized = true;
     decorateAuthCard();
     ensureAuthControls();
+    ensureCloudWorkspaceUi();
     document.querySelectorAll('[data-auth-tab]').forEach((button) => button.addEventListener('click', () => {
       if ($('authFormStatus')) $('authFormStatus').textContent = '';
       setAuthTab(button.dataset.authTab);
@@ -392,11 +676,17 @@
       form.addEventListener('submit', submitEmailAuth);
       form.querySelectorAll('input').forEach((input) => { input.required = true; });
     });
+    $('cloudProfileForm')?.addEventListener('submit', saveProfile);
     $('preferencesForm')?.addEventListener('submit', savePreferences);
-    $('prefProbability')?.addEventListener('input', () => { $('prefProbabilityValue').textContent = `${$('prefProbability').value}%`; });
-    document.getElementById('authGoogleButton')?.addEventListener('click', signInGoogle);
-    document.getElementById('authLogoutButton')?.addEventListener('click', signOutAccount);
-    setAuthTab('login'); renderProductState(); loadPreferencesIntoForm(); void loadAuthAdapter();
+    $('prefProbability')?.addEventListener('input', () => {
+      $('prefProbabilityValue').textContent = `${$('prefProbability').value}%`;
+    });
+    $('authGoogleButton')?.addEventListener('click', signInGoogle);
+    $('authLogoutButton')?.addEventListener('click', signOutAccount);
+    setAuthTab('login');
+    loadPreferencesIntoForm();
+    renderProductState();
+    void loadAuthAdapter();
   }
 
   function boot() {
