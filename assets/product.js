@@ -20,6 +20,21 @@
   let currentUser = null;
   let activeAuthTab = 'login';
 
+  function syncPhaseCopy() {
+    if ($('productPhase')) $('productPhase').textContent = 'FASE 2B';
+    const systemIdentity = document.querySelector('#system .lockedFeature');
+    if (systemIdentity) {
+      const title = systemIdentity.querySelector('b');
+      const note = systemIdentity.querySelector('small');
+      if (title) title.textContent = '🔐 Cuenta de usuario · Fase 2B';
+      if (note) note.textContent = 'Firebase Authentication conectado. Perfil persistente y autorización por membresía permanecen reservados para fases posteriores.';
+    }
+    const heroNote = document.querySelector('#account .productHero .productNote');
+    if (heroNote) heroNote.textContent = 'Firebase Authentication gestiona la identidad sin otorgar acceso de escritura al motor Quant. Perfil persistente, membresías y alertas permanecen separados.';
+    const planNote = document.querySelector('#account .membershipCard > p.tiny');
+    if (planNote) planNote.textContent = 'Planes en diseño. No existen cobros ni checkout en Fase 2B.';
+  }
+
   function safeLoadPreferences() {
     try {
       const value = JSON.parse(localStorage.getItem(PRODUCT.preferenceStorageKey) || '{}');
@@ -328,6 +343,7 @@
   }
 
   function boot() {
+    syncPhaseCopy();
     document.querySelectorAll('[data-view="account"]').forEach((button) => {
       button.addEventListener('click', initAccount, { once: true });
     });
