@@ -171,7 +171,7 @@ test('cloud profile name persists and updates authenticated identity', async ({ 
 
   await page.locator('#profileDisplayName').fill('Jor QA');
   await page.locator('#cloudProfileForm button[type="submit"]').click();
-  await expect(page.locator('#cloudProfileStatus')).toContainText('Perfil sincronizado');
+  await expect(page.locator('#cloudProfileStatus')).toHaveText('Sincronizado');
   await expect(page.locator('#authSession')).toContainText('Jor QA');
 
   await page.reload({ waitUntil: 'domcontentloaded' });
