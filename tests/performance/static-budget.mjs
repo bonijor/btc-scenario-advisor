@@ -7,8 +7,9 @@ const budgets = new Map([
   ['assets/responsive-bootstrap.js', 1_500],
   ['assets/accessibility.js', 6_000],
   ['assets/accessibility.css', 4_000],
-  ['assets/product.js', 7_000],
-  ['assets/product.css', 6_000],
+  ['assets/product.js', 16_000],
+  ['assets/firebase-auth.js', 6_000],
+  ['assets/product.css', 7_500],
 ]);
 
 let total = 0;
@@ -20,8 +21,8 @@ for (const [path, maxBytes] of budgets) {
   if (size > maxBytes) failures.push(`${path} exceeds budget by ${size - maxBytes} bytes`);
 }
 
-const totalBudget = 85_000;
-if (total > totalBudget) failures.push(`critical frontend total ${total} exceeds ${totalBudget} bytes`);
+const totalBudget = 100_000;
+if (total > totalBudget) failures.push(`frontend source total ${total} exceeds ${totalBudget} bytes`);
 
 const html = await readFile('index.html', 'utf8');
 const localCriticalRefs = [...html.matchAll(/(?:src|href)=["'](assets\/[^"']+)["']/g)].map((match) => match[1]);
@@ -34,4 +35,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`PASS_STATIC_PERFORMANCE_BUDGET total=${total}/${totalBudget} criticalRequests=${uniqueRefs.length}/7`);
+console.log(`PASS_STATIC_PERFORMANCE_BUDGET total=${total}/${totalBudget} criticalRequests=${uniqueRefs.length}/7 lazyAuthAdapter=1`);

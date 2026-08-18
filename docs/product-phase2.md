@@ -1,6 +1,6 @@
 # BTC Scenario Advisor · Fase 2 Producto
 
-Estado: FASE 2A PUBLICADA / VALIDADA
+Estado: FASE 2B EN VALIDACIÓN / NO PUBLICADA
 
 ## Objetivo
 
@@ -24,7 +24,7 @@ Alcance publicado:
 - contrato de seguridad que impide simular autenticación real;
 - QA de producto sobre desktop, tablet y mobile.
 
-Regla de seguridad: mientras `authEnabled=false`, los formularios de acceso no autentican, las contraseñas no se persisten y el estado de cuenta se presenta explícitamente como pendiente. Las preferencias de Fase 2A son únicamente preview local no sensible y no modifican el modelo Quant.
+Regla de seguridad de 2A: mientras `authEnabled=false`, los formularios de acceso no autentican, las contraseñas no se persisten y el estado de cuenta se presenta explícitamente como pendiente. Las preferencias de Fase 2A son únicamente preview local no sensible y no modifican el modelo Quant.
 
 ## Evidencia Fase 2A
 
@@ -42,20 +42,37 @@ Candidato final:
 
 El QA verifica además que las credenciales de los formularios no se persistan y que el preview de preferencias no cambie parámetros del modelo.
 
-## Proveedor de identidad propuesto
-
-Firebase Authentication sobre el ecosistema Google Cloud existente. La integración real se reserva para Fase 2B, después de registrar una aplicación web y obtener su configuración pública oficial. No se inventarán valores de configuración ni se incorporarán secretos al repositorio.
-
 ## Fase 2B · Identidad real
 
-Gate de entrada:
-1. proyecto Firebase asociado al proyecto Google Cloud elegido;
-2. aplicación web registrada;
-3. Authentication habilitado con proveedores aprobados;
-4. dominios autorizados restringidos;
-5. adaptador Firebase modular integrado;
-6. sesión observable con `onAuthStateChanged`;
-7. tests contra emulador o entorno controlado antes de producción.
+Proveedor gestionado: Firebase Authentication sobre el proyecto Google Cloud existente `linear-poet-426418-k0`.
+
+Gate de infraestructura completado:
+- FirebaseProject `ACTIVE` sobre el mismo project ID y project number;
+- Web App `BTC Scenario Advisor Web` registrada y `ACTIVE`;
+- App ID `1:531376347818:web:fc733e0485165b4c158ed3`;
+- dominio de autenticación `linear-poet-426418-k0.firebaseapp.com`;
+- Email/Password habilitado;
+- Google habilitado;
+- `bonijor.github.io` incluido en dominios autorizados;
+- secreto OAuth rotado después del diagnóstico y nunca incorporado al repositorio.
+
+Candidato de frontend en rama `agent/product-phase2b-firebase-auth`:
+- configuración pública oficial de Firebase, sin credenciales privadas;
+- adaptador modular Firebase JS SDK cargado sólo al abrir Cuenta;
+- registro real con Email/Password;
+- actualización de display name y envío de verificación de email;
+- ingreso con Email/Password;
+- Google Sign-In mediante popup;
+- persistencia de sesión gestionada por Firebase;
+- observación de sesión con `onAuthStateChanged`;
+- logout real;
+- errores de autenticación traducidos a mensajes de producto sin exponer detalles internos;
+- fail-closed si el SDK/proveedor no puede inicializarse;
+- ningún password o token se persiste manualmente por el dashboard.
+
+El QA de 2B utiliza un adaptador determinístico inyectado por Playwright. Ese adaptador sólo existe dentro del proceso de prueba y evita depender de cuentas reales o de red externa para validar login, registro, Google, sesión, logout y responsive. La implementación pública no activa mocks mediante query strings ni simula usuarios cuando Firebase falla.
+
+La capa de identidad se carga de forma lazy. Overview, Analytics, Paper y Trial no incorporan Firebase al camino crítico inicial. El presupuesto estático incluye el adaptador de Auth como asset diferido y Lighthouse conserva los gates existentes.
 
 ## Fase 2C · Perfil persistente y preferencias
 
@@ -92,15 +109,16 @@ Gate de entrada:
 - sin ejecución automática;
 - API Quant pública sólo lectura;
 - ningún dato de usuario modifica V5.9.0 durante el trial;
+- ninguna identidad concede autoridad sobre el runtime Quant o exchanges;
 - ningún secreto de identidad o mensajería en GitHub Pages.
 
-## Gate de publicación aplicado
+## Gate de publicación Fase 2B
 
-Fase 2A fue fusionada a `main` sólo después de:
+Fase 2B permanece fuera de `main` hasta completar:
 - CI estático PASS;
 - Playwright cross-browser PASS con `retries: 0`;
 - Lighthouse dentro de los gates vigentes;
-- verificación de no persistencia de contraseñas/tokens;
-- runtime Quant y trial sin cambios.
-
-Siguiente gate: Fase 2B no puede activar login real hasta contar con configuración oficial del proveedor gestionado y pruebas controladas de autenticación.
+- verificación de no persistencia manual de contraseñas/tokens;
+- escaneo de material sensible PASS;
+- runtime Quant y trial sin cambios;
+- aprobación explícita del gate de publicación.
