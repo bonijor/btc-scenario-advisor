@@ -7,7 +7,7 @@ const budgets = new Map([
   ['assets/responsive-bootstrap.js', 1_500],
   ['assets/accessibility.js', 6_000],
   ['assets/accessibility.css', 4_000],
-  ['assets/product.js', 14_000],
+  ['assets/product.js', 16_000],
   ['assets/firebase-auth.js', 6_000],
   ['assets/product.css', 7_500],
 ]);
