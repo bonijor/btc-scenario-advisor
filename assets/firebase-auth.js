@@ -12,6 +12,10 @@ const FIREBASE_CONFIG = Object.freeze({
 const SDK_BASE = `https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}`;
 let adapterPromise = null;
 
+function cleanName(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+}
+
 function safeUser(user) {
   if (!user) return null;
   return Object.freeze({
@@ -52,8 +56,8 @@ async function buildAdapter({ onState }) {
 
     async registerEmail({ name, email, password }) {
       const credential = await authSdk.createUserWithEmailAndPassword(auth, email, password);
-      const cleanName = String(name || '').trim().slice(0, 80);
-      if (cleanName) await authSdk.updateProfile(credential.user, { displayName: cleanName });
+      const cleanDisplayName = cleanName(name);
+      if (cleanDisplayName) await authSdk.updateProfile(credential.user, { displayName: cleanDisplayName });
       await credential.user.reload();
       await authSdk.sendEmailVerification(credential.user);
       return safeUser(auth.currentUser);
@@ -62,6 +66,18 @@ async function buildAdapter({ onState }) {
     async signInGoogle() {
       const credential = await authSdk.signInWithPopup(auth, googleProvider);
       return safeUser(credential.user);
+    },
+
+    async updateDisplayName(displayName) {
+      if (!auth.currentUser) {
+        const error = new Error('No hay una sesión activa.');
+        error.code = 'auth/no-current-user';
+        throw error;
+      }
+      await authSdk.updateProfile(auth.currentUser, { displayName: cleanName(displayName) });
+      await auth.currentUser.reload();
+      onState?.(safeUser(auth.currentUser), null);
+      return safeUser(auth.currentUser);
     },
 
     async signOut() {
