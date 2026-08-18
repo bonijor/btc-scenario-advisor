@@ -107,7 +107,10 @@ jobs:
           grep -q 'tabindex="0" role="region"' index.html
           grep -q 'syncNavigationState' assets/accessibility.js
           grep -q 'syncTimeframeState' assets/accessibility.js
-          grep -q 'External network disabled during deterministic QA' assets/accessibility.js
+          grep -q 'const dashboardFixture' assets/accessibility.js
+          grep -q "/ticker/24hr" assets/accessibility.js
+          grep -q "/klines" assets/accessibility.js
+          grep -q "/api/v1/dashboard" assets/accessibility.js
           grep -q ':focus-visible' assets/accessibility.css
           grep -q '.srOnly' assets/accessibility.css
           grep -q 'contrastRatio' tests/e2e/dashboard-accessibility.spec.mjs
