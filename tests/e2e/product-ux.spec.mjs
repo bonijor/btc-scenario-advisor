@@ -20,7 +20,7 @@ test('guided product UX adds clear navigation, theme preference and scoped marke
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 
-  const marketsNav = page.locator('.nav [data-view="markets"]');
+  const marketsNav = page.locator('[data-view="markets"]:visible').first();
   await expect(marketsNav).toContainText('Mercados');
   await marketsNav.click();
   await expect(page.locator('#markets')).toHaveClass(/active/);
