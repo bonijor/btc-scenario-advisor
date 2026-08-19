@@ -12,6 +12,10 @@
       script.src = 'assets/paper-funnel.js?v=3d1';
       script.dataset.autopaperModule = 'true';
       script.async = false;
+      script.addEventListener('load', () => {
+        const paperNav = document.querySelector('[data-view="paper"]');
+        if (paperNav) paperNav.textContent = '◎ Simulaciones';
+      }, { once: true });
       document.head.appendChild(script);
     }
   };
