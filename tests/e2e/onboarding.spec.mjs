@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('first authenticated use offers guide and simple/technical reading modes', async ({ page }) => {
-  await page.goto('/?gate=0');
+  await page.goto('/?gate=0&onboarding=1');
 
   await expect(page.locator('#guideToggle')).toBeVisible();
   await expect(page.locator('#readingModeToggle')).toBeVisible();
