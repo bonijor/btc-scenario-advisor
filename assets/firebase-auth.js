@@ -13,6 +13,10 @@ const SDK_BASE = `https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}`;
 let adapterPromise = null;
 let productUiBound = false;
 let productUiPromise = null;
+let authStateInitialized = false;
+let lastAuthUser = null;
+let lastAuthError = null;
+const stateListeners = new Set();
 
 function cleanName(value) {
   return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 80);
@@ -28,6 +32,22 @@ function safeUser(user) {
     photoURL: user.photoURL || '',
     providerIds: (user.providerData || []).map((entry) => entry?.providerId).filter(Boolean),
   });
+}
+
+function emitAuthState(user, error = null) {
+  authStateInitialized = true;
+  lastAuthUser = user || null;
+  lastAuthError = error || null;
+  for (const listener of [...stateListeners]) {
+    try { listener(lastAuthUser, lastAuthError); } catch { /* listeners are isolated */ }
+  }
+}
+
+function addStateListener(listener) {
+  if (typeof listener !== 'function') return () => {};
+  stateListeners.add(listener);
+  if (authStateInitialized) queueMicrotask(() => listener(lastAuthUser, lastAuthError));
+  return () => stateListeners.delete(listener);
 }
 
 function bindProductControlUiLoader() {
@@ -46,7 +66,7 @@ function bindProductControlUiLoader() {
   if (new URLSearchParams(location.search).get('membership') === 'return') load().catch(() => {});
 }
 
-async function buildAdapter({ onState }) {
+async function buildAdapter() {
   const [appSdk, authSdk] = await Promise.all([
     import(`${SDK_BASE}/firebase-app.js`),
     import(`${SDK_BASE}/firebase-auth.js`),
@@ -62,9 +82,16 @@ async function buildAdapter({ onState }) {
 
   const unsubscribe = authSdk.onAuthStateChanged(
     auth,
-    (user) => onState?.(safeUser(user), null),
-    (error) => onState?.(null, error),
+    (user) => emitAuthState(safeUser(user), null),
+    (error) => emitAuthState(null, error),
   );
+
+  function requireCurrentUser() {
+    if (auth.currentUser) return auth.currentUser;
+    const error = new Error('No hay una sesión activa.');
+    error.code = 'auth/no-current-user';
+    throw error;
+  }
 
   return Object.freeze({
     async signInEmail({ email, password }) {
@@ -78,7 +105,9 @@ async function buildAdapter({ onState }) {
       if (cleanDisplayName) await authSdk.updateProfile(credential.user, { displayName: cleanDisplayName });
       await credential.user.reload();
       await authSdk.sendEmailVerification(credential.user);
-      return safeUser(auth.currentUser);
+      const user = safeUser(auth.currentUser);
+      emitAuthState(user, null);
+      return user;
     },
 
     async signInGoogle() {
@@ -86,25 +115,46 @@ async function buildAdapter({ onState }) {
       return safeUser(credential.user);
     },
 
-    async updateDisplayName(displayName) {
-      if (!auth.currentUser) {
-        const error = new Error('No hay una sesión activa.');
-        error.code = 'auth/no-current-user';
+    async resetPassword(email) {
+      const cleanEmail = String(email || '').trim();
+      if (!cleanEmail) {
+        const error = new Error('Email requerido.');
+        error.code = 'auth/invalid-email';
         throw error;
       }
-      await authSdk.updateProfile(auth.currentUser, { displayName: cleanName(displayName) });
-      await auth.currentUser.reload();
-      onState?.(safeUser(auth.currentUser), null);
-      return safeUser(auth.currentUser);
+      await authSdk.sendPasswordResetEmail(auth, cleanEmail);
+      return true;
+    },
+
+    async sendVerification() {
+      const user = requireCurrentUser();
+      await user.reload();
+      if (!user.emailVerified) await authSdk.sendEmailVerification(user);
+      const snapshot = safeUser(auth.currentUser);
+      emitAuthState(snapshot, null);
+      return snapshot;
+    },
+
+    async refreshCurrentUser() {
+      const user = requireCurrentUser();
+      await user.reload();
+      const snapshot = safeUser(auth.currentUser);
+      emitAuthState(snapshot, null);
+      return snapshot;
+    },
+
+    async updateDisplayName(displayName) {
+      const user = requireCurrentUser();
+      await authSdk.updateProfile(user, { displayName: cleanName(displayName) });
+      await user.reload();
+      const snapshot = safeUser(auth.currentUser);
+      emitAuthState(snapshot, null);
+      return snapshot;
     },
 
     async getIdToken(forceRefresh = false) {
-      if (!auth.currentUser) {
-        const error = new Error('No hay una sesión activa.');
-        error.code = 'auth/no-current-user';
-        throw error;
-      }
-      return auth.currentUser.getIdToken(forceRefresh === true);
+      const user = requireCurrentUser();
+      return user.getIdToken(forceRefresh === true);
     },
 
     async signOut() {
@@ -115,6 +165,10 @@ async function buildAdapter({ onState }) {
       return safeUser(auth.currentUser);
     },
 
+    subscribe(listener) {
+      return addStateListener(listener);
+    },
+
     destroy() {
       unsubscribe();
     },
@@ -123,8 +177,10 @@ async function buildAdapter({ onState }) {
 
 export function createFirebaseAuthAdapter(options = {}) {
   bindProductControlUiLoader();
-  if (!adapterPromise) adapterPromise = buildAdapter(options).catch((error) => {
+  addStateListener(options.onState);
+  if (!adapterPromise) adapterPromise = buildAdapter().catch((error) => {
     adapterPromise = null;
+    emitAuthState(null, error);
     throw error;
   });
   return adapterPromise;
