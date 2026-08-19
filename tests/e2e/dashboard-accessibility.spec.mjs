@@ -41,6 +41,17 @@ test('semantic accessibility contract is present', async ({ page }) => {
   await expect(page.locator('.tfButton.active')).toHaveAttribute('aria-pressed', 'true');
 });
 
+test('Auto-Paper lazy module preserves accessible table regions on demand', async ({ page }) => {
+  await openDeterministicDashboard(page);
+  const paperButton = page.locator('[data-view="paper"]:visible').first();
+  await paperButton.click();
+  await expect(page.locator('#paper')).toHaveAttribute('aria-hidden', 'false');
+  await expect(page.locator('#apStatus')).toBeVisible({ timeout: 8000 });
+  await expect(page.locator('table caption')).toHaveCount(3);
+  await expect(page.locator('.tableWrap[tabindex="0"]')).toHaveCount(3);
+  await expect(page.locator('#paper')).toHaveAttribute('aria-label', 'Auto-Paper');
+});
+
 test('keyboard skip link and visible navigation preserve focus and state', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes('chromium'), 'Keyboard focus gate runs once per Chromium viewport family.');
   await openDeterministicDashboard(page);

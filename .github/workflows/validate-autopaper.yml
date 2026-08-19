@@ -1,0 +1,50 @@
+name: Validate Auto-Paper module
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  autopaper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate module files and syntax
+        run: |
+          test -s assets/paper-funnel.js
+          test -s assets/paper-funnel.css
+          node --check assets/paper-funnel.js
+          node --check assets/responsive-bootstrap.js
+          grep -q 'paper-funnel.js' assets/responsive-bootstrap.js
+          grep -q 'paper-funnel.css' assets/responsive-bootstrap.js
+      - name: Validate v2 Paper contract mapping
+        run: |
+          grep -q 'WAITING_CONDITIONS' assets/paper-funnel.js
+          grep -q 'PAPER_OPEN' assets/paper-funnel.js
+          grep -q 'VERIFIED' assets/paper-funnel.js
+          grep -q 'rejectedByReason' assets/paper-funnel.js
+          grep -q 'summaryDigest' assets/paper-funnel.js
+          grep -q 'recordDigest' assets/paper-funnel.js
+          grep -q 'evidenceDigest' assets/paper-funnel.js
+      - name: Enforce read-only safety envelope
+        shell: bash
+        run: |
+          grep -q 'rehearsalOnly === true' assets/paper-funnel.js
+          grep -q 'formalTrialMutation === false' assets/paper-funnel.js
+          grep -q 'realOrderCreated === false' assets/paper-funnel.js
+          grep -q 'exchangeOrderRequestMade === false' assets/paper-funnel.js
+          grep -q 'safety.spotOnly === true' assets/paper-funnel.js
+          grep -q 'safety.shortsAllowed === false' assets/paper-funnel.js
+          if grep -niE -- "method:[[:space:]]*['\"](POST|PUT|PATCH|DELETE)['\"]|/api/v3/order" assets/paper-funnel.js; then
+            echo 'Auto-Paper module contains a prohibited write/order path.'
+            exit 1
+          fi
+          echo 'PASS_AUTOPAPER_READONLY_CONTRACT'
