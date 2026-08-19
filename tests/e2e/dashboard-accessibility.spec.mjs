@@ -29,8 +29,8 @@ test('semantic accessibility contract is present', async ({ page }) => {
   await expect(page.locator('.skipLink')).toHaveAttribute('href', '#main-content');
   await expect(page.locator('#priceChart')).toHaveAttribute('role', 'img');
   await expect(page.locator('#priceChart')).toHaveAttribute('aria-describedby', 'chartA11y');
-  await expect(page.locator('table caption')).toHaveCount(3);
-  await expect(page.locator('.tableWrap[tabindex="0"]')).toHaveCount(3);
+  await expect(page.locator('table caption')).toHaveCount(2);
+  await expect(page.locator('.tableWrap[tabindex="0"]')).toHaveCount(2);
 
   const unnamedButtons = await page.locator('button').evaluateAll((buttons) => buttons.filter((button) => !(button.getAttribute('aria-label') || button.textContent.trim())).length);
   expect(unnamedButtons).toBe(0);
@@ -39,6 +39,17 @@ test('semantic accessibility contract is present', async ({ page }) => {
   await expect(page.locator('#overview')).toHaveAttribute('aria-hidden', 'false');
   await expect(page.locator('#analytics')).toHaveAttribute('aria-hidden', 'true');
   await expect(page.locator('.tfButton.active')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('Auto-Paper lazy module preserves accessible table regions on demand', async ({ page }) => {
+  await openDeterministicDashboard(page);
+  const paperButton = page.locator('[data-view="paper"]:visible').first();
+  await paperButton.click();
+  await expect(page.locator('#paper')).toHaveAttribute('aria-hidden', 'false');
+  await expect(page.locator('#apStatus')).toBeVisible({ timeout: 8000 });
+  await expect(page.locator('table caption')).toHaveCount(3);
+  await expect(page.locator('.tableWrap[tabindex="0"]')).toHaveCount(3);
+  await expect(page.locator('#paper')).toHaveAttribute('aria-label', 'Auto-Paper');
 });
 
 test('keyboard skip link and visible navigation preserve focus and state', async ({ page }, testInfo) => {
