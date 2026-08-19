@@ -80,6 +80,15 @@ async function buildAdapter({ onState }) {
       return safeUser(auth.currentUser);
     },
 
+    async getIdToken(forceRefresh = false) {
+      if (!auth.currentUser) {
+        const error = new Error('No hay una sesión activa.');
+        error.code = 'auth/no-current-user';
+        throw error;
+      }
+      return auth.currentUser.getIdToken(forceRefresh === true);
+    },
+
     async signOut() {
       await authSdk.signOut(auth);
     },
