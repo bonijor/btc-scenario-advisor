@@ -1,0 +1,5 @@
+BTC Scenario Advisor network access policy
+
+Public frontend data requests to Binance and Cloud Run are expected to remain blocked until Firebase Authentication grants the session. This policy is enforced from responsive-bootstrap.js before DOMContentLoaded, so app.js cannot leak model/market requests behind the visual login gate.
+
+The frontend gate is defense-in-depth only. Backend authorization remains a separate control.
