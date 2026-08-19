@@ -27,6 +27,7 @@
   ]);
 
   let marketRefreshTimer = null;
+  let guidedLoadScheduled = false;
   const $ = (selector, root = document) => root.querySelector(selector);
 
   function setTheme(theme, persist = true) {
@@ -258,6 +259,14 @@
     });
   }
 
+  function scheduleGuidedUx() {
+    if (guidedLoadScheduled || new URLSearchParams(location.search).get('qa') === 'performance') return;
+    guidedLoadScheduled = true;
+    const load = () => setTimeout(() => import('./onboarding.js').catch(() => {}), 650);
+    if (document.body.classList.contains('auth-granted')) load();
+    else window.addEventListener('btc:auth-granted', load, { once: true });
+  }
+
   function init() {
     setTheme(localStorage.getItem('scenarioTheme') || 'dark', false);
     applyBrand();
@@ -266,6 +275,7 @@
     addThemeToggle();
     addModuleIntros();
     annotateMetrics();
+    scheduleGuidedUx();
     window.addEventListener('btc:auth-granted', () => {
       if ($('#markets')?.classList.contains('active')) void refreshMarkets();
     });
