@@ -1,0 +1,47 @@
+name: Validate Product Control UI
+
+on:
+  pull_request:
+    paths:
+      - 'assets/firebase-auth.js'
+      - 'assets/product-control-ui.js'
+      - 'assets/product-control-ui.css'
+      - '.github/workflows/validate-product-control-ui.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'assets/firebase-auth.js'
+      - 'assets/product-control-ui.js'
+      - 'assets/product-control-ui.css'
+      - '.github/workflows/validate-product-control-ui.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  product-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          node --check assets/firebase-auth.js
+          node --check assets/product-control-ui.js
+      - name: Safety and lazy-load contract
+        shell: bash
+        run: |
+          grep -q 'getIdToken' assets/firebase-auth.js
+          grep -q "import('./product-control-ui.js')" assets/firebase-auth.js
+          grep -q '/api/v1/membership/checkout' assets/product-control-ui.js
+          grep -q '/api/v1/contact' assets/product-control-ui.js
+          grep -q 'quantMutationAllowed === false' assets/product-control-ui.js
+          grep -q 'tradingExecutionAllowed === false' assets/product-control-ui.js
+          test -s assets/product-control-ui.css
+          if grep -niE -- '/api/v3/order|method:[[:space:]]*["'"'](PUT|PATCH|DELETE)["'"']|BINANCE_API_SECRET|EXCHANGE_API_SECRET' assets/product-control-ui.js assets/firebase-auth.js; then
+            echo 'Ruta de trading o secreto prohibido en Product UI.'
+            exit 1
+          fi
+          echo 'PASS_PRODUCT_CONTROL_UI_ISOLATION'
