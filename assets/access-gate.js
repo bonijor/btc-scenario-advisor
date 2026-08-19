@@ -71,12 +71,12 @@
     state.mode = mode;
     document.querySelectorAll('[data-gate-panel]').forEach((panel) => { panel.hidden = panel.dataset.gatePanel !== mode; });
     setMessage('');
-    if (mode === 'login') requestAnimationFrame(() => $('gateLoginEmail')?.focus());
-    if (mode === 'register') requestAnimationFrame(() => $('gateRegisterName')?.focus());
+    if (mode === 'login') $('gateLoginEmail')?.focus({ preventScroll: true });
+    if (mode === 'register') $('gateRegisterName')?.focus({ preventScroll: true });
     if (mode === 'reset') {
       const source = $('gateLoginEmail')?.value || state.user?.email || '';
       if ($('gateResetEmail') && !$('gateResetEmail').value) $('gateResetEmail').value = source;
-      requestAnimationFrame(() => $('gateResetEmail')?.focus());
+      $('gateResetEmail')?.focus({ preventScroll: true });
     }
   }
   function setBusy(busy) {
