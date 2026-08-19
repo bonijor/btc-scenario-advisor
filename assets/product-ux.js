@@ -155,27 +155,45 @@
       </section>`;
   }
 
-  function addMarketsView() {
-    if ($('#markets')) return;
-    const systemView = $('#system');
-    if (!systemView) return;
-    systemView.insertAdjacentHTML('beforebegin', marketMarkup());
-    const nav = $('.nav');
-    const systemButton = nav?.querySelector('[data-view="system"]');
-    if (nav && systemButton) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.dataset.view = 'markets';
-      nav.insertBefore(button, nav.querySelector('[data-view="analytics"]') || systemButton);
+  function ensureMarketRefreshTimer() {
+    if (marketRefreshTimer) return;
+    marketRefreshTimer = setInterval(() => {
+      if ($('#markets')?.classList.contains('active')) void refreshMarkets();
+    }, 30000);
+  }
+
+  function openMarkets() {
+    openView('markets');
+    void refreshMarkets();
+    ensureMarketRefreshTimer();
+  }
+
+  function addMarketNavButton(container, { beforeSelector = null, compact = false } = {}) {
+    if (!container || container.querySelector('[data-view="markets"]')) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.view = 'markets';
+    if (compact) {
+      button.textContent = 'Mercados';
+      button.setAttribute('aria-label', 'Mercados. BTC, ETH y BNB en Binance Spot');
+      button.title = 'Mercados · BTC, ETH y BNB';
+    } else {
       formatNavigationButton(button);
-      button.addEventListener('click', () => {
-        openView('markets');
-        void refreshMarkets();
-        if (!marketRefreshTimer) marketRefreshTimer = setInterval(() => {
-          if ($('#markets')?.classList.contains('active')) void refreshMarkets();
-        }, 30000);
-      });
     }
+    const before = beforeSelector ? container.querySelector(beforeSelector) : null;
+    if (before) container.insertBefore(button, before);
+    else container.append(button);
+    button.addEventListener('click', openMarkets);
+  }
+
+  function addMarketsView() {
+    if (!$('#markets')) {
+      const systemView = $('#system');
+      if (!systemView) return;
+      systemView.insertAdjacentHTML('beforebegin', marketMarkup());
+    }
+    addMarketNavButton($('.nav'), { beforeSelector: '[data-view="analytics"]' });
+    addMarketNavButton($('.mobileNav'), { beforeSelector: '[data-view="analytics"]', compact: true });
   }
 
   function fmtUsd(value) {
