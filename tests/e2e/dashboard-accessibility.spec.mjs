@@ -50,48 +50,52 @@ test('keyboard skip link and visible navigation preserve focus and state', async
   await page.keyboard.press('Enter');
   await expect(page.locator('#main-content')).toBeFocused();
 
-  const analyticsButtons = page.locator('[data-view="analytics"]:visible');
-  await analyticsButtons.first().click();
-  await expect(page.locator('#analytics')).toHaveClass(/active/);
+  const analyticsButton = page.locator('[data-view="analytics"]:visible').first();
+  await expect(analyticsButton).toBeVisible();
+  await analyticsButton.focus();
+  await expect(analyticsButton).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(analyticsButton).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('#analytics')).toHaveAttribute('aria-hidden', 'false');
-  await expect(analyticsButtons.first()).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('#overview')).toHaveAttribute('aria-hidden', 'true');
 
-  const paperButtons = page.locator('[data-view="paper"]:visible');
-  await paperButtons.first().click();
-  await expect(page.locator('#paper')).toHaveClass(/active/);
-  await expect(page.locator('#paper')).toHaveAttribute('aria-hidden', 'false');
-  await expect(paperButtons.first()).toHaveAttribute('aria-current', 'page');
+  const outline = await analyticsButton.evaluate((node) => getComputedStyle(node).outlineStyle);
+  expect(outline).not.toBe('none');
 });
 
-test('core palette meets WCAG AA contrast budget', async () => {
-  const pairs = [
-    ['#eaf2fb', '#081421'],
-    ['#96abc2', '#081421'],
-    ['#75a8d8', '#081421'],
-    ['#f5f9ff', '#0b1726'],
-    ['#7cf7bf', '#081421'],
-    ['#ffb766', '#081421'],
-    ['#ff8c99', '#081421'],
-  ];
-  for (const [fg, bg] of pairs) {
-    expect(contrastRatio(fg, bg)).toBeGreaterThanOrEqual(4.5);
-  }
+test('core palette meets WCAG AA contrast budget', async ({ page }) => {
+  await openDeterministicDashboard(page);
+  const palette = await page.evaluate(() => {
+    const css = getComputedStyle(document.documentElement);
+    return {
+      bg: css.getPropertyValue('--bg').trim(),
+      panel: css.getPropertyValue('--panel').trim(),
+      text: css.getPropertyValue('--text').trim(),
+      muted: css.getPropertyValue('--muted').trim(),
+      blue: css.getPropertyValue('--blue').trim(),
+      green: css.getPropertyValue('--green').trim(),
+      amber: css.getPropertyValue('--amber').trim(),
+      red: css.getPropertyValue('--red').trim(),
+    };
+  });
+
+  expect(contrastRatio(palette.text, palette.bg)).toBeGreaterThanOrEqual(7);
+  expect(contrastRatio(palette.muted, palette.panel)).toBeGreaterThanOrEqual(4.5);
+  expect(contrastRatio(palette.blue, palette.bg)).toBeGreaterThanOrEqual(4.5);
+  expect(contrastRatio(palette.green, palette.bg)).toBeGreaterThanOrEqual(4.5);
+  expect(contrastRatio(palette.amber, palette.bg)).toBeGreaterThanOrEqual(4.5);
+  expect(contrastRatio(palette.red, palette.bg)).toBeGreaterThanOrEqual(4.5);
 });
 
 test('deterministic QA blocks external network without breaking the shell', async ({ page }) => {
-  const blocked = [];
-  await page.route('**/*', async (route) => {
-    const url = route.request().url();
-    if (url.startsWith('http://127.0.0.1') || url.startsWith('http://localhost')) {
-      await route.continue();
-      return;
-    }
-    blocked.push(url);
-    await route.abort();
+  const external = [];
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.hostname !== '127.0.0.1' && url.hostname !== 'localhost') external.push(request.url());
   });
-
   await openDeterministicDashboard(page);
-  await expect(page.locator('.app')).toBeVisible();
-  await expect(page.locator('#overview')).toHaveClass(/active/);
-  expect(blocked.length).toBeGreaterThanOrEqual(0);
+  await page.waitForTimeout(300);
+  expect(external).toEqual([]);
+  await expect(page.locator('#engineState')).toContainText('ONLINE');
+  await expect(page.locator('#overview')).toBeVisible();
 });
