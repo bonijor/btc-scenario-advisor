@@ -18,14 +18,14 @@ function shell() {
   if (!card) return null;
   if (!$('productControlPanel')) {
     card.innerHTML = `
-      <div class="ey">Membresía y alertas</div>
-      <div class="productControlHead"><div><h3>BTC Scenario PRO</h3><p class="tiny">Producto y notificaciones separados del motor Quant.</p></div><span class="chip" id="productControlStatus">CONECTANDO</span></div>
+      <div class="ey">Plan y alertas</div>
+      <div class="productControlHead"><div><h3>Scenario Advisor PRO</h3><p class="tiny">Tu plan habilita producto y notificaciones, nunca autoridad sobre el motor Quant.</p></div><span class="chip" id="productControlStatus">CONECTANDO</span></div>
       <div class="membershipGrid" id="productPlans">
-        <div class="planCard"><strong>FREE</strong><small>Dashboard, análisis, trial 90D y Auto-Paper.</small></div>
-        <div class="planCard recommended"><strong>PRO mensual</strong><small>Email + WhatsApp, historial ampliado y futuras herramientas de research.</small></div>
+        <div class="planCard"><strong>FREE</strong><small>Dashboard, análisis probabilístico, trial 90D y lectura de mercado.</small></div>
+        <div class="planCard recommended"><strong>PRO mensual</strong><small>Alertas, canales personales, historial ampliado y herramientas de research a medida que sean validadas.</small></div>
       </div>
       <div id="productControlPanel" class="productControlPanel" aria-live="polite"></div>
-      <div class="planAuthorityNote"><b>Separación Quant:</b> pagar una membresía nunca puede modificar V5.9.0, umbrales ni habilitar órdenes.</div>
+      <div class="planAuthorityNote"><b>Separación Quant:</b> una membresía nunca puede cambiar el modelo, sus umbrales, habilitar órdenes ni convertir una señal bloqueada en operación.</div>
     `;
   }
   return $('productControlPanel');
@@ -49,15 +49,15 @@ async function authFetch(path, options = {}) {
 }
 
 function renderOffline(panel) {
-  $('productControlStatus').textContent = 'PENDIENTE';
+  $('productControlStatus').textContent = 'SIN CONEXIÓN';
   $('productControlStatus').className = 'chip warn';
-  panel.innerHTML = '<div class="bannerNote">La capa de membresías y alertas todavía no está publicada/configurada. Tu cuenta y el dashboard siguen funcionando normalmente.</div>';
+  panel.innerHTML = '<div class="bannerNote"><b>Plan no sincronizado.</b> No pudimos conectar con Product Control. El dashboard sigue disponible, pero no mostramos un estado de membresía que no podamos verificar.</div>';
 }
 
 function renderAnonymous(panel) {
-  $('productControlStatus').textContent = state.online ? 'DISPONIBLE' : 'PENDIENTE';
+  $('productControlStatus').textContent = state.online ? 'DISPONIBLE' : 'SIN CONEXIÓN';
   $('productControlStatus').className = `chip ${state.online ? 'good' : 'warn'}`;
-  panel.innerHTML = '<div class="bannerNote">Iniciá sesión para administrar PRO, email y WhatsApp.</div>';
+  panel.innerHTML = '<div class="bannerNote">Iniciá sesión para ver tu plan, configurar alertas y administrar tus canales personales.</div>';
 }
 
 function renderMe(panel, me) {
@@ -70,17 +70,17 @@ function renderMe(panel, me) {
   panel.innerHTML = `
     <div class="productControlGrid">
       <div class="productControlStat"><span>Plan</span><strong>${escapeHtml(pro ? 'PRO' : 'FREE')}</strong><small>${escapeHtml(ent.status || 'inactive')}</small></div>
-      <div class="productControlStat"><span>Email</span><strong>${caps.alertEmail ? 'LISTO' : 'NO ACTIVO'}</strong><small>${escapeHtml(me.email || 'sin email')}</small></div>
-      <div class="productControlStat"><span>WhatsApp</span><strong>${caps.alertWhatsapp ? 'LISTO' : 'NO ACTIVO'}</strong><small>${whatsapp ? `••• ${escapeHtml(whatsapp.slice(-4))}` : 'sin número'}</small></div>
+      <div class="productControlStat"><span>Alertas por email</span><strong>${caps.alertEmail ? 'HABILITADAS' : 'NO ACTIVAS'}</strong><small>${escapeHtml(me.email || 'sin email')}</small></div>
+      <div class="productControlStat"><span>Alertas por WhatsApp</span><strong>${caps.alertWhatsapp ? 'HABILITADAS' : 'NO ACTIVAS'}</strong><small>${whatsapp ? `••• ${escapeHtml(whatsapp.slice(-4))}` : 'sin número'}</small></div>
     </div>
     <div class="productActions">
       ${!pro && caps.membershipCheckout ? '<button class="btn primary" id="startProCheckout" type="button">Activar PRO mensual</button>' : ''}
-      <button class="btn" id="refreshProductControl" type="button">Actualizar estado</button>
+      <button class="btn" id="refreshProductControl" type="button">Sincronizar plan</button>
     </div>
     <form id="whatsappContactForm" class="productContactForm">
       <label for="productWhatsapp">WhatsApp para alertas</label>
       <div class="productContactRow"><input id="productWhatsapp" type="tel" autocomplete="tel" placeholder="+54 9 351 ..." value=""><button class="btn" type="submit">Guardar</button></div>
-      <small>Se guarda en backend privado. Activar WhatsApp en Preferencias define si querés recibir alertas.</small>
+      <small>Se almacena en el backend privado. Tus preferencias definen qué alertas querés recibir; no modifican los criterios del motor.</small>
       <p class="tiny" id="productContactStatus"></p>
     </form>
   `;
@@ -102,7 +102,7 @@ async function refresh() {
   const panel = shell();
   if (!panel) return;
   state.loading = true;
-  panel.innerHTML = '<div class="bannerNote">Sincronizando membresía y canales…</div>';
+  panel.innerHTML = '<div class="bannerNote">Sincronizando plan y canales…</div>';
   state.online = await health();
   if (!state.online) {
     state.loading = false;
@@ -123,7 +123,7 @@ async function refresh() {
     renderMe(panel, state.me);
   } catch (error) {
     state.error = error;
-    panel.innerHTML = '<div class="bannerNote">No pudimos leer la membresía. Actualizá la sesión e intentá nuevamente.</div>';
+    panel.innerHTML = '<div class="bannerNote">No pudimos verificar el plan con Product Control. La interfaz no asumirá FREE ni PRO hasta recuperar una respuesta válida.</div>';
   } finally { state.loading = false; }
 }
 
@@ -158,4 +158,6 @@ async function saveContact(event) {
 ensureStyles();
 shell();
 refresh();
-window.BTC_PRODUCT_CONTROL_UI = Object.freeze({ refresh, apiBase: API_BASE });
+const api = Object.freeze({ refresh, apiBase: API_BASE });
+window.BTC_PRODUCT_CONTROL_UI = api;
+window.SCENARIO_PRODUCT_CONTROL_UI = api;
