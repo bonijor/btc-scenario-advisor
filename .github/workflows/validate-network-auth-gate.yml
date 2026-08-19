@@ -1,0 +1,29 @@
+name: Validate network auth gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: node --check assets/responsive-bootstrap.js
+      - name: Contract
+        run: |
+          grep -q "AUTH_DATA_GATE_LOCKED" assets/responsive-bootstrap.js
+          grep -q "api.binance.com" assets/responsive-bootstrap.js
+          grep -q "run.app" assets/responsive-bootstrap.js
+          grep -q "auth-granted" assets/responsive-bootstrap.js
+          python3 - <<'PY'
+          from pathlib import Path
+          size=len(Path('assets/responsive-bootstrap.js').read_bytes())
+          assert size <= 1536, size
+          print('PASS_NETWORK_GATE_BOOTSTRAP_BUDGET', size)
+          PY
