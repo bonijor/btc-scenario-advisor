@@ -40,7 +40,7 @@ jobs:
           grep -q 'quantMutationAllowed === false' assets/product-control-ui.js
           grep -q 'tradingExecutionAllowed === false' assets/product-control-ui.js
           test -s assets/product-control-ui.css
-          if grep -niE -- '/api/v3/order|method:[[:space:]]*["'"'](PUT|PATCH|DELETE)["'"']|BINANCE_API_SECRET|EXCHANGE_API_SECRET' assets/product-control-ui.js assets/firebase-auth.js; then
+          if grep -niE -- '/api/v3/order|method:.*(PUT|PATCH|DELETE)|BINANCE_API_SECRET|EXCHANGE_API_SECRET' assets/product-control-ui.js assets/firebase-auth.js; then
             echo 'Ruta de trading o secreto prohibido en Product UI.'
             exit 1
           fi
