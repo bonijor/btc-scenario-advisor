@@ -104,7 +104,10 @@ async function buildAdapter({ onState }) {
 }
 
 export function createFirebaseAuthAdapter(options = {}) {
-  if (!adapterPromise) adapterPromise = buildAdapter(options).catch((error) => {
+  if (!adapterPromise) adapterPromise = buildAdapter(options).then((adapter) => {
+    queueMicrotask(() => import('./product-control-ui.js').catch(() => {}));
+    return adapter;
+  }).catch((error) => {
     adapterPromise = null;
     throw error;
   });
