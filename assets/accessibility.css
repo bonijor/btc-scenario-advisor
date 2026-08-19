@@ -40,6 +40,20 @@
 
 .view[aria-hidden="true"]{pointer-events:none}
 
+/* Gatekeeper: no protected dashboard flash before Firebase resolves. */
+body:not(.auth-gate-ready) :where(.app,.mobileNav,.skipLink){visibility:hidden}
+body.auth-gate-ready:not(.auth-granted) .app{
+  visibility:visible;
+  pointer-events:none;
+  user-select:none;
+  opacity:.34;
+  filter:blur(8px) saturate(.68);
+  transform:scale(.997);
+}
+body.auth-gate-ready:not(.auth-granted) :where(.mobileNav,.skipLink){visibility:hidden}
+body.auth-granted :where(.app,.mobileNav,.skipLink){visibility:visible}
+body.auth-granted .app{opacity:1;filter:none;transform:none}
+
 .tiny,
 .ey,
 .statusCell span,
