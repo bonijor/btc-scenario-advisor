@@ -86,21 +86,24 @@
     summary.textContent = `Gráfico BTC/USDT ${tf}. Última vela: apertura ${open}, máximo ${high}, mínimo ${low}, cierre ${close}.`;
   };
 
+  const observeClasses = (selector, callback) => {
+    document.querySelectorAll(selector).forEach((node) => {
+      new MutationObserver(callback).observe(node, { attributes: true, attributeFilter: ['class'] });
+    });
+  };
+
   const enhance = () => {
     syncNavigationState();
     syncTimeframeState();
     syncRefreshState();
     syncChartSummary();
 
-    const app = document.querySelector('.app');
-    if (app) {
-      const stateObserver = new MutationObserver(() => {
-        syncNavigationState();
-        syncTimeframeState();
-        syncRefreshState();
-      });
-      stateObserver.observe(app, { subtree: true, attributes: true, attributeFilter: ['class', 'disabled'] });
-    }
+    observeClasses('[data-view]', syncNavigationState);
+    observeClasses('.view', syncNavigationState);
+    observeClasses('.tfButton', syncTimeframeState);
+
+    const refresh = document.getElementById('refresh');
+    if (refresh) new MutationObserver(syncRefreshState).observe(refresh, { attributes: true, attributeFilter: ['disabled'] });
 
     const chartObserver = new MutationObserver(syncChartSummary);
     ['chartTf', 'candleOpen', 'candleHigh', 'candleLow', 'candleClose'].forEach((id) => {
