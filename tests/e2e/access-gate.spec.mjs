@@ -38,9 +38,9 @@ async function installGateAdapter(page) {
   });
 }
 
-async function openGate(page) {
+async function openGate(page, query = '?gate=1') {
   await installGateAdapter(page);
-  await page.goto('/?gate=1', { waitUntil: 'domcontentloaded' });
+  await page.goto(`/${query}`, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#authGate')).toBeVisible();
 }
 
@@ -72,4 +72,32 @@ test('new email accounts remain blocked until email verification is confirmed', 
   await page.locator('#gateCheckVerification').click();
   await expect(page.locator('#authGate')).toBeHidden();
   await expect(page.locator('body')).toHaveClass(/auth-granted/);
+});
+
+test('verified session attaches Firebase bearer only to dashboard Cloud Run request', async ({ page }) => {
+  const observed = [];
+  await page.route('https://btc-shadow-dashboard-api.example.run.app/**', async (route) => {
+    observed.push({ url: route.request().url(), authorization: route.request().headers().authorization || null });
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
+  });
+  await page.route('https://api.binance.com/**', async (route) => {
+    observed.push({ url: route.request().url(), authorization: route.request().headers().authorization || null });
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+  });
+
+  await openGate(page, '?gate=1&dashboardAuth=1');
+  await page.locator('#gateLoginEmail').fill('gate@example.invalid');
+  await page.locator('#gateLoginPassword').fill('qa-password');
+  await page.locator('#gateLoginForm button[type="submit"]').click();
+  await expect(page.locator('body')).toHaveClass(/auth-granted/);
+
+  await page.evaluate(async () => {
+    await fetch('https://btc-shadow-dashboard-api.example.run.app/api/v1/dashboard');
+    await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
+  });
+
+  const dashboard = observed.find((x) => x.url.includes('/api/v1/dashboard'));
+  const binance = observed.find((x) => x.url.includes('api.binance.com'));
+  expect(dashboard?.authorization).toBe('Bearer qa-token');
+  expect(binance?.authorization).toBeNull();
 });

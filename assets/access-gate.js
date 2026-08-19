@@ -4,21 +4,22 @@
   const state = { adapter: null, user: null, mode: 'pending', busy: false };
   const $ = (id) => document.getElementById(id);
   const protectedNodes = () => [document.querySelector('.app'), document.querySelector('.mobileNav'), document.querySelector('.skipLink')].filter(Boolean);
+  let dashboardBearerInstalled = false;
 
   function gateMarkup() {
     return `
       <div class="authGate" id="authGate" role="dialog" aria-modal="true" aria-labelledby="authGateTitle">
         <div class="authGateShell">
           <div class="authGateStatus" aria-label="Estado de acceso">
-            <span><i aria-hidden="true"></i> Shadow Lab</span>
+            <span><i aria-hidden="true"></i> Crypto Shadow Lab</span>
             <span><i aria-hidden="true"></i> API read-only</span>
           </div>
           <div class="authGateCard">
             <header class="authGateBrand">
-              <div class="authGateCoin" aria-hidden="true">₿</div>
-              <h2 id="authGateTitle">BTC Scenario Advisor</h2>
+              <div class="authGateCoin" aria-hidden="true">◈</div>
+              <h2 id="authGateTitle">Scenario Advisor</h2>
               <p>Tu ventaja estratégica, bajo control</p>
-              <small>Shadow Lab · acceso protegido</small>
+              <small>Crypto Shadow Lab · acceso protegido</small>
             </header>
             <section data-gate-panel="pending"><div class="authGateVerify"><div class="authGateVerifyIcon" aria-hidden="true">◌</div><h2>Validando sesión</h2><p>Comprobando tu identidad antes de mostrar el dashboard.</p></div></section>
             <section data-gate-panel="login" hidden>
@@ -57,6 +58,32 @@
           </div>
         </div>
       </div>`;
+  }
+
+  function isDashboardApiRequest(input) {
+    try {
+      const url = new URL(input?.url || input, location.href);
+      return url.hostname.endsWith('.run.app') && url.pathname === '/api/v1/dashboard';
+    } catch { return false; }
+  }
+
+  function installDashboardBearer() {
+    if (dashboardBearerInstalled) return;
+    dashboardBearerInstalled = true;
+    const baseFetch = window.fetch.bind(window);
+    window.fetch = async (input, init = {}) => {
+      if (!isDashboardApiRequest(input)) return baseFetch(input, init);
+      const localQa = ['127.0.0.1', 'localhost'].includes(location.hostname);
+      const qaAuth = new URLSearchParams(location.search).get('dashboardAuth') === '1';
+      if (!state.user?.emailVerified || (localQa && !qaAuth)) return baseFetch(input, init);
+      let token;
+      try { token = await state.adapter?.getIdToken?.(); } catch { token = null; }
+      if (!token) throw new Error('DASHBOARD_AUTH_TOKEN_UNAVAILABLE');
+      const requestHeaders = typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined;
+      const headers = new Headers(init.headers || requestHeaders || undefined);
+      headers.set('authorization', `Bearer ${token}`);
+      return baseFetch(input, { ...init, headers });
+    };
   }
 
   function setProtectedLocked(locked) {
@@ -135,6 +162,7 @@
   }
   async function start() {
     if ($('authGate')) return;
+    installDashboardBearer();
     document.body.insertAdjacentHTML('beforeend', gateMarkup()); document.body.classList.add('auth-gate-ready'); document.body.style.overflow = 'hidden'; setProtectedLocked(true); bindUi();
     const localQa = ['127.0.0.1', 'localhost'].includes(location.hostname) && new URLSearchParams(location.search).get('gate') !== '1';
     if (localQa) { grant({ uid: 'local-qa', email: 'local-qa@example.invalid', emailVerified: true, providerIds: ['qa'] }); return; }
