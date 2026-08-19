@@ -5,6 +5,9 @@ const load=()=>p||(p=new Promise((ok,bad)=>{
  const s=document.createElement('script');s.src='assets/paper-funnel.js?v=3d2';s.dataset.autopaperModule='1';s.async=true;s.onload=()=>ok(window.BTCAutoPaper);s.onerror=bad;document.head.append(s)
 }));
 document.querySelectorAll('[data-view="paper"]').forEach(b=>b.addEventListener('click',()=>{load().catch(()=>{})},{passive:true}));
+const api=document.getElementById('systemApi');
+const fixApi=()=>{if(api&&/^btc-shadow-dashboard-api-/.test(api.textContent||''))api.textContent='btc-shadow-dashboard-readonly/2.0'};
+if(api){fixApi();new MutationObserver(fixApi).observe(api,{childList:true,subtree:true,characterData:true})}
 const kick=()=>window.dispatchEvent(new Event('resize'));
 const settle=()=>{requestAnimationFrame(()=>requestAnimationFrame(kick));setTimeout(kick,120);setTimeout(kick,420)};
 window.addEventListener('load',settle,{once:true});
