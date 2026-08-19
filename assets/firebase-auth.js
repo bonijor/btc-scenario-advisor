@@ -11,6 +11,8 @@ const FIREBASE_CONFIG = Object.freeze({
 
 const SDK_BASE = `https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}`;
 let adapterPromise = null;
+let productUiBound = false;
+let productUiPromise = null;
 
 function cleanName(value) {
   return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 80);
@@ -26,6 +28,22 @@ function safeUser(user) {
     photoURL: user.photoURL || '',
     providerIds: (user.providerData || []).map((entry) => entry?.providerId).filter(Boolean),
   });
+}
+
+function bindProductControlUiLoader() {
+  if (productUiBound) return;
+  productUiBound = true;
+  const load = () => {
+    if (!productUiPromise) productUiPromise = import('./product-control-ui.js').catch((error) => {
+      productUiPromise = null;
+      throw error;
+    });
+    return productUiPromise;
+  };
+  document.querySelectorAll('[data-view="account"]').forEach((button) => {
+    button.addEventListener('click', () => { load().catch(() => {}); }, { passive: true });
+  });
+  if (new URLSearchParams(location.search).get('membership') === 'return') load().catch(() => {});
 }
 
 async function buildAdapter({ onState }) {
@@ -104,10 +122,8 @@ async function buildAdapter({ onState }) {
 }
 
 export function createFirebaseAuthAdapter(options = {}) {
-  if (!adapterPromise) adapterPromise = buildAdapter(options).then((adapter) => {
-    queueMicrotask(() => import('./product-control-ui.js').catch(() => {}));
-    return adapter;
-  }).catch((error) => {
+  bindProductControlUiLoader();
+  if (!adapterPromise) adapterPromise = buildAdapter(options).catch((error) => {
     adapterPromise = null;
     throw error;
   });
