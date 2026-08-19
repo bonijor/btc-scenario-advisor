@@ -16,7 +16,7 @@
           <div class="authGateCard">
             <header class="authGateBrand">
               <div class="authGateCoin" aria-hidden="true">₿</div>
-              <h1 id="authGateTitle">BTC Scenario Advisor</h1>
+              <h2 id="authGateTitle">BTC Scenario Advisor</h2>
               <p>Tu ventaja estratégica, bajo control</p>
               <small>Shadow Lab · acceso protegido</small>
             </header>
