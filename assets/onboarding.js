@@ -159,7 +159,9 @@
     markTechnicalDetails();
     ensureToolbarControls();
     bindGuide();
-    if (localStorage.getItem(TOUR_KEY) !== 'done') setTimeout(() => openGuide(0), 450);
+    const localQa = ['127.0.0.1', 'localhost'].includes(location.hostname);
+    const qaOptIn = new URLSearchParams(location.search).get('onboarding') === '1';
+    if (localStorage.getItem(TOUR_KEY) !== 'done' && (!localQa || qaOptIn)) setTimeout(() => openGuide(0), 450);
   }
 
   window.ScenarioGuidedUx = Object.freeze({ init, openGuide, setReadingMode });
