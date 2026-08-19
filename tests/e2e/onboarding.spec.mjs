@@ -9,6 +9,7 @@ test('first authenticated use offers guide and simple/technical reading modes', 
   await expect(page.locator('#overview .runtimeBanner')).toHaveAttribute('data-reading-detail', 'technical');
 
   await expect(page.locator('#scenarioGuide')).toBeVisible();
+  await expect(page.locator('#scenarioGuide')).toHaveAttribute('aria-modal', 'true');
   await expect(page.locator('#scenarioGuideProgress')).toHaveText('1 / 5');
   await expect(page.locator('#scenarioGuideTitle')).toContainText('Resumen');
 
