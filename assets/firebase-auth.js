@@ -11,6 +11,8 @@ const FIREBASE_CONFIG = Object.freeze({
 
 const SDK_BASE = `https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}`;
 let adapterPromise = null;
+let productUiBound = false;
+let productUiPromise = null;
 
 function cleanName(value) {
   return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 80);
@@ -26,6 +28,22 @@ function safeUser(user) {
     photoURL: user.photoURL || '',
     providerIds: (user.providerData || []).map((entry) => entry?.providerId).filter(Boolean),
   });
+}
+
+function bindProductControlUiLoader() {
+  if (productUiBound) return;
+  productUiBound = true;
+  const load = () => {
+    if (!productUiPromise) productUiPromise = import('./product-control-ui.js').catch((error) => {
+      productUiPromise = null;
+      throw error;
+    });
+    return productUiPromise;
+  };
+  document.querySelectorAll('[data-view="account"]').forEach((button) => {
+    button.addEventListener('click', () => { load().catch(() => {}); }, { passive: true });
+  });
+  if (new URLSearchParams(location.search).get('membership') === 'return') load().catch(() => {});
 }
 
 async function buildAdapter({ onState }) {
@@ -80,6 +98,15 @@ async function buildAdapter({ onState }) {
       return safeUser(auth.currentUser);
     },
 
+    async getIdToken(forceRefresh = false) {
+      if (!auth.currentUser) {
+        const error = new Error('No hay una sesión activa.');
+        error.code = 'auth/no-current-user';
+        throw error;
+      }
+      return auth.currentUser.getIdToken(forceRefresh === true);
+    },
+
     async signOut() {
       await authSdk.signOut(auth);
     },
@@ -95,6 +122,7 @@ async function buildAdapter({ onState }) {
 }
 
 export function createFirebaseAuthAdapter(options = {}) {
+  bindProductControlUiLoader();
   if (!adapterPromise) adapterPromise = buildAdapter(options).catch((error) => {
     adapterPromise = null;
     throw error;
