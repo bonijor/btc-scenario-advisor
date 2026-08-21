@@ -1,4 +1,5 @@
 const $ = (id) => document.getElementById(id);
+const funnelEl = (id) => document.getElementById(id);
 
 const CONFIG = Object.freeze({
   apiBase: (new URLSearchParams(location.search).get('api') || localStorage.getItem('btcModelApiBase') || 'https://btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app').replace(/\/$/, ''),
@@ -376,7 +377,7 @@ function renderDecisions(rows) {
 }
 
 function ensureFunnelUi() {
-  if ($('paperFunnelPanel')) return;
+  if (funnelEl('paperFunnelPanel')) return;
   const lowerGrid = document.querySelector('#overview .lowerGrid');
   if (!lowerGrid) return;
   lowerGrid.insertAdjacentHTML('afterend', `
@@ -400,26 +401,27 @@ function renderFunnel(funnel) {
   const f = funnel && typeof funnel === 'object' ? funnel : null;
   if (!f) {
     ['funnelObserved', 'funnelOfficial', 'funnelBullish', 'funnelConfidence', 'funnelEligible'].forEach((id) => {
-      if ($(id)) $(id).textContent = '--';
+      const el = funnelEl(id);
+      if (el) el.textContent = '--';
     });
-    if ($('funnelStatus')) $('funnelStatus').textContent = 'sin datos';
-    if ($('funnelReasons')) $('funnelReasons').textContent = 'Esperando evidencia del funnel.';
+    if (funnelEl('funnelStatus')) funnelEl('funnelStatus').textContent = 'sin datos';
+    if (funnelEl('funnelReasons')) funnelEl('funnelReasons').textContent = 'Esperando evidencia del funnel.';
     return;
   }
   const counts = f.counts || {};
   const value = (key) => Number.isFinite(Number(counts[key])) ? String(Number(counts[key])) : '--';
-  $('funnelObserved').textContent = value('observed');
-  $('funnelOfficial').textContent = value('officialHorizon');
-  $('funnelBullish').textContent = value('bullishBias');
-  $('funnelConfidence').textContent = value('highConfidence');
-  $('funnelEligible').textContent = value('eligible');
-  $('funnelStatus').textContent = `protocolo ${f.protocol || 'read-only'}`;
+  funnelEl('funnelObserved').textContent = value('observed');
+  funnelEl('funnelOfficial').textContent = value('officialHorizon');
+  funnelEl('funnelBullish').textContent = value('bullishBias');
+  funnelEl('funnelConfidence').textContent = value('highConfidence');
+  funnelEl('funnelEligible').textContent = value('eligible');
+  funnelEl('funnelStatus').textContent = `protocolo ${f.protocol || 'read-only'}`;
   const rejected = f.rejectedByReason && typeof f.rejectedByReason === 'object' ? Object.entries(f.rejectedByReason) : [];
   const lifecycle = f.lifecycle || {};
   const rejectionText = rejected.length
     ? rejected.map(([reason, count]) => `${reason}: ${count}`).join(' · ')
     : 'Sin rechazos publicados.';
-  $('funnelReasons').textContent = `${rejectionText} · abiertas: ${Number(lifecycle.opened || 0)} · verificadas: ${Number(lifecycle.verified || 0)}`;
+  funnelEl('funnelReasons').textContent = `${rejectionText} · abiertas: ${Number(lifecycle.opened || 0)} · verificadas: ${Number(lifecycle.verified || 0)}`;
 }
 
 function normalizedPaperPayload(payload) {
