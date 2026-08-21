@@ -9,15 +9,16 @@ const CONFIG = Object.freeze({
   marketRefreshMs: 15000,
   modelRefreshMs: 30000,
   marketCandleLimit: 160,
+  verifiedSnapshotKey: 'btcScenarioDashboardVerifiedV2',
 });
 
 const BASE_TRIAL = Object.freeze({
   trialId: CONFIG.trialId,
   requiredDays: CONFIG.requiredDays,
-  completedDays: 0,
+  completedDays: null,
   firstCompleteDay: '2026-08-18',
   manifestDigest: '757422dbd20fead8503f0545766f06b5df020c78eab2bf036d72c5f72ef9fd03',
-  status: 'INITIALIZED',
+  status: 'UNAVAILABLE',
 });
 
 const chartState = { interval: '5m', candles: [], ticker: null };
@@ -87,26 +88,70 @@ function setClassText(id, text, className = '') {
   if (className) el.classList.add(className);
 }
 
-function setTrial(input) {
+function setTrial(input, { stale = false } = {}) {
   const t = { ...BASE_TRIAL, ...(input || {}) };
-  const req = Number(t.requiredDays) || 90;
-  const validDone = Number.isFinite(Number(t.completedDays));
-  const done = validDone ? Math.max(0, Math.min(req, Number(t.completedDays))) : 0;
+  const req = Number(t.requiredDays) || CONFIG.requiredDays;
+  const hasCompletedDays = t.completedDays !== null && t.completedDays !== undefined && t.completedDays !== '';
+  const validDone = hasCompletedDays && Number.isFinite(Number(t.completedDays));
+  const done = validDone ? Math.max(0, Math.min(req, Number(t.completedDays))) : null;
   const pct = validDone && req ? (done / req) * 100 : 0;
   document.documentElement.style.setProperty('--trial-pct', `${pct}%`);
   $('trialCounter').textContent = validDone ? `${done} / ${req}` : `-- / ${req}`;
   $('trialPct').textContent = validDone ? `${pct.toFixed(pct < 10 ? 1 : 0)}%` : '--';
-  $('trialDays').textContent = validDone ? `${done} de ${req}` : 'evidencia bloqueada';
+  $('trialDays').textContent = validDone ? `${done} de ${req}` : 'evidencia no disponible';
   $('trialId').textContent = t.trialId || CONFIG.trialId;
   $('firstDay').textContent = t.firstCompleteDay || '--';
   const digest = t.manifestDigest || '';
   $('manifest').textContent = digest ? `${digest.slice(0, 10)}…${digest.slice(-6)}` : '--';
-  $('trialState').textContent = `${t.status || 'UNKNOWN'}${validDone ? ` · ${done}/${req}` : ''}`;
-  $('trialStatus').textContent = t.status === 'BLOCKED' || String(t.status).startsWith('BLOCKED')
-    ? 'La continuidad formal no pudo validarse. El contador queda bloqueado y no avanza.'
-    : 'Sólo cuentan días completos con evidencia fail-closed.';
-  const isHealthy = !(t.status === 'BLOCKED' || String(t.status).startsWith('BLOCKED'));
-  setClassText('trialHealth', isHealthy ? (t.status || 'INITIALIZED') : 'BLOCKED', isHealthy ? 'goodText' : 'badText');
+  const status = t.status || 'UNKNOWN';
+  $('trialState').textContent = `${status}${validDone ? ` · ${done}/${req}` : ''}${stale ? ' · SNAPSHOT' : ''}`;
+  if (stale) {
+    $('trialStatus').textContent = 'Mostrando el último snapshot verificado. La API está temporalmente fuera de línea; el contador no se reinicia.';
+  } else if (status === 'UNAVAILABLE') {
+    $('trialStatus').textContent = 'La API todavía no respondió y no hay un snapshot verificado local.';
+  } else if (status === 'BLOCKED' || String(status).startsWith('BLOCKED')) {
+    $('trialStatus').textContent = 'La continuidad formal no pudo validarse. El contador queda bloqueado y no avanza.';
+  } else {
+    $('trialStatus').textContent = 'Sólo cuentan días completos con evidencia fail-closed.';
+  }
+  const blocked = status === 'BLOCKED' || String(status).startsWith('BLOCKED');
+  const className = blocked ? 'badText' : stale || status === 'UNAVAILABLE' ? 'warnText' : 'goodText';
+  const healthLabel = stale ? `${status} · SNAPSHOT` : blocked ? 'BLOCKED' : status;
+  setClassText('trialHealth', healthLabel, className);
+}
+
+function snapshotIsSafe(data) {
+  if (!data || typeof data !== 'object') return false;
+  const rt = data.runtime || {};
+  const trial = data.trial || {};
+  return data.mode === 'SHADOW'
+    && data.spotOnly === true
+    && data.automaticExecution === false
+    && rt.shadowMode === true
+    && rt.operationMode === 'SPOT_ONLY'
+    && rt.allowShort === false
+    && trial.trialId === CONFIG.trialId
+    && Number.isFinite(Number(trial.completedDays))
+    && Number(trial.completedDays) >= 0
+    && Number(trial.completedDays) <= CONFIG.requiredDays;
+}
+
+function saveVerifiedSnapshot(data) {
+  if (!snapshotIsSafe(data)) return;
+  try {
+    localStorage.setItem(CONFIG.verifiedSnapshotKey, JSON.stringify({ savedAt: Date.now(), data }));
+  } catch {
+    // Resilience cache is best effort only.
+  }
+}
+
+function readVerifiedSnapshot() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CONFIG.verifiedSnapshotKey) || 'null');
+    return cached && snapshotIsSafe(cached.data) ? cached.data : null;
+  } catch {
+    return null;
+  }
 }
 
 async function loadTicker() {
@@ -310,7 +355,7 @@ function renderAnalytics(rows) {
   $('analyticsBA').textContent = Number.isFinite(avg(ba)) ? avg(ba).toFixed(3) : '--';
   $('analyticsECE').textContent = Number.isFinite(avg(ece)) ? avg(ece).toFixed(3) : '--';
   $('analyticsBSS').textContent = Number.isFinite(avg(bss)) ? avg(bss).toFixed(3) : '--';
-  $('analyticsSamples').textContent = Number.isFinite(Math.max(...samples)) ? Math.max(...samples).toFixed(0) : '--';
+  $('analyticsSamples').textContent = samples.length ? Math.max(...samples).toFixed(0) : '--';
   const blocked = eligible.filter((x) => String(x.executionViability || '').toUpperCase().includes('BLOQUE')).length;
   $('analyticsGate').textContent = eligible.length ? `${blocked}/${eligible.length} bloqueadas` : '--';
 }
@@ -330,18 +375,81 @@ function renderDecisions(rows) {
   renderAnalytics(list);
 }
 
+function ensureFunnelUi() {
+  if ($('paperFunnelPanel')) return;
+  const lowerGrid = document.querySelector('#overview .lowerGrid');
+  if (!lowerGrid) return;
+  lowerGrid.insertAdjacentHTML('afterend', `
+    <article class="panel content" id="paperFunnelPanel" style="margin-top:10px">
+      <div class="head"><div><div class="ey">Embudo de elegibilidad</div><h3>De observación a señal Paper elegible</h3></div><span class="chip" id="funnelStatus">sin datos</span></div>
+      <p class="tiny">Cada etapa muestra cuántas observaciones siguen vivas después de aplicar los filtros del motor. Cero elegibles no significa cero datos.</p>
+      <div class="analyticsGrid">
+        <div class="analyticsCard"><span>Observadas</span><strong id="funnelObserved">--</strong></div>
+        <div class="analyticsCard"><span>Horizonte oficial</span><strong id="funnelOfficial">--</strong></div>
+        <div class="analyticsCard"><span>Sesgo bullish</span><strong id="funnelBullish">--</strong></div>
+        <div class="analyticsCard"><span>Alta confianza</span><strong id="funnelConfidence">--</strong></div>
+        <div class="analyticsCard"><span>Elegibles</span><strong id="funnelEligible">--</strong></div>
+      </div>
+      <div class="bannerNote" id="funnelReasons">Esperando evidencia del funnel.</div>
+    </article>
+  `);
+}
+
+function renderFunnel(funnel) {
+  ensureFunnelUi();
+  const f = funnel && typeof funnel === 'object' ? funnel : null;
+  if (!f) {
+    ['funnelObserved', 'funnelOfficial', 'funnelBullish', 'funnelConfidence', 'funnelEligible'].forEach((id) => {
+      if ($(id)) $(id).textContent = '--';
+    });
+    if ($('funnelStatus')) $('funnelStatus').textContent = 'sin datos';
+    if ($('funnelReasons')) $('funnelReasons').textContent = 'Esperando evidencia del funnel.';
+    return;
+  }
+  const counts = f.counts || {};
+  const value = (key) => Number.isFinite(Number(counts[key])) ? String(Number(counts[key])) : '--';
+  $('funnelObserved').textContent = value('observed');
+  $('funnelOfficial').textContent = value('officialHorizon');
+  $('funnelBullish').textContent = value('bullishBias');
+  $('funnelConfidence').textContent = value('highConfidence');
+  $('funnelEligible').textContent = value('eligible');
+  $('funnelStatus').textContent = `protocolo ${f.protocol || 'read-only'}`;
+  const rejected = f.rejectedByReason && typeof f.rejectedByReason === 'object' ? Object.entries(f.rejectedByReason) : [];
+  const lifecycle = f.lifecycle || {};
+  const rejectionText = rejected.length
+    ? rejected.map(([reason, count]) => `${reason}: ${count}`).join(' · ')
+    : 'Sin rechazos publicados.';
+  $('funnelReasons').textContent = `${rejectionText} · abiertas: ${Number(lifecycle.opened || 0)} · verificadas: ${Number(lifecycle.verified || 0)}`;
+}
+
+function normalizedPaperPayload(payload) {
+  const root = payload && typeof payload === 'object' ? payload : {};
+  const book = root.paper && typeof root.paper === 'object' ? root.paper : root;
+  const metrics = book.metrics && typeof book.metrics === 'object' ? book.metrics : {};
+  const trades = Array.isArray(book.trades) ? book.trades : Array.isArray(root.trades) ? root.trades : [];
+  return {
+    simulatedTrades: root.simulatedTrades ?? book.verified ?? metrics.verifiedTrades ?? 0,
+    winRatePct: root.winRatePct ?? metrics.winRatePct ?? null,
+    netPnlPct: root.netPnlPct ?? metrics.netReturnPct ?? null,
+    drawdownPct: root.drawdownPct ?? metrics.maxDrawdownPct ?? null,
+    trades,
+    note: root.note || (root.status ? `Estado Paper: ${root.status}. Sólo se publican operaciones con entrada, salida y evidencia verificadas.` : ''),
+    funnel: root.funnel || null,
+  };
+}
+
 function renderPaper(paper) {
-  const p = paper || {};
-  $('pTrades').textContent = p.simulatedTrades ?? 0;
+  const p = normalizedPaperPayload(paper);
+  $('pTrades').textContent = Number.isFinite(Number(p.simulatedTrades)) ? String(Number(p.simulatedTrades)) : '--';
   $('pWin').textContent = Number.isFinite(Number(p.winRatePct)) ? fmtPct(p.winRatePct) : '--';
   $('pPnl').textContent = Number.isFinite(Number(p.netPnlPct)) ? fmtPct(p.netPnlPct, 2) : '--';
   $('pDd').textContent = Number.isFinite(Number(p.drawdownPct)) ? fmtPct(p.drawdownPct, 2) : '--';
   if (p.note) $('paperNote').textContent = p.note;
-  const trades = Array.isArray(p.trades) ? p.trades : [];
-  $('tradesBody').innerHTML = trades.length ? trades.map((x) => `
+  $('tradesBody').innerHTML = p.trades.length ? p.trades.map((x) => `
     <tr><td>${fmtTime(x.closedAt || x.timestamp)}</td><td>${x.horizon || '--'}</td><td>${fmtUsd(x.entryPrice)}</td>
     <td>${fmtUsd(x.exitPrice)}</td><td>${x.result || '--'}</td><td>${Number.isFinite(Number(x.netPnlPct)) ? fmtPct(x.netPnlPct, 2) : '--'}</td><td>${x.evidenceRef || '--'}</td></tr>`).join('')
     : '<tr><td colspan="7">Sin trades simulados verificados publicados por la API.</td></tr>';
+  renderFunnel(p.funnel);
 }
 
 function updateFreshness() {
@@ -365,40 +473,69 @@ function updateFreshness() {
   }
 }
 
-async function loadModel() {
-  try {
-    const data = await fetchJson(`${CONFIG.apiBase}/api/v1/dashboard`, 14000);
-    modelState = data;
-    const rt = data.runtime || {};
-    const ready = rt.ready === true && rt.shadowMode === true && rt.operationMode === 'SPOT_ONLY' && rt.allowShort === false;
+function renderModelData(data, { stale = false } = {}) {
+  modelState = data;
+  const rt = data.runtime || {};
+  const ready = rt.ready === true && rt.shadowMode === true && rt.operationMode === 'SPOT_ONLY' && rt.allowShort === false;
+  if (stale) {
+    setClassText('engineState', 'ÚLTIMO DATO', 'warnText');
+    $('engineMeta').textContent = 'snapshot verificado';
+    setClassText('apiStatus', 'OFFLINE', 'badText');
+    $('runtimeChip').className = 'chip warn';
+    $('runtimeChip').textContent = '● ÚLTIMO DATO VERIFICADO';
+  } else {
     setClassText('engineState', ready ? 'ONLINE' : 'NOT READY', ready ? 'goodText' : 'badText');
     $('engineMeta').textContent = ready ? 'runtime validado' : 'fail-closed';
     setClassText('apiStatus', 'ONLINE', 'goodText');
     $('runtimeChip').className = `chip ${ready ? 'good' : 'bad'}`;
     $('runtimeChip').textContent = ready ? '● MOTOR ONLINE' : '● MOTOR NOT READY';
-    $('runtimeText').textContent = `${rt.modelVersion || CONFIG.modelVersion} · ${rt.operationMode || '--'} · SHADOW=${rt.shadowMode === true ? 'true' : '--'}`;
-    $('revision').textContent = rt.revision || '--';
-    $('lastCycle').textContent = fmtTime(rt.lastSuccessfulCycleAt);
-    $('errorState').textContent = rt.errorState || 'NONE';
-    $('apiGenerated').textContent = fmtTime(data.generatedAt);
-    $('systemRuntime').textContent = rt.revision || '--';
-    $('systemApi').textContent = 'btc-shadow-dashboard-api-00002-6zb';
-    $('systemMode').textContent = `${data.mode || '--'} / ${data.spotOnly ? 'SPOT_ONLY' : '--'}`;
-    setTrial(data.trial);
-    renderDecisions(data.decisions);
-    renderPaper(data.paper);
-    updateFreshness();
-    $('sideDetail').textContent = 'Motor y trial servidos por API sanitizada sólo lectura.';
+  }
+  $('runtimeText').textContent = stale
+    ? `${rt.modelVersion || CONFIG.modelVersion} · ${rt.operationMode || '--'} · último snapshot local verificado`
+    : `${rt.modelVersion || CONFIG.modelVersion} · ${rt.operationMode || '--'} · SHADOW=${rt.shadowMode === true ? 'true' : '--'}`;
+  $('revision').textContent = rt.revision || '--';
+  $('lastCycle').textContent = fmtTime(rt.lastSuccessfulCycleAt);
+  $('errorState').textContent = rt.errorState || 'NONE';
+  $('apiGenerated').textContent = fmtTime(data.generatedAt);
+  $('systemRuntime').textContent = rt.revision || '--';
+  $('systemApi').textContent = data.apiRevision || data.serviceRevision || data.apiVersion || '--';
+  $('systemMode').textContent = `${data.mode || '--'} / ${data.spotOnly ? 'SPOT_ONLY' : '--'}`;
+  setTrial(data.trial, { stale });
+  renderDecisions(data.decisions);
+  renderPaper(data.paper);
+  updateFreshness();
+  $('sideDetail').textContent = stale
+    ? 'API temporalmente offline. Se conserva el último snapshot verificado; no se inventan datos nuevos.'
+    : 'Motor, trial y funnel servidos por API sanitizada sólo lectura.';
+}
+
+function renderUnavailableState() {
+  setClassText('engineState', 'SIN API', 'badText');
+  $('engineMeta').textContent = 'fail-closed';
+  setClassText('apiStatus', 'OFFLINE', 'badText');
+  $('runtimeChip').className = 'chip bad';
+  $('runtimeChip').textContent = '● API READ-ONLY OFFLINE';
+  $('runtimeText').textContent = 'No hay snapshot verificado disponible. El dashboard no sustituye datos faltantes por cero.';
+  $('sideDetail').textContent = 'La API read-only no respondió y todavía no existe un snapshot local verificado.';
+  setTrial(BASE_TRIAL);
+  renderFunnel(null);
+  $('pTrades').textContent = '--';
+  updateFreshness();
+}
+
+async function loadModel() {
+  try {
+    const data = await fetchJson(`${CONFIG.apiBase}/api/v1/dashboard`, 14000);
+    renderModelData(data);
+    saveVerifiedSnapshot(data);
   } catch (error) {
-    modelState = null;
-    setClassText('engineState', 'SIN API', 'badText');
-    $('engineMeta').textContent = 'fail-closed';
-    setClassText('apiStatus', 'OFFLINE', 'badText');
-    $('runtimeChip').className = 'chip bad';
-    $('runtimeChip').textContent = '● API READ-ONLY OFFLINE';
-    $('runtimeText').textContent = 'No se sustituyen datos faltantes. El dashboard queda fail-closed.';
-    $('sideDetail').textContent = 'La API read-only no respondió. No se muestran datos inventados.';
-    updateFreshness();
+    if (modelState && snapshotIsSafe(modelState)) {
+      renderModelData(modelState, { stale: true });
+    } else {
+      const cached = readVerifiedSnapshot();
+      if (cached) renderModelData(cached, { stale: true });
+      else renderUnavailableState();
+    }
   }
 }
 
@@ -439,7 +576,10 @@ function initNavigation() {
 function init() {
   initNavigation();
   initResponsiveChart();
-  setTrial(BASE_TRIAL);
+  ensureFunnelUi();
+  const cached = readVerifiedSnapshot();
+  if (cached) renderModelData(cached, { stale: true });
+  else renderUnavailableState();
   refreshAll();
   marketTimer = setInterval(loadTicker, CONFIG.marketRefreshMs);
   modelTimer = setInterval(loadModel, CONFIG.modelRefreshMs);
