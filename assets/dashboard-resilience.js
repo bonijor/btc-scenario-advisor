@@ -1,3 +1,5 @@
+const SNAPSHOT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
 function funnelEl(id) {
   return document.getElementById(id);
 }
@@ -13,25 +15,61 @@ export function snapshotIsSafe(data, trialId, requiredDays = 90) {
     && rt.operationMode === 'SPOT_ONLY'
     && rt.allowShort === false
     && trial.trialId === trialId
+    && trial.status === 'VERIFIED'
     && Number.isFinite(Number(trial.completedDays))
     && Number(trial.completedDays) >= 0
     && Number(trial.completedDays) <= requiredDays;
 }
 
+function cacheProjection(data) {
+  const paper = data.paper && typeof data.paper === 'object' ? data.paper : null;
+  return {
+    apiVersion: data.apiVersion,
+    generatedAt: data.generatedAt,
+    mode: data.mode,
+    spotOnly: data.spotOnly,
+    automaticExecution: data.automaticExecution,
+    runtime: data.runtime,
+    trial: data.trial,
+    decisions: Array.isArray(data.decisions) ? data.decisions.slice(0, 15) : [],
+    paper: paper ? {
+      status: paper.status,
+      funnel: paper.funnel,
+      paper: paper.paper ? {
+        activeOpen: paper.paper.activeOpen,
+        verified: paper.paper.verified,
+        metrics: paper.paper.metrics,
+        trades: Array.isArray(paper.paper.trades) ? paper.paper.trades.slice(0, 20) : [],
+      } : undefined,
+      simulatedTrades: paper.simulatedTrades,
+      winRatePct: paper.winRatePct,
+      netPnlPct: paper.netPnlPct,
+      drawdownPct: paper.drawdownPct,
+      trades: Array.isArray(paper.trades) ? paper.trades.slice(0, 20) : undefined,
+      note: paper.note,
+    } : null,
+  };
+}
+
 export function saveVerifiedSnapshot(storage, key, data, trialId, requiredDays = 90) {
   if (!snapshotIsSafe(data, trialId, requiredDays)) return;
   try {
-    storage.setItem(key, JSON.stringify({ savedAt: Date.now(), data }));
+    storage.setItem(key, JSON.stringify({ savedAt: Date.now(), data: cacheProjection(data) }));
   } catch {
-    // Cache is best effort only.
+    // Cache is best effort only and never stores Firebase tokens or account data.
   }
 }
 
-export function readVerifiedSnapshot(storage, key, trialId, requiredDays = 90) {
+export function readVerifiedSnapshot(storage, key, trialId, requiredDays = 90, now = Date.now()) {
   try {
     const cached = JSON.parse(storage.getItem(key) || 'null');
-    return cached && snapshotIsSafe(cached.data, trialId, requiredDays) ? cached.data : null;
+    const savedAt = Number(cached?.savedAt);
+    const freshEnough = Number.isFinite(savedAt) && savedAt <= now + 60_000 && now - savedAt <= SNAPSHOT_MAX_AGE_MS;
+    if (cached && freshEnough && snapshotIsSafe(cached.data, trialId, requiredDays)) return cached.data;
+    storage.removeItem(key);
+    return null;
   } catch {
+    try { storage.removeItem(key); } catch { /* best effort */ }
     return null;
   }
 }
