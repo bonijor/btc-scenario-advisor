@@ -3,6 +3,7 @@ import { stat, readFile } from 'node:fs/promises';
 const budgets = new Map([
   ['index.html', 26_000],
   ['assets/app.js', 24_000],
+  ['assets/dashboard-resilience.js', 6_000],
   ['assets/styles.css', 20_000],
   ['assets/responsive-bootstrap.js', 1_500],
   ['assets/accessibility.js', 6_000],
@@ -23,8 +24,8 @@ for (const [path, maxBytes] of budgets) {
   if (size > maxBytes) failures.push(`${path} exceeds budget by ${size - maxBytes} bytes`);
 }
 
-// Phase 2D adds cloud-profile modules, but both Firestore JS and its CSS are lazy:
-// they are requested only after the user opens Cuenta and authenticates.
+// Phase 2D adds cloud-profile modules and dashboard resilience helpers lazily.
+// They are not critical HTML requests, but they remain inside the aggregate source budget.
 const totalBudget = 135_000;
 if (total > totalBudget) failures.push(`frontend source total ${total} exceeds ${totalBudget} bytes`);
 
@@ -39,4 +40,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`PASS_STATIC_PERFORMANCE_BUDGET total=${total}/${totalBudget} criticalRequests=${uniqueRefs.length}/7 lazyAuthAdapter=1 lazyCloudProfile=1`);
+console.log(`PASS_STATIC_PERFORMANCE_BUDGET total=${total}/${totalBudget} criticalRequests=${uniqueRefs.length}/7 lazyAuthAdapter=1 lazyCloudProfile=1 lazyDashboardResilience=1`);
