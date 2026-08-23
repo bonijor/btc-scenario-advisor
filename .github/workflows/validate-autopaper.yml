@@ -48,6 +48,17 @@ jobs:
           grep -q 'NO_DATA' assets/paper-kpi-contract.js
           grep -q 'verifiedTrades' assets/paper-kpi-contract.js
           echo 'PASS_AUTOPAPER_V21_KPI_CONTRACT'
+      - name: Validate Quant decision bridge from diagnostics
+        run: |
+          grep -q 'quantDecisionsFromDiagnostics' assets/paper-kpi-contract.js
+          grep -q '__BTC_QUANT_DIAGNOSTIC_FETCH_BRIDGE__' assets/paper-kpi-contract.js
+          grep -q "check(diagnostic, 'activationReached')" assets/paper-kpi-contract.js
+          grep -q "check(diagnostic, 'dataQuality')" assets/paper-kpi-contract.js
+          grep -q "check(diagnostic, 'balancedAccuracy')" assets/paper-kpi-contract.js
+          grep -q "check(diagnostic, 'brierSkill')" assets/paper-kpi-contract.js
+          grep -q "check(diagnostic, 'ece')" assets/paper-kpi-contract.js
+          grep -q "source: 'paper-distance-to-eligible-v2.1'" assets/paper-kpi-contract.js
+          echo 'PASS_QUANT_DECISION_DIAGNOSTIC_BRIDGE'
       - name: Enforce read-only safety envelope
         shell: bash
         run: |
