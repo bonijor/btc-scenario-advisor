@@ -49,6 +49,72 @@
     return `${comparator} ${diagnosticValue(check?.target, check?.unit)}`;
   }
 
+  function officialDiagnostics(paper) {
+    return Array.isArray(paper?.funnel?.diagnostics)
+      ? paper.funnel.diagnostics.filter((item) =>
+        item?.protocol === DIAGNOSTIC_PROTOCOL && (item?.horizon === '5m' || item?.horizon === '15m'))
+      : [];
+  }
+
+  function check(diagnostic, id) {
+    return Array.isArray(diagnostic?.checks)
+      ? diagnostic.checks.find((item) => item?.id === id) || null
+      : null;
+  }
+
+  function quantDecisionsFromDiagnostics(paper) {
+    const timestamp = paper?.latestRun?.lastSuccessfulCycleAt || paper?.generatedAt || null;
+    return officialDiagnostics(paper).map((diagnostic) => {
+      const action = check(diagnostic, 'shadowAction')?.actual;
+      const actionSuggested = action && typeof action === 'object' ? action.suggested : null;
+      return {
+        timestamp,
+        signalId: diagnostic.signalId || null,
+        horizon: diagnostic.horizon || null,
+        decision: actionSuggested || null,
+        reason: diagnostic.firstFailureReason || diagnostic.result || null,
+        activation: check(diagnostic, 'activationReached')?.target ?? null,
+        invalidation: null,
+        signalQuality: check(diagnostic, 'dataQuality')?.actual ?? null,
+        balancedAccuracy: check(diagnostic, 'balancedAccuracy')?.actual ?? null,
+        brierSkillScore: check(diagnostic, 'brierSkill')?.actual ?? null,
+        ece: check(diagnostic, 'ece')?.actual ?? null,
+        evaluatedSamples: check(diagnostic, 'evaluatedCount')?.actual ?? null,
+        executionViability: diagnostic.eligible === true ? 'ELIGIBLE' : 'BLOQUEADA',
+        modelState: 'SHADOW',
+        source: 'paper-distance-to-eligible-v2.1',
+      };
+    });
+  }
+
+  function installDashboardDecisionBridge() {
+    if (window.__BTC_QUANT_DIAGNOSTIC_FETCH_BRIDGE__ === true) return;
+    window.__BTC_QUANT_DIAGNOSTIC_FETCH_BRIDGE__ = true;
+    const baseFetch = window.fetch.bind(window);
+    window.fetch = async (input, init) => {
+      const response = await baseFetch(input, init);
+      let url;
+      try { url = new URL(input?.url || input, location.href); } catch { return response; }
+      if (url.pathname !== '/api/v1/dashboard' || !response.ok) return response;
+      try {
+        const data = await response.clone().json();
+        if (Array.isArray(data?.decisions) && data.decisions.length) return response;
+        const decisions = quantDecisionsFromDiagnostics(data?.paper || {});
+        if (!decisions.length) return response;
+        const headers = new Headers(response.headers);
+        headers.delete('content-length');
+        headers.set('content-type', 'application/json; charset=utf-8');
+        return new Response(JSON.stringify({ ...data, decisions }), {
+          status: response.status,
+          statusText: response.statusText,
+          headers,
+        });
+      } catch {
+        return response;
+      }
+    };
+  }
+
   function ensureDiagnosticsCard() {
     let card = $('apDiagnosticsCard');
     if (card) return card;
@@ -74,11 +140,7 @@
     const state = $('apDiagnosticsState');
     if (!node) return;
 
-    const diagnostics = Array.isArray(paper?.funnel?.diagnostics)
-      ? paper.funnel.diagnostics.filter((item) =>
-        item?.protocol === DIAGNOSTIC_PROTOCOL && (item?.horizon === '5m' || item?.horizon === '15m'))
-      : [];
-
+    const diagnostics = officialDiagnostics(paper);
     diagnostics.sort((a, b) => (a.horizon === '5m' ? -1 : 1) - (b.horizon === '5m' ? -1 : 1));
 
     if (!diagnostics.length) {
@@ -95,15 +157,15 @@
       const progress = Math.max(0, Math.min(100, num(diagnostic.progressPct) ?? 0));
       const remaining = num(diagnostic.remainingChecks);
       const checks = Array.isArray(diagnostic.checks) ? diagnostic.checks : [];
-      const failed = checks.filter((check) => check?.pass !== true).length;
+      const failed = checks.filter((item) => item?.pass !== true).length;
       const firstFailure = diagnostic.firstFailureReason || 'NINGUNO';
 
-      const checkRows = checks.map((check) => {
-        const pass = check?.pass === true;
-        const shortfall = num(check?.shortfall);
+      const checkRows = checks.map((item) => {
+        const pass = item?.pass === true;
+        const shortfall = num(item?.shortfall);
         return `<div class="ap-check ${pass ? 'pass' : 'fail'}">
-          <div class="ap-check-main"><span>${pass ? '✓' : '×'}</span><b>${esc(check?.label || check?.id || 'Check')}</b><strong>${esc(diagnosticValue(check?.actual, check?.unit))}</strong></div>
-          <div class="ap-check-meta"><code>${esc(check?.id || '--')}</code><span>objetivo ${esc(requirement(check))}</span>${shortfall !== null && shortfall > 0 ? `<em>falta ${esc(diagnosticValue(shortfall, check?.unit))}</em>` : ''}</div>
+          <div class="ap-check-main"><span>${pass ? '✓' : '×'}</span><b>${esc(item?.label || item?.id || 'Check')}</b><strong>${esc(diagnosticValue(item?.actual, item?.unit))}</strong></div>
+          <div class="ap-check-meta"><code>${esc(item?.id || '--')}</code><span>objetivo ${esc(requirement(item))}</span>${shortfall !== null && shortfall > 0 ? `<em>falta ${esc(diagnosticValue(shortfall, item?.unit))}</em>` : ''}</div>
         </div>`;
       }).join('');
 
@@ -169,13 +231,16 @@
     window.renderPaper = wrapped;
     window.BTCAutoPaperKpi = Object.freeze({
       protocol: DIAGNOSTIC_PROTOCOL,
-      version: '1.0',
+      version: '1.1',
       render: applyContract,
+      quantDecisionsFromDiagnostics,
     });
 
     setTimeout(() => $('refresh')?.click(), 0);
     return true;
   }
+
+  installDashboardDecisionBridge();
 
   if (!install()) {
     let attempts = 0;
