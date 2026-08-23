@@ -1,3 +1,5 @@
+import './quant-decision-bridge.js';
+
 const FIREBASE_SDK_VERSION = '12.16.0';
 
 const FIREBASE_CONFIG = Object.freeze({
