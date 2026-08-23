@@ -21,10 +21,18 @@ jobs:
         run: |
           test -s assets/paper-funnel.js
           test -s assets/paper-funnel.css
+          test -s assets/paper-kpi-contract.js
+          test -s assets/paper-kpi-contract.css
+          test -s assets/quant-decision-bridge.js
           node --check assets/paper-funnel.js
+          node --check assets/paper-kpi-contract.js
+          node --check assets/quant-decision-bridge.js
           node --check assets/responsive-bootstrap.js
           grep -q 'paper-funnel.js' assets/responsive-bootstrap.js
           grep -q 'paper-funnel.css' assets/responsive-bootstrap.js
+          grep -q 'paper-kpi-contract.js' assets/responsive-bootstrap.js
+          grep -q "import './quant-decision-bridge.js'" assets/firebase-auth.js
+          grep -q 'paper-kpi-contract.css' assets/paper-funnel.css
       - name: Validate v2 Paper contract mapping
         run: |
           grep -q 'WAITING_CONDITIONS' assets/paper-funnel.js
@@ -34,6 +42,26 @@ jobs:
           grep -q 'summaryDigest' assets/paper-funnel.js
           grep -q 'recordDigest' assets/paper-funnel.js
           grep -q 'evidenceDigest' assets/paper-funnel.js
+      - name: Validate v2.1 diagnostics and no-data semantics
+        run: |
+          grep -q 'btc-shadow-paper-distance-to-eligible/1.0' assets/paper-kpi-contract.js
+          grep -q 'funnel?.diagnostics' assets/paper-kpi-contract.js
+          grep -q 'remainingChecks' assets/paper-kpi-contract.js
+          grep -q 'progressPct' assets/paper-kpi-contract.js
+          grep -q 'NO_DATA' assets/paper-kpi-contract.js
+          grep -q 'verifiedTrades' assets/paper-kpi-contract.js
+          echo 'PASS_AUTOPAPER_V21_KPI_CONTRACT'
+      - name: Validate Quant decision bridge from diagnostics
+        run: |
+          grep -q 'decisionsFromPaper' assets/quant-decision-bridge.js
+          grep -q '__BTC_QUANT_DIAGNOSTIC_FETCH_BRIDGE__' assets/quant-decision-bridge.js
+          grep -q "check(diagnostic, 'activationReached')" assets/quant-decision-bridge.js
+          grep -q "check(diagnostic, 'dataQuality')" assets/quant-decision-bridge.js
+          grep -q "check(diagnostic, 'balancedAccuracy')" assets/quant-decision-bridge.js
+          grep -q "check(diagnostic, 'brierSkill')" assets/quant-decision-bridge.js
+          grep -q "check(diagnostic, 'ece')" assets/quant-decision-bridge.js
+          grep -q "source: 'paper-distance-to-eligible-v2.1'" assets/quant-decision-bridge.js
+          echo 'PASS_QUANT_DECISION_DIAGNOSTIC_BRIDGE'
       - name: Enforce read-only safety envelope
         shell: bash
         run: |
@@ -43,8 +71,8 @@ jobs:
           grep -q 'exchangeOrderRequestMade === false' assets/paper-funnel.js
           grep -q 'safety.spotOnly === true' assets/paper-funnel.js
           grep -q 'safety.shortsAllowed === false' assets/paper-funnel.js
-          if grep -niE -- "method:[[:space:]]*['\"](POST|PUT|PATCH|DELETE)['\"]|/api/v3/order" assets/paper-funnel.js; then
-            echo 'Auto-Paper module contains a prohibited write/order path.'
+          if grep -niE -- "method:[[:space:]]*['\"](POST|PUT|PATCH|DELETE)['\"]|/api/v3/order" assets/paper-funnel.js assets/paper-kpi-contract.js assets/quant-decision-bridge.js; then
+            echo 'Auto-Paper/Quant bridge contains a prohibited write/order path.'
             exit 1
           fi
           echo 'PASS_AUTOPAPER_READONLY_CONTRACT'
