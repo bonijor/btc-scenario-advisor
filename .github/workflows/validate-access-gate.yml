@@ -45,13 +45,13 @@ jobs:
           const a11y = fs.readFileSync('assets/accessibility.css', 'utf8');
           const auth = fs.readFileSync('assets/firebase-auth.js', 'utf8');
           const boot = fs.readFileSync('assets/responsive-bootstrap.js', 'utf8');
-          const requiredGate = ['emailVerified === true', "setAttribute('inert'", 'resetPassword', 'refreshCurrentUser', 'sendVerification', 'Firebase Authentication no está disponible', 'getIdToken', "'/api/v1/dashboard'", "headers.set('authorization'", 'DASHBOARD_AUTH_TOKEN_UNAVAILABLE'];
+          const requiredGate = ['emailVerified === true', "setAttribute('inert'", 'resetPassword', 'refreshCurrentUser', 'sendVerification', 'Firebase Authentication no está disponible', 'getIdToken', "'/api/v1/dashboard'", "headers.set('x-btc-dashboard-authorization'", 'DASHBOARD_AUTH_TOKEN_UNAVAILABLE'];
           for (const token of requiredGate) if (!gate.includes(token)) throw new Error(`missing gate contract: ${token}`);
           if (!a11y.includes('body:not(.auth-gate-ready)')) throw new Error('dashboard is not fail-closed before auth gate resolves');
           if (!a11y.includes('body.auth-gate-ready:not(.auth-granted) .app')) throw new Error('unauthenticated protected backdrop missing');
           for (const token of ['sendPasswordResetEmail', 'sendEmailVerification', 'browserLocalPersistence', 'stateListeners']) if (!auth.includes(token)) throw new Error(`missing Firebase capability: ${token}`);
           for (const token of ['assets/access-gate.css', 'assets/access-gate.js']) if (!boot.includes(token)) throw new Error(`gate loader missing ${token}`);
-          for (const forbidden of ['temp_auth_token', 'sessionStorage.setItem', '/api/v3/order', 'automaticExecution=true']) {
+          for (const forbidden of ['temp_auth_token', 'sessionStorage.setItem', '/api/v3/order', 'automaticExecution=true', "headers.set('authorization'"]) {
             if (gate.includes(forbidden) || auth.includes(forbidden)) throw new Error(`forbidden auth/trading token: ${forbidden}`);
           }
           if (!gate.includes("url.hostname.endsWith('.run.app') && url.pathname === '/api/v1/dashboard'")) throw new Error('bearer scope is not restricted to dashboard Cloud Run path');
