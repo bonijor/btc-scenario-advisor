@@ -81,7 +81,7 @@
       if (!token) throw new Error('DASHBOARD_AUTH_TOKEN_UNAVAILABLE');
       const requestHeaders = typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined;
       const headers = new Headers(init.headers || requestHeaders || undefined);
-      headers.set('authorization', `Bearer ${token}`);
+      headers.set('x-btc-dashboard-authorization', `Bearer ${token}`);
       return baseFetch(input, { ...init, headers });
     };
   }
