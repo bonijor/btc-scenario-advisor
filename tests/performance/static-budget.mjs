@@ -2,7 +2,7 @@ import { stat, readFile } from 'node:fs/promises';
 
 const budgets = new Map([
   ['index.html', 26_000],
-  ['assets/app.js', 24_000],
+  ['assets/app.js', 26_000],
   ['assets/dashboard-resilience.js', 6_000],
   ['assets/styles.css', 20_000],
   ['assets/responsive-bootstrap.js', 1_500],
@@ -24,9 +24,9 @@ for (const [path, maxBytes] of budgets) {
   if (size > maxBytes) failures.push(`${path} exceeds budget by ${size - maxBytes} bytes`);
 }
 
-// Phase 2D adds cloud-profile modules and dashboard resilience helpers lazily.
-// They are not critical HTML requests, but they remain inside the aggregate source budget.
-const totalBudget = 135_000;
+// Data Pulse adds the closed-candle provenance contract without another critical request.
+// Lazy cloud-profile and resilience modules remain inside the aggregate source budget.
+const totalBudget = 138_000;
 if (total > totalBudget) failures.push(`frontend source total ${total} exceeds ${totalBudget} bytes`);
 
 const html = await readFile('index.html', 'utf8');

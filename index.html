@@ -80,6 +80,15 @@
         <div class="rMetric"><small>Error state</small><b id="errorState">--</b></div>
       </article>
 
+      <section class="panel dataPulse" aria-label="Procedencia y frescura de datos">
+        <div class="dataPulseTitle"><span>DATA PULSE</span><b>Una sola lectura · sin datos aproximados</b></div>
+        <article><span>Cotización BTC/USDT</span><strong id="pulsePrice">Validando…</strong><small id="pulseChange">Mercado público read-only</small></article>
+        <article><span>Fuente de velas</span><strong id="pulseSource">Binance público</strong><small>Sólo períodos cerrados</small></article>
+        <article><span>Último cierre <b id="pulseInterval">5m</b></span><strong id="pulseCloseAt">No disponible</strong><small id="pulseNextClose">Esperando velas verificables</small></article>
+        <article><span>Lectura Quant</span><strong id="pulseQuant" class="warnText">Validando</strong><small id="pulseQuantMeta">5m/15m son los únicos horizontes elegibles</small></article>
+        <article><span>Calidad / edad</span><strong id="pulseQuality">No evaluada</strong><small id="pulseAge">Falla cerrado</small></article>
+      </section>
+
       <div class="proGrid">
         <article class="panel chartPanel">
           <div class="head">
@@ -88,7 +97,8 @@
               <button class="tfButton" data-interval="1m" aria-pressed="false">1m</button>
               <button class="tfButton active" data-interval="5m" aria-pressed="true">5m</button>
               <button class="tfButton" data-interval="15m" aria-pressed="false">15m</button>
-              <button class="tfButton" data-interval="1h" aria-pressed="false">1h</button>
+              <button class="tfButton" data-interval="45m" aria-pressed="false">45m</button>
+              <button class="tfButton" data-interval="1d" aria-pressed="false">1d</button>
             </div>
           </div>
           <div class="chartWrap">
