@@ -74,14 +74,24 @@ test('new email accounts remain blocked until email verification is confirmed', 
   await expect(page.locator('body')).toHaveClass(/auth-granted/);
 });
 
-test('verified session attaches Firebase bearer only to dashboard Cloud Run request', async ({ page }) => {
+test('verified session attaches dedicated Firebase bearer only to dashboard Cloud Run request', async ({ page }) => {
   const observed = [];
   await page.route('https://btc-shadow-dashboard-api.example.run.app/**', async (route) => {
-    observed.push({ url: route.request().url(), authorization: route.request().headers().authorization || null });
+    const headers = route.request().headers();
+    observed.push({
+      url: route.request().url(),
+      authorization: headers.authorization || null,
+      dashboardAuthorization: headers['x-btc-dashboard-authorization'] || null,
+    });
     await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
   });
   await page.route('https://api.binance.com/**', async (route) => {
-    observed.push({ url: route.request().url(), authorization: route.request().headers().authorization || null });
+    const headers = route.request().headers();
+    observed.push({
+      url: route.request().url(),
+      authorization: headers.authorization || null,
+      dashboardAuthorization: headers['x-btc-dashboard-authorization'] || null,
+    });
     await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
   });
 
@@ -98,6 +108,8 @@ test('verified session attaches Firebase bearer only to dashboard Cloud Run requ
 
   const dashboard = observed.find((x) => x.url.includes('/api/v1/dashboard'));
   const binance = observed.find((x) => x.url.includes('api.binance.com'));
-  expect(dashboard?.authorization).toBe('Bearer qa-token');
+  expect(dashboard?.dashboardAuthorization).toBe('Bearer qa-token');
+  expect(dashboard?.authorization).toBeNull();
+  expect(binance?.dashboardAuthorization).toBeNull();
   expect(binance?.authorization).toBeNull();
 });
