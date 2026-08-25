@@ -61,6 +61,13 @@ canvas,img,svg{max-width:100%}
 .runtimeBanner h2{font-size:clamp(15px,1.5vw,19px);margin:6px 0 4px;overflow-wrap:anywhere}.chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;border:1px solid var(--line);background:rgba(5,10,18,.48);border-radius:999px;padding:6px 9px;font-size:9px;font-weight:900}.chip.good{color:var(--green);border-color:rgba(41,211,145,.28)}.chip.warn{color:var(--amber);border-color:rgba(246,199,93,.28)}.chip.bad{color:var(--red);border-color:rgba(255,102,120,.28)}
 .rMetric{border-left:1px solid var(--line);padding-left:12px;min-width:0}.rMetric small{display:block;color:var(--muted);font-size:9px;text-transform:uppercase}.rMetric b{display:block;margin-top:5px;font-size:11px;word-break:break-word}
 
+.dataPulse{margin-top:10px;padding:0;display:grid;grid-template-columns:minmax(145px,.75fr) minmax(175px,1.05fr) repeat(4,minmax(125px,.8fr));overflow:hidden;box-shadow:0 14px 42px rgba(0,0,0,.25)}
+.dataPulseTitle,.dataPulse article{min-height:84px;padding:13px 14px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--line);min-width:0}
+.dataPulse article:last-child{border-right:0}.dataPulseTitle{background:linear-gradient(135deg,rgba(88,168,255,.14),rgba(123,108,255,.07))}
+.dataPulseTitle span{color:var(--blue);font-size:9px;font-weight:950;letter-spacing:.11em}.dataPulseTitle b{margin-top:7px;color:#c2cedd;font-size:9px;line-height:1.4}
+.dataPulse article>span{color:var(--muted);font-size:8px;font-weight:850;letter-spacing:.07em;text-transform:uppercase}.dataPulse article>span b{color:var(--blue)}
+.dataPulse article strong{margin-top:7px;overflow:hidden;font-size:12px;text-overflow:ellipsis;white-space:nowrap}.dataPulse article small{margin-top:5px;color:var(--muted);font-size:8px;line-height:1.35}
+
 .proGrid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.8fr);gap:var(--gap);margin-top:10px}.chartPanel{padding:var(--panel-pad)}
 .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;min-width:0}.head>div{min-width:0}.head h3{font-size:clamp(15px,1.4vw,18px);margin:4px 0 0}.tfButtons{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.tfButton{min-width:42px;min-height:36px;border:1px solid var(--line);background:#07111e;color:var(--muted);padding:6px 8px;border-radius:9px;cursor:pointer;font-size:10px;font-weight:800}.tfButton.active{color:#fff;border-color:rgba(88,168,255,.45);background:rgba(88,168,255,.12)}
 .chartWrap{position:relative;width:100%;height:clamp(270px,35vw,430px);max-height:55vh;min-height:240px;border:1px solid rgba(32,58,88,.7);border-radius:14px;background:linear-gradient(180deg,rgba(5,13,23,.58),rgba(4,10,18,.92));overflow:hidden;contain:layout paint size}
@@ -87,6 +94,7 @@ canvas,img,svg{max-width:100%}
   .metricGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.assetCard{grid-column:1/-1;grid-row:auto}
   .runtimeBanner{grid-template-columns:repeat(2,minmax(0,1fr))}.runtimeBanner>div:first-child{grid-column:1/-1;grid-row:auto}
   .rMetric:nth-last-child(-n+4){border-left:0;border-top:1px solid var(--line);padding:8px 0 0}
+  .dataPulse{grid-template-columns:repeat(3,minmax(0,1fr))}.dataPulseTitle,.dataPulse article{border-bottom:1px solid var(--line)}.dataPulse article:nth-child(3n){border-right:0}.dataPulse article:nth-last-child(-n+3){border-bottom:0}
   .proGrid,.lowerGrid{grid-template-columns:1fr}.analyticsGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.pipeline{grid-template-columns:repeat(2,minmax(0,1fr))}
   .chartWrap{height:clamp(290px,44vw,420px)}
 }
@@ -103,6 +111,7 @@ canvas,img,svg{max-width:100%}
   .statusStrip{grid-template-columns:repeat(2,minmax(0,1fr))}.statusCell:first-child{grid-column:1/-1}
   .metricGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.assetCard{grid-column:1/-1}
   .runtimeBanner{grid-template-columns:1fr}.runtimeBanner>div:first-child{grid-column:auto}.rMetric{border-left:0;border-top:1px solid var(--line);padding:8px 0 0}
+  .dataPulse{grid-template-columns:repeat(2,minmax(0,1fr))}.dataPulseTitle,.dataPulse article,.dataPulse article:nth-last-child(-n+3){border-right:0;border-bottom:1px solid var(--line)}.dataPulseTitle{grid-column:1/-1}.dataPulse article:nth-child(even){border-right:1px solid var(--line)}.dataPulse article:last-child{grid-column:1/-1;border-right:0;border-bottom:0}
   .head{flex-wrap:wrap}.tfButtons{width:100%;justify-content:flex-start}.tfButton{flex:1 1 58px;min-height:40px}
   .chartWrap{height:clamp(250px,62vw,340px);min-height:230px}.chartFooter{grid-template-columns:repeat(2,minmax(0,1fr))}
   .trialHero{grid-template-columns:1fr}.ring{margin:auto}.analyticsGrid,.accountGrid,.pipeline{grid-template-columns:1fr}.kv{grid-template-columns:1fr}.modelMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -114,6 +123,7 @@ canvas,img,svg{max-width:100%}
   .main{padding-top:11px}.topbar{gap:11px}.topbar h1{font-size:24px}.topActions{gap:6px}.topActions .btn{flex:1 1 100%;width:100%}
   .statusStrip,.metricGrid{grid-template-columns:1fr}.statusCell:first-child,.assetCard{grid-column:auto}.assetCard{align-items:flex-start}.assetInfo{align-items:flex-start}.coin{width:42px;height:42px;flex-basis:42px}.price{font-size:22px}
   .runtimeBanner{padding:13px}.runtimeBanner h2{font-size:15px}.chartPanel,.decisionPanel,.box{padding:12px}
+  .dataPulse{grid-template-columns:1fr}.dataPulseTitle,.dataPulse article,.dataPulse article:nth-child(even){min-height:72px;border-right:0;border-bottom:1px solid var(--line)}.dataPulseTitle{grid-column:auto}.dataPulse article:last-child{border-bottom:0}
   .chartWrap{height:clamp(240px,78vw,315px);min-height:220px;border-radius:12px}.chartOverlay{left:7px;top:7px}.marketBadge{font-size:8px;padding:4px 6px}.chartFooter{gap:5px}.chartStat{padding:7px}.chartStat b{font-size:10px}
   .paperStats{grid-template-columns:1fr 1fr}.mobileNav{left:max(5px,env(safe-area-inset-left));right:max(5px,env(safe-area-inset-right));padding:4px}.mobileNav button{font-size:8px;min-height:40px}
   table{min-width:620px}th,td{padding:8px 6px;font-size:8px}

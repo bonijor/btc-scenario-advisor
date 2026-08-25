@@ -42,6 +42,7 @@ jobs:
           test -s playwright.config.mjs
           test -s tests/e2e/dashboard-responsive.spec.mjs
           test -s tests/e2e/dashboard-accessibility.spec.mjs
+          test -s tests/e2e/data-pulse.spec.mjs
           test -s tests/e2e/product-account.spec.mjs
           test -s tests/performance/static-budget.mjs
           test -s tests/performance/run-lighthouse.mjs
@@ -65,6 +66,7 @@ jobs:
           node --check playwright.config.mjs
           node --check tests/e2e/dashboard-responsive.spec.mjs
           node --check tests/e2e/dashboard-accessibility.spec.mjs
+          node --check tests/e2e/data-pulse.spec.mjs
           node --check tests/e2e/product-account.spec.mjs
           node --check tests/performance/static-budget.mjs
           node --check tests/performance/run-lighthouse.mjs
@@ -206,6 +208,21 @@ jobs:
           grep -q 'expectCanvasMatchesContainer' tests/e2e/dashboard-responsive.spec.mjs
           grep -q 'page.screenshot' tests/e2e/dashboard-responsive.spec.mjs
           echo 'PASS_BROWSER_QA_CONTRACT'
+
+      - name: Validate Data Pulse and horizon contract
+        shell: bash
+        run: |
+          grep -q 'class="panel dataPulse"' index.html
+          grep -q 'data-interval="1m"' index.html
+          grep -q 'data-interval="5m"' index.html
+          grep -q 'data-interval="15m"' index.html
+          grep -q 'data-interval="45m"' index.html
+          grep -q 'data-interval="1d"' index.html
+          grep -q "interval === '45m' ? '15m'" assets/app.js
+          grep -q 'closeTime <= Date.now()' assets/app.js
+          grep -q 'CONTEXTO PÚBLICO' assets/app.js
+          grep -q 'requestedIntervals.*15m' tests/e2e/data-pulse.spec.mjs
+          echo 'PASS_DATA_PULSE_CONTRACT'
 
       - name: Enforce static performance budgets
         run: npm run qa:budget

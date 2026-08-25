@@ -21,6 +21,7 @@ const BASE_TRIAL = Object.freeze({
   status: 'UNAVAILABLE',
 });
 
+const INTERVAL_MS = Object.freeze({ '1m': 60_000, '5m': 300_000, '15m': 900_000, '45m': 2_700_000, '1d': 86_400_000 });
 const chartState = { interval: '5m', candles: [], ticker: null };
 let modelState = null;
 let resilience = null;
@@ -65,6 +66,38 @@ function timeAgo(value) {
   if (seconds < 60) return `${seconds}s`;
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
   return `${Math.floor(seconds / 3600)}h`;
+}
+
+function updatePulseClock() {
+  const interval = chartState.interval;
+  const duration = INTERVAL_MS[interval] || INTERVAL_MS['5m'];
+  const remaining = Math.max(0, Math.ceil(Date.now() / duration) * duration - Date.now());
+  const minutes = Math.floor(remaining / 60_000), seconds = Math.floor((remaining % 60_000) / 1000);
+  const countdown = minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  $('pulseInterval').textContent = interval;
+  $('pulseNextClose').textContent = `Próximo cierre ${countdown}`;
+}
+
+function updatePulseModel(data, { stale = false } = {}) {
+  const interval = chartState.interval, official = interval === '5m' || interval === '15m';
+  if (!official) {
+    setClassText('pulseQuant', 'CONTEXTO PÚBLICO', 'warnText');
+    $('pulseQuantMeta').textContent = `${interval} no habilita señales ni alertas`;
+    $('pulseQuality').textContent = 'No aplica'; $('pulseAge').textContent = 'Sólo 5m/15m son elegibles';
+    return;
+  }
+  const row = Array.isArray(data?.decisions) ? data.decisions.find((item) => item.horizon === interval) : null;
+  if (!row) {
+    setClassText('pulseQuant', 'SIN LECTURA', 'badText'); $('pulseQuantMeta').textContent = `Sin decisión oficial ${interval}`;
+    $('pulseQuality').textContent = 'No evaluada'; $('pulseAge').textContent = 'Falla cerrado';
+    return;
+  }
+  const decision = String(row.decision || 'SIN DECISIÓN').replaceAll('_', ' ');
+  const blocked = /NO ACTUAR|ESPERAR|BLOQUE/.test(decision.toUpperCase());
+  setClassText('pulseQuant', stale ? `${decision} · SNAPSHOT` : decision, stale || blocked ? 'warnText' : 'goodText');
+  $('pulseQuantMeta').textContent = `${interval} · ${data.runtime?.modelVersion || CONFIG.modelVersion}`;
+  $('pulseQuality').textContent = row.signalQuality ?? 'No evaluada';
+  $('pulseAge').textContent = row.timestamp ? `${stale ? 'Snapshot · ' : ''}edad ${timeAgo(row.timestamp)}` : 'Edad no verificable';
 }
 
 async function fetchJson(url, timeoutMs = 10000) {
@@ -113,33 +146,51 @@ function setTrial(input, { stale = false } = {}) {
 }
 
 async function loadTicker() {
-  const data = await fetchJson(`https://api.binance.com/api/v3/ticker/24hr?symbol=${CONFIG.marketSymbol}`);
-  chartState.ticker = data;
-  $('price').textContent = fmtUsd(data.lastPrice);
-  const change = Number(data.priceChangePercent);
-  $('priceMeta').textContent = `24h ${change >= 0 ? '+' : ''}${change.toFixed(2)}% · Binance público`;
-  setClassText('marketStatus', 'ONLINE', 'goodText');
-  $('sideDot').className = 'dot ok';
-  $('sideConn').textContent = 'Mercado público online';
-  $('marketHigh').textContent = fmtUsd(data.highPrice);
-  $('marketLow').textContent = fmtUsd(data.lowPrice);
-  $('marketVolume').textContent = Number(data.quoteVolume) > 0 ? `${(Number(data.quoteVolume) / 1e6).toFixed(1)}M USDT` : '--';
+  try {
+    const data = await fetchJson(`https://api.binance.com/api/v3/ticker/24hr?symbol=${CONFIG.marketSymbol}`);
+    chartState.ticker = data;
+    $('price').textContent = fmtUsd(data.lastPrice);
+    const change = Number(data.priceChangePercent);
+    $('priceMeta').textContent = `24h ${change >= 0 ? '+' : ''}${change.toFixed(2)}% · Binance público`;
+    $('pulsePrice').textContent = fmtUsd(data.lastPrice); $('pulseChange').textContent = `24h ${change >= 0 ? '+' : ''}${change.toFixed(2)}% · mercado público`;
+    setClassText('marketStatus', 'ONLINE', 'goodText'); $('sideDot').className = 'dot ok'; $('sideConn').textContent = 'Mercado público online';
+    $('marketHigh').textContent = fmtUsd(data.highPrice); $('marketLow').textContent = fmtUsd(data.lowPrice); $('marketVolume').textContent = Number(data.quoteVolume) > 0 ? `${(Number(data.quoteVolume) / 1e6).toFixed(1)}M USDT` : '--';
+  } catch (error) {
+    chartState.ticker = null; $('price').textContent = 'No disponible'; $('pulsePrice').textContent = 'No disponible'; $('pulseChange').textContent = 'Sin cotización pública verificable'; throw error;
+  }
+}
+
+function aggregate45m(candles) {
+  const buckets = new Map();
+  candles.forEach((candle) => {
+    const bucket = Math.floor(candle.time / INTERVAL_MS['45m']) * INTERVAL_MS['45m'];
+    const current = buckets.get(bucket);
+    if (!current) buckets.set(bucket, { ...candle, time: bucket, closeTime: bucket + INTERVAL_MS['45m'] - 1, count: 1 });
+    else { current.high = Math.max(current.high, candle.high); current.low = Math.min(current.low, candle.low); current.close = candle.close; current.volume += candle.volume; current.count += 1; }
+  });
+  return [...buckets.values()].filter((candle) => candle.count === 3 && candle.closeTime <= Date.now()).map(({ count, ...candle }) => candle);
 }
 
 async function loadCandles(interval = chartState.interval) {
   chartState.interval = interval;
   document.querySelectorAll('.tfButton').forEach((button) => button.classList.toggle('active', button.dataset.interval === interval));
-  const rows = await fetchJson(`https://api.binance.com/api/v3/klines?symbol=${CONFIG.marketSymbol}&interval=${encodeURIComponent(interval)}&limit=${CONFIG.marketCandleLimit}`);
-  chartState.candles = rows.map((r) => ({ time: Number(r[0]), open: Number(r[1]), high: Number(r[2]), low: Number(r[3]), close: Number(r[4]), volume: Number(r[5]) }));
-  $('chartTf').textContent = interval;
-  const last = chartState.candles.at(-1);
-  if (last) {
-    $('candleOpen').textContent = fmtUsd(last.open);
-    $('candleHigh').textContent = fmtUsd(last.high);
-    $('candleLow').textContent = fmtUsd(last.low);
-    $('candleClose').textContent = fmtUsd(last.close);
+  $('chartTf').textContent = interval; $('pulseInterval').textContent = interval; updatePulseClock(); updatePulseModel(modelState, { stale: $('apiStatus')?.textContent === 'OFFLINE' && Boolean(modelState) });
+  const sourceInterval = interval === '45m' ? '15m' : interval;
+  const sourceDuration = INTERVAL_MS[sourceInterval];
+  const limit = interval === '45m' ? Math.min(1000, CONFIG.marketCandleLimit * 3 + 3) : CONFIG.marketCandleLimit;
+  try {
+    const rows = await fetchJson(`https://api.binance.com/api/v3/klines?symbol=${CONFIG.marketSymbol}&interval=${encodeURIComponent(sourceInterval)}&limit=${limit}`);
+    const closed = rows.map((r) => ({ time: Number(r[0]), closeTime: Number(r[6] ?? (Number(r[0]) + sourceDuration - 1)), open: Number(r[1]), high: Number(r[2]), low: Number(r[3]), close: Number(r[4]), volume: Number(r[5]) })).filter((candle) => candle.closeTime <= Date.now());
+    chartState.candles = interval === '45m' ? aggregate45m(closed) : closed;
+    const last = chartState.candles.at(-1);
+    if (!last) throw new Error('NO_CLOSED_CANDLES');
+    $('candleOpen').textContent = fmtUsd(last.open); $('candleHigh').textContent = fmtUsd(last.high); $('candleLow').textContent = fmtUsd(last.low); $('candleClose').textContent = fmtUsd(last.close);
+    $('pulseCloseAt').textContent = fmtTime(last.closeTime); $('pulseSource').textContent = interval === '45m' ? 'Binance · 15m→45m' : 'Binance público';
+    scheduleChartDraw();
+  } catch (error) {
+    chartState.candles = []; ['candleOpen', 'candleHigh', 'candleLow', 'candleClose'].forEach((id) => { $(id).textContent = '--'; });
+    $('pulseCloseAt').textContent = 'No disponible'; $('pulseSource').textContent = 'Fuente no disponible'; scheduleChartDraw(); throw error;
   }
-  scheduleChartDraw();
 }
 
 function chartViewportProfile(width, height) {
@@ -155,7 +206,7 @@ function chartViewportProfile(width, height) {
 
 function drawChart() {
   const canvas = $('priceChart');
-  if (!canvas || !chartState.candles.length) return;
+  if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
   const width = Math.max(1, rect.width), height = Math.max(1, rect.height);
   if (width < 40 || height < 40) return;
@@ -167,13 +218,14 @@ function drawChart() {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+  if (!chartState.candles.length) return;
   const pad = { top: width < 520 ? 21 : 24, right: profile.rightPad, bottom: width < 520 ? 18 : 24, left: width < 520 ? 7 : 12 };
   const plotW = Math.max(20, width - pad.left - pad.right), plotH = Math.max(20, height - pad.top - pad.bottom);
   const candles = chartState.candles.slice(-profile.candleCount);
   const minPrice = Math.min(...candles.map((c) => c.low)), maxPrice = Math.max(...candles.map((c) => c.high));
   const span = Math.max(1, maxPrice - minPrice), y = (p) => pad.top + ((maxPrice - p) / span) * plotH;
   const step = plotW / candles.length, bodyW = Math.max(width < 380 ? 1.5 : 2, Math.min(8, step * 0.62));
-  ctx.clearRect(0, 0, width, height);
   ctx.font = `${profile.fontSize}px system-ui`;
   ctx.textBaseline = 'middle';
   for (let i = 0; i <= profile.gridLines; i += 1) {
@@ -245,6 +297,7 @@ function renderPaper(paper) {
 }
 
 function updateFreshness() {
+  updatePulseClock();
   const rt = modelState?.runtime;
   if (!rt?.lastSuccessfulCycleAt) { setClassText('dataFreshness', '--', 'warnText'); $('freshnessDetail').textContent = 'sin ciclo verificable'; return; }
   const ageSec = Math.max(0, Math.floor((Date.now() - Number(rt.lastSuccessfulCycleAt)) / 1000)), label = timeAgo(Number(rt.lastSuccessfulCycleAt));
@@ -255,24 +308,25 @@ function updateFreshness() {
 
 function renderModelData(data, { stale = false } = {}) {
   modelState = data;
-  const rt = data.runtime || {}, ready = rt.ready === true && rt.shadowMode === true && rt.operationMode === 'SPOT_ONLY' && rt.allowShort === false;
+  const rt = data.runtime || {}, ready = data.mode === 'SHADOW' && data.spotOnly === true && data.automaticExecution === false && rt.ready === true && rt.shadowMode === true && rt.operationMode === 'SPOT_ONLY' && rt.allowShort === false;
   if (stale) { setClassText('engineState', 'ÚLTIMO DATO', 'warnText'); $('engineMeta').textContent = 'snapshot verificado'; setClassText('apiStatus', 'OFFLINE', 'badText'); $('runtimeChip').className = 'chip warn'; $('runtimeChip').textContent = '● ÚLTIMO DATO VERIFICADO'; }
   else { setClassText('engineState', ready ? 'ONLINE' : 'NOT READY', ready ? 'goodText' : 'badText'); $('engineMeta').textContent = ready ? 'runtime validado' : 'fail-closed'; setClassText('apiStatus', 'ONLINE', 'goodText'); $('runtimeChip').className = `chip ${ready ? 'good' : 'bad'}`; $('runtimeChip').textContent = ready ? '● MOTOR ONLINE' : '● MOTOR NOT READY'; }
   $('runtimeText').textContent = stale ? `${rt.modelVersion || CONFIG.modelVersion} · ${rt.operationMode || '--'} · último snapshot local verificado` : `${rt.modelVersion || CONFIG.modelVersion} · ${rt.operationMode || '--'} · SHADOW=${rt.shadowMode === true ? 'true' : '--'}`;
   $('revision').textContent = rt.revision || '--'; $('lastCycle').textContent = fmtTime(rt.lastSuccessfulCycleAt); $('errorState').textContent = rt.errorState || 'NONE'; $('apiGenerated').textContent = fmtTime(data.generatedAt); $('systemRuntime').textContent = rt.revision || '--'; $('systemApi').textContent = data.apiRevision || data.serviceRevision || data.apiVersion || '--'; $('systemMode').textContent = `${data.mode || '--'} / ${data.spotOnly ? 'SPOT_ONLY' : '--'}`;
-  setTrial(data.trial, { stale }); renderDecisions(data.decisions); renderPaper(data.paper); updateFreshness();
+  setTrial(data.trial, { stale }); renderDecisions(data.decisions); renderPaper(data.paper); updatePulseModel(data, { stale }); updateFreshness();
   $('sideDetail').textContent = stale ? 'API temporalmente offline. Se conserva el último snapshot verificado; no se inventan datos nuevos.' : 'Motor, trial y funnel servidos por API sanitizada sólo lectura.';
 }
 
 function renderUnavailableState() {
   setClassText('engineState', 'SIN API', 'badText'); $('engineMeta').textContent = 'fail-closed'; setClassText('apiStatus', 'OFFLINE', 'badText'); $('runtimeChip').className = 'chip bad'; $('runtimeChip').textContent = '● API READ-ONLY OFFLINE'; $('runtimeText').textContent = 'No hay snapshot verificado disponible. El dashboard no sustituye datos faltantes por cero.'; $('sideDetail').textContent = 'La API read-only no respondió y todavía no existe un snapshot local verificado.';
-  setTrial(BASE_TRIAL); resilience?.renderFunnel(null); $('pTrades').textContent = '--'; updateFreshness();
+  setTrial(BASE_TRIAL); resilience?.renderFunnel(null); $('pTrades').textContent = '--'; updatePulseModel(null); updateFreshness();
 }
 
 async function loadModel() {
   const tools = await resilienceTools();
   try {
     const data = await fetchJson(`${CONFIG.apiBase}/api/v1/dashboard`, 14000);
+    if (!tools.snapshotIsSafe(data, CONFIG.trialId, CONFIG.requiredDays)) throw new Error('UNSAFE_DASHBOARD_SNAPSHOT');
     renderModelData(data); tools.saveVerifiedSnapshot(localStorage, CONFIG.verifiedSnapshotKey, data, CONFIG.trialId, CONFIG.requiredDays);
   } catch {
     if (modelState && tools.snapshotIsSafe(modelState, CONFIG.trialId, CONFIG.requiredDays)) renderModelData(modelState, { stale: true });

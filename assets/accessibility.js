@@ -14,6 +14,7 @@
       generatedAt: new Date(now).toISOString(),
       mode: 'SHADOW',
       spotOnly: true,
+      automaticExecution: false,
       runtime: {
         ready: true,
         shadowMode: true,
