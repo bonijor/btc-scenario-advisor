@@ -15,7 +15,9 @@
     }
   }
 
-  if (qaMode === 'performance' || qaMode === 'a11y') {
+  // Deterministic network fixtures are strictly local QA. A public URL parameter must
+  // never be able to replace live read-only data with fixtures.
+  if (localQaHost && (qaMode === 'performance' || qaMode === 'a11y')) {
     const nativeFetch = window.fetch.bind(window);
     const now = Date.now();
     const jsonResponse = (payload) => Promise.resolve(new Response(JSON.stringify(payload), {
