@@ -56,6 +56,30 @@ jobs:
           assert 'spreadsheets.values' not in js and 'googleapis.com/v4/spreadsheets' not in js, 'BI no debe leer el Sheet directamente desde el navegador'
           print(f'PASS_BI_DOM_CONTRACT ids={len(idset)} jsRefs={len(refs)}')
 
+      - name: Validate BI fail-closed audit fixes
+        shell: python
+        run: |
+          from pathlib import Path
+          js = Path('assets/bi-trading.js').read_text(encoding='utf-8')
+          html = Path('bi-trading.html').read_text(encoding='utf-8')
+          required = [
+            "user.emailVerified !== true",
+            "EMAIL_VERIFICATION_REQUIRED",
+            "UNSAFE_DASHBOARD_PAYLOAD",
+            "paper.rehearsalOnly === true",
+            "paper.formalTrialMutation === false",
+            "paperSafety.realOrderCreated === false",
+            "paperSafety.exchangeOrderRequestMade === false",
+            "trial?.completedDays !== null",
+            "errorHealthy",
+          ]
+          for token in required:
+            assert token in js, f'missing audit hardening: {token}'
+          assert 'Prob. dominante media 5m/15m' in html, 'No debe presentar probabilidad dominante como confianza global'
+          assert 'Qué falta para elegibilidad Paper' in html, 'Distance to Eligible no debe sugerir ejecución real'
+          assert 'BTC/USDT ACTUAL' in html, 'El par visual debe coincidir con BTCUSDT'
+          print('PASS_BI_FAIL_CLOSED_AUDIT_FIXES')
+
       - name: Validate BI safety copy
         shell: bash
         run: |
