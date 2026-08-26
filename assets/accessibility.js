@@ -1,8 +1,23 @@
 (() => {
   const params = new URLSearchParams(location.search);
   const qaMode = params.get('qa');
+  const localQaHost = ['127.0.0.1', 'localhost'].includes(location.hostname);
 
-  if (qaMode === 'performance' || qaMode === 'a11y') {
+  // Production must always use the canonical Cloud Run service configured in app.js.
+  // Old canary/test overrides are allowed only on localhost so a stale browser value
+  // cannot silently keep the public GitHub Pages dashboard pointed at a retired revision.
+  if (!localQaHost) {
+    try { localStorage.removeItem('btcModelApiBase'); } catch {}
+    if (params.has('api')) {
+      params.delete('api');
+      const query = params.toString();
+      history.replaceState(history.state, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+    }
+  }
+
+  // Deterministic network fixtures are strictly local QA. A public URL parameter must
+  // never be able to replace live read-only data with fixtures.
+  if (localQaHost && (qaMode === 'performance' || qaMode === 'a11y')) {
     const nativeFetch = window.fetch.bind(window);
     const now = Date.now();
     const jsonResponse = (payload) => Promise.resolve(new Response(JSON.stringify(payload), {

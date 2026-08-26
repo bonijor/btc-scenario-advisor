@@ -6,6 +6,8 @@ on:
       - 'assets/access-gate.js'
       - 'assets/access-gate.css'
       - 'assets/accessibility.css'
+      - 'assets/accessibility.js'
+      - 'assets/app.js'
       - 'assets/firebase-auth.js'
       - 'assets/responsive-bootstrap.js'
       - 'tests/e2e/access-gate.spec.mjs'
@@ -16,6 +18,8 @@ on:
       - 'assets/access-gate.js'
       - 'assets/access-gate.css'
       - 'assets/accessibility.css'
+      - 'assets/accessibility.js'
+      - 'assets/app.js'
       - 'assets/firebase-auth.js'
       - 'assets/responsive-bootstrap.js'
       - 'tests/e2e/access-gate.spec.mjs'
@@ -34,6 +38,7 @@ jobs:
       - name: Syntax check gate modules
         run: |
           node --check assets/access-gate.js
+          node --check assets/accessibility.js
           node --check assets/responsive-bootstrap.js
           node --check assets/firebase-auth.js
           node --check tests/e2e/access-gate.spec.mjs
@@ -42,19 +47,31 @@ jobs:
           node <<'NODE'
           const fs = require('node:fs');
           const gate = fs.readFileSync('assets/access-gate.js', 'utf8');
-          const a11y = fs.readFileSync('assets/accessibility.css', 'utf8');
+          const a11yCss = fs.readFileSync('assets/accessibility.css', 'utf8');
+          const a11yJs = fs.readFileSync('assets/accessibility.js', 'utf8');
+          const app = fs.readFileSync('assets/app.js', 'utf8');
           const auth = fs.readFileSync('assets/firebase-auth.js', 'utf8');
           const boot = fs.readFileSync('assets/responsive-bootstrap.js', 'utf8');
-          const requiredGate = ['emailVerified === true', "setAttribute('inert'", 'resetPassword', 'refreshCurrentUser', 'sendVerification', 'Firebase Authentication no está disponible', 'getIdToken', "'/api/v1/dashboard'", "headers.set('authorization'", 'DASHBOARD_AUTH_TOKEN_UNAVAILABLE'];
+          const requiredGate = ['emailVerified === true', "setAttribute('inert'", 'resetPassword', 'refreshCurrentUser', 'sendVerification', 'Firebase Authentication no está disponible', 'getIdToken', "'/api/v1/dashboard'", "headers.set('x-btc-dashboard-authorization'", 'DASHBOARD_AUTH_TOKEN_UNAVAILABLE'];
           for (const token of requiredGate) if (!gate.includes(token)) throw new Error(`missing gate contract: ${token}`);
-          if (!a11y.includes('body:not(.auth-gate-ready)')) throw new Error('dashboard is not fail-closed before auth gate resolves');
-          if (!a11y.includes('body.auth-gate-ready:not(.auth-granted) .app')) throw new Error('unauthenticated protected backdrop missing');
+          if (!a11yCss.includes('body:not(.auth-gate-ready)')) throw new Error('dashboard is not fail-closed before auth gate resolves');
+          if (!a11yCss.includes('body.auth-gate-ready:not(.auth-granted) .app')) throw new Error('unauthenticated protected backdrop missing');
           for (const token of ['sendPasswordResetEmail', 'sendEmailVerification', 'browserLocalPersistence', 'stateListeners']) if (!auth.includes(token)) throw new Error(`missing Firebase capability: ${token}`);
           for (const token of ['assets/access-gate.css', 'assets/access-gate.js']) if (!boot.includes(token)) throw new Error(`gate loader missing ${token}`);
-          for (const forbidden of ['temp_auth_token', 'sessionStorage.setItem', '/api/v3/order', 'automaticExecution=true']) {
+          for (const forbidden of ['temp_auth_token', 'sessionStorage.setItem', '/api/v3/order', 'automaticExecution=true', "headers.set('authorization'"]) {
             if (gate.includes(forbidden) || auth.includes(forbidden)) throw new Error(`forbidden auth/trading token: ${forbidden}`);
           }
           if (!gate.includes("url.hostname.endsWith('.run.app') && url.pathname === '/api/v1/dashboard'")) throw new Error('bearer scope is not restricted to dashboard Cloud Run path');
           if (!gate.includes("['127.0.0.1', 'localhost'].includes(location.hostname)")) throw new Error('local QA isolation is not host-scoped');
+
+          const canonicalApi = 'https://btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app';
+          if (!app.includes(canonicalApi)) throw new Error('canonical stable dashboard API missing from app config');
+          for (const token of ["localStorage.removeItem('btcModelApiBase')", "params.delete('api')", "['127.0.0.1', 'localhost'].includes(location.hostname)"]) {
+            if (!a11yJs.includes(token)) throw new Error(`production API override lock missing: ${token}`);
+          }
+          if (!a11yJs.includes("if (localQaHost && (qaMode === 'performance' || qaMode === 'a11y'))")) throw new Error('deterministic QA fixtures are not restricted to localhost');
+          if (canonicalApi.includes('---')) throw new Error('canonical endpoint must not be a tagged Cloud Run URL');
           console.log('PASS_ACCESS_GATE_FAIL_CLOSED_CONTRACT');
+          console.log('PASS_CANONICAL_PRODUCTION_DASHBOARD_ENDPOINT');
+          console.log('PASS_QA_FIXTURES_LOCALHOST_ONLY');
           NODE
