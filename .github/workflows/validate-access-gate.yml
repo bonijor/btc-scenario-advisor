@@ -69,7 +69,9 @@ jobs:
           for (const token of ["localStorage.removeItem('btcModelApiBase')", "params.delete('api')", "['127.0.0.1', 'localhost'].includes(location.hostname)"]) {
             if (!a11yJs.includes(token)) throw new Error(`production API override lock missing: ${token}`);
           }
+          if (!a11yJs.includes("if (localQaHost && (qaMode === 'performance' || qaMode === 'a11y'))")) throw new Error('deterministic QA fixtures are not restricted to localhost');
           if (canonicalApi.includes('---')) throw new Error('canonical endpoint must not be a tagged Cloud Run URL');
           console.log('PASS_ACCESS_GATE_FAIL_CLOSED_CONTRACT');
           console.log('PASS_CANONICAL_PRODUCTION_DASHBOARD_ENDPOINT');
+          console.log('PASS_QA_FIXTURES_LOCALHOST_ONLY');
           NODE
