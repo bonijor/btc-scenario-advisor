@@ -3,6 +3,7 @@ import { createFirebaseAuthAdapter } from './firebase-auth.js';
 const API_BASE = 'https://btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app';
 const MARKET_URL = 'https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT';
 const REQUIRED_DAYS = 90;
+const TRIAL_ID = 'btc-shadow-90d-20260817T173948Z';
 const MODEL_VERSION = 'V5.9.0-SPOT-HIGH-CONVICTION';
 const HORIZON_ORDER = ['1m', '5m', '15m', '45m', '1d'];
 
@@ -23,14 +24,6 @@ function classText(id, value, tone = '') {
   if (tone) node.classList.add(tone);
 }
 
-function number(value) {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
-  if (value == null || value === '') return NaN;
-  const cleaned = String(value).trim().replace(/\s/g, '').replace(/%$/, '').replace(/\./g, '').replace(',', '.');
-  const n = Number(cleaned);
-  return Number.isFinite(n) ? n : NaN;
-}
-
 function decimal(value) {
   if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
   if (value == null || value === '') return NaN;
@@ -38,17 +31,17 @@ function decimal(value) {
   return Number.isFinite(n) ? n : NaN;
 }
 
-function pct(value, digits = 1, alreadyPercent = false) {
+function pct(value, digits = 1) {
   const n = decimal(value);
   if (!Number.isFinite(n)) return '--';
-  const p = alreadyPercent ? n : Math.abs(n) <= 1 ? n * 100 : n;
+  const p = Math.abs(n) <= 1 ? n * 100 : n;
   return `${p.toFixed(digits)}%`;
 }
 
-function usd(value) {
+function usdt(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return '--';
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n);
+  return `${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(n)} USDT`;
 }
 
 function when(value) {
@@ -90,8 +83,11 @@ function dominantProbability(row) {
   const direct = field(row, 'dominantProbability', 'probabilityDominant', 'probability', 'confidenceScore', 'confidencePct');
   const n = decimal(direct);
   if (Number.isFinite(n)) return Math.abs(n) <= 1 ? n * 100 : n;
-  const candidates = [field(row, 'upProbability', 'pUp', 'probUp'), field(row, 'downProbability', 'pDown', 'probDown'), field(row, 'sidewaysProbability', 'pSideways', 'probSideways')]
-    .map(decimal).filter(Number.isFinite).map((v) => Math.abs(v) <= 1 ? v * 100 : v);
+  const candidates = [
+    field(row, 'upProbability', 'pUp', 'probUp'),
+    field(row, 'downProbability', 'pDown', 'probDown'),
+    field(row, 'sidewaysProbability', 'pSideways', 'probSideways'),
+  ].map(decimal).filter(Number.isFinite).map((v) => Math.abs(v) <= 1 ? v * 100 : v);
   return candidates.length ? Math.max(...candidates) : NaN;
 }
 
@@ -135,12 +131,54 @@ async function waitForUser(adapter, timeoutMs = 2500) {
   });
 }
 
+function safeRuntime(data) {
+  const rt = data?.runtime || {};
+  return data?.apiVersion === 'btc-shadow-dashboard-readonly/2.1'
+    && data?.mode === 'SHADOW'
+    && data?.spotOnly === true
+    && data?.automaticExecution === false
+    && rt.ready === true
+    && rt.shadowMode === true
+    && rt.operationMode === 'SPOT_ONLY'
+    && rt.allowShort === false;
+}
+
+function safePaperContract(data) {
+  const paper = data?.paper || {};
+  const safety = paper?.safety || {};
+  return paper.rehearsalOnly === true
+    && paper.formalTrialMutation === false
+    && safety.realOrderCreated === false
+    && safety.exchangeOrderRequestMade === false;
+}
+
+function safeTrialContract(data) {
+  const trial = data?.trial || {};
+  const required = Number(trial.requiredDays || REQUIRED_DAYS);
+  const countPresent = trial.completedDays !== null && trial.completedDays !== undefined && trial.completedDays !== '';
+  const countValid = !countPresent || Number.isFinite(Number(trial.completedDays));
+  return trial.trialId === TRIAL_ID
+    && required === REQUIRED_DAYS
+    && typeof trial.status === 'string'
+    && trial.status.length > 0
+    && countValid;
+}
+
+function safeDashboardPayload(data) {
+  return safeRuntime(data) && safePaperContract(data) && safeTrialContract(data);
+}
+
 async function dashboardRequest() {
   const adapter = await getAuthAdapter();
   const user = await waitForUser(adapter);
   if (!user) {
     const err = new Error('SESSION_REQUIRED');
     err.code = 'SESSION_REQUIRED';
+    throw err;
+  }
+  if (user.emailVerified !== true) {
+    const err = new Error('EMAIL_VERIFICATION_REQUIRED');
+    err.code = 'EMAIL_VERIFICATION_REQUIRED';
     throw err;
   }
   const token = await adapter.getIdToken(false);
@@ -157,6 +195,11 @@ async function dashboardRequest() {
     });
     if (!response.ok) throw new Error(`API_HTTP_${response.status}`);
     const data = await response.json();
+    if (!safeDashboardPayload(data)) {
+      const err = new Error('UNSAFE_DASHBOARD_PAYLOAD');
+      err.code = 'UNSAFE_DASHBOARD_PAYLOAD';
+      throw err;
+    }
     return { data, user };
   } finally {
     clearTimeout(timer);
@@ -169,18 +212,6 @@ async function marketRequest() {
   return await response.json();
 }
 
-function safeRuntime(data) {
-  const rt = data?.runtime || {};
-  return data?.apiVersion === 'btc-shadow-dashboard-readonly/2.1'
-    && data?.mode === 'SHADOW'
-    && data?.spotOnly === true
-    && data?.automaticExecution === false
-    && rt.ready === true
-    && rt.shadowMode === true
-    && rt.operationMode === 'SPOT_ONLY'
-    && rt.allowShort === false;
-}
-
 function renderMarket(market) {
   if (!market) {
     classText('marketState', 'OFFLINE', 'badText');
@@ -190,7 +221,7 @@ function renderMarket(market) {
   }
   const price = Number(market.lastPrice);
   const change = Number(market.priceChangePercent);
-  text('btcPrice', usd(price));
+  text('btcPrice', usdt(price));
   const changeLabel = Number.isFinite(change) ? `24h ${change >= 0 ? '+' : ''}${change.toFixed(2)}%` : '24h --';
   const changeNode = $('priceChange');
   if (changeNode) {
@@ -211,10 +242,10 @@ function renderExecutive(data) {
   text('executiveBias', bias);
 
   const probs = operational.map(dominantProbability).filter(Number.isFinite);
-  const confidence = probs.length ? probs.reduce((a, b) => a + b, 0) / probs.length : NaN;
-  text('globalConfidence', Number.isFinite(confidence) ? `${confidence.toFixed(1)}%` : 'NO PUBLICADA');
+  const dominantMean = probs.length ? probs.reduce((a, b) => a + b, 0) / probs.length : NaN;
+  text('globalConfidence', Number.isFinite(dominantMean) ? `${dominantMean.toFixed(1)}%` : 'NO PUBLICADA');
   const pulse = $('pulseBar');
-  if (pulse) pulse.style.width = `${Number.isFinite(confidence) ? Math.max(0, Math.min(100, confidence)) : 0}%`;
+  if (pulse) pulse.style.width = `${Number.isFinite(dominantMean) ? Math.max(0, Math.min(100, dominantMean)) : 0}%`;
 
   const qualities = operational.map((r) => String(r.signalQuality || '')).filter(Boolean);
   text('globalQuality', qualities.length ? [...new Set(qualities)].join(' / ') : 'NO PUBLICADA');
@@ -223,8 +254,9 @@ function renderExecutive(data) {
 
 function renderTrial(trial) {
   const required = Number(trial?.requiredDays) || REQUIRED_DAYS;
-  const done = Number(trial?.completedDays);
-  const valid = Number.isFinite(done);
+  const countPresent = trial?.completedDays !== null && trial?.completedDays !== undefined && trial?.completedDays !== '';
+  const done = countPresent ? Number(trial.completedDays) : NaN;
+  const valid = countPresent && Number.isFinite(done);
   const pctValue = valid && required > 0 ? Math.max(0, Math.min(100, done / required * 100)) : 0;
   const remaining = valid ? Math.max(0, required - done) : null;
   text('trialState', valid ? `${done} / ${required}` : `-- / ${required}`);
@@ -233,7 +265,7 @@ function renderTrial(trial) {
   text('trialDays', valid ? `${done} de ${required}` : `-- de ${required}`);
   text('trialRemaining', remaining == null ? '-- días restantes' : `${remaining} días restantes`);
   text('trialRange', trial?.firstCompleteDay && trial?.lastCompleteDay ? `${trial.firstCompleteDay} → ${trial.lastCompleteDay}` : 'Continuidad formal no publicada');
-  text('trialId', trial?.trialId || 'btc-shadow-90d-20260817T173948Z');
+  text('trialId', trial?.trialId || TRIAL_ID);
   const ring = $('trialRing');
   if (ring) ring.style.setProperty('--trial-pct', `${pctValue}%`);
   const badge = $('trialBadge');
@@ -245,11 +277,16 @@ function renderTrial(trial) {
 
 function renderSafety(data) {
   const rt = data?.runtime || {};
-  const paperSafety = data?.paper?.safety || {};
+  const paper = data?.paper || {};
+  const paperSafety = paper?.safety || {};
   const shadowOk = data?.mode === 'SHADOW' && rt.shadowMode === true;
   const spotOk = data?.spotOnly === true && rt.operationMode === 'SPOT_ONLY';
   const shortOk = rt.allowShort === false;
-  const ordersOk = data?.automaticExecution === false && paperSafety.realOrderCreated !== true && paperSafety.exchangeOrderRequestMade !== true;
+  const ordersOk = data?.automaticExecution === false
+    && paper.rehearsalOnly === true
+    && paper.formalTrialMutation === false
+    && paperSafety.realOrderCreated === false
+    && paperSafety.exchangeOrderRequestMade === false;
   classText('shadowGuard', shadowOk ? 'PASS' : 'FAIL', shadowOk ? 'goodText' : 'badText');
   classText('spotGuard', spotOk ? 'PASS' : 'FAIL', spotOk ? 'goodText' : 'badText');
   classText('shortGuard', shortOk ? 'BLOQUEADOS' : 'REVISAR', shortOk ? 'goodText' : 'badText');
@@ -344,7 +381,9 @@ function renderSystem(data) {
   text('runtimeRevision', rt.revision || '--');
   text('lastCycle', when(rt.lastSuccessfulCycleAt));
   text('cycleAge', age(rt.lastSuccessfulCycleAt));
-  classText('errorState', rt.errorState || 'NONE', rt.errorState ? 'badText' : 'goodText');
+  const errorState = String(rt.errorState || 'NONE').toUpperCase();
+  const errorHealthy = ['NONE', 'OK', 'NO_ERROR'].includes(errorState);
+  classText('errorState', errorState, errorHealthy ? 'goodText' : 'badText');
   text('contractState', data?.apiVersion || '--');
   text('generatedAt', when(data?.generatedAt));
   classText('apiState', ready ? 'ONLINE' : 'NOT READY', ready ? 'goodText' : 'badText');
@@ -366,12 +405,24 @@ function renderDashboard(data, user) {
 }
 
 function renderApiFailure(error) {
-  const session = error?.code === 'SESSION_REQUIRED' || error?.message === 'SESSION_REQUIRED';
-  classText('apiState', session ? 'SESIÓN REQUERIDA' : 'OFFLINE', 'badText');
-  text('apiVersion', session ? 'Ingresá desde Dashboard → Cuenta' : 'fail-closed');
-  setRail(false, session ? 'Sesión requerida' : 'BI offline');
+  const code = String(error?.code || error?.message || '');
+  const session = code === 'SESSION_REQUIRED';
+  const verification = code === 'EMAIL_VERIFICATION_REQUIRED';
+  const unsafe = code === 'UNSAFE_DASHBOARD_PAYLOAD';
+  classText('apiState', session ? 'SESIÓN REQUERIDA' : verification ? 'EMAIL SIN VERIFICAR' : unsafe ? 'PAYLOAD BLOQUEADO' : 'OFFLINE', 'badText');
+  text('apiVersion', session ? 'Ingresá desde Dashboard → Cuenta' : verification ? 'Verificá tu email en Cuenta' : unsafe ? 'fail-closed por contrato' : 'fail-closed');
+  setRail(false, session ? 'Sesión requerida' : verification ? 'Email sin verificar' : unsafe ? 'Contrato bloqueado' : 'BI offline');
   const body = $('scenarioRows');
-  if (body) body.innerHTML = `<tr><td colspan="10">${session ? 'Iniciá sesión en el Dashboard y volvé a abrir BI Trading.' : 'API read-only no disponible. No se muestran valores aproximados.'}</td></tr>`;
+  if (body) {
+    const message = session
+      ? 'Iniciá sesión en el Dashboard y volvé a abrir BI Trading.'
+      : verification
+        ? 'Verificá tu email desde Dashboard → Cuenta antes de abrir BI Trading.'
+        : unsafe
+          ? 'La respuesta no cumplió el contrato SHADOW de seguridad. BI permanece cerrado.'
+          : 'API read-only no disponible. No se muestran valores aproximados.';
+    body.innerHTML = `<tr><td colspan="10">${message}</td></tr>`;
+  }
 }
 
 async function refresh() {
