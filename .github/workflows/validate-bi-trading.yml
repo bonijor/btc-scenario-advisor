@@ -1,0 +1,65 @@
+name: Validate BI Trading
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-bi-trading:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate BI files
+        shell: bash
+        run: |
+          test -s bi-trading.html
+          test -s assets/bi-trading.css
+          test -s assets/bi-trading.js
+          grep -q 'href="bi-trading.html"' index.html
+          grep -q 'assets/bi-trading.css' bi-trading.html
+          grep -q 'assets/bi-trading.js' bi-trading.html
+          grep -q 'x-btc-dashboard-authorization' assets/bi-trading.js
+          grep -q 'btc-shadow-dashboard-api-o7li7xggnq-rj.a.run.app' assets/bi-trading.js
+          grep -q "apiVersion === 'btc-shadow-dashboard-readonly/2.1'" assets/bi-trading.js
+          grep -q "data?.mode === 'SHADOW'" assets/bi-trading.js
+          grep -q "data?.spotOnly === true" assets/bi-trading.js
+          grep -q "rt.allowShort === false" assets/bi-trading.js
+          ! grep -q "headers:.*Authorization" assets/bi-trading.js
+
+      - name: Syntax-check BI JavaScript
+        run: node --check assets/bi-trading.js
+
+      - name: Validate BI DOM contract
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          html = Path('bi-trading.html').read_text(encoding='utf-8')
+          js = Path('assets/bi-trading.js').read_text(encoding='utf-8')
+          ids = re.findall(r'\bid=["\']([^"\']+)["\']', html)
+          duplicates = sorted({x for x in ids if ids.count(x) > 1})
+          assert not duplicates, f'IDs duplicados: {duplicates}'
+          idset = set(ids)
+          refs = set(re.findall(r"\$\(['\"]([^'\"]+)['\"]\)", js))
+          missing = sorted(refs - idset)
+          assert not missing, f'IDs usados por BI JS pero ausentes en HTML: {missing}'
+          assert 'https://docs.google.com/spreadsheets/' in html, 'Debe conservar link de auditoría al Sheet'
+          assert 'spreadsheets.values' not in js and 'googleapis.com/v4/spreadsheets' not in js, 'BI no debe leer el Sheet directamente desde el navegador'
+          print(f'PASS_BI_DOM_CONTRACT ids={len(idset)} jsRefs={len(refs)}')
+
+      - name: Validate BI safety copy
+        shell: bash
+        run: |
+          grep -q 'SHADOW' bi-trading.html
+          grep -q 'SPOT_ONLY' bi-trading.html
+          grep -q 'no ejecuta órdenes reales' bi-trading.html
+          grep -q 'sin online learning' bi-trading.html

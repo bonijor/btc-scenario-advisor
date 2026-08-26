@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#050a12">
+  <meta name="description" content="BI Trading de BTC Scenario Advisor PRO: lectura ejecutiva read-only del motor Quant, trial 90D, Paper y salud del sistema.">
+  <title>BI Trading · BTC Scenario Advisor PRO</title>
+  <link rel="stylesheet" href="assets/bi-trading.css">
+  <script type="module" src="assets/bi-trading.js"></script>
+</head>
+<body>
+  <a class="skipLink" href="#bi-main">Saltar al panel</a>
+
+  <div class="shell">
+    <aside class="rail" aria-label="Navegación BI">
+      <a class="brand" href="index.html" aria-label="Volver a BTC Scenario Advisor">
+        <span class="brandMark" aria-hidden="true">₿</span>
+        <span><strong>Scenario Advisor</strong><small>BI Trading · Shadow Lab</small></span>
+      </a>
+      <nav>
+        <a class="active" href="#executive">▦ Resumen</a>
+        <a href="#scenarios">⌁ Escenarios</a>
+        <a href="#calibration">◎ Calibración</a>
+        <a href="#paper">◷ Paper</a>
+        <a href="#system">⚙ Sistema</a>
+      </nav>
+      <div class="railFoot">
+        <span class="statusDot" id="railDot" aria-hidden="true"></span>
+        <div><b id="railStatus">Conectando</b><small>Read-only · sin órdenes reales</small></div>
+      </div>
+    </aside>
+
+    <main id="bi-main" class="main" tabindex="-1">
+      <header class="topbar">
+        <div>
+          <span class="eyebrow">BI TRADING · PANEL EJECUTIVO</span>
+          <h1>Bitcoin / USDT</h1>
+          <p>Lectura visual del Panel_Control y del runtime validado, sin acceso directo de escritura al Sheet.</p>
+        </div>
+        <div class="topActions">
+          <a class="ghostButton" href="index.html">← Dashboard</a>
+          <a class="ghostButton" href="https://docs.google.com/spreadsheets/d/1mbkbLb_kAR8fyAEaE9TLljhxcTbZ9LpbEXhTxAhpsv0/edit#gid=1900100001" target="_blank" rel="noopener">Hoja fuente</a>
+          <button class="primaryButton" id="refreshBi" type="button">↻ Actualizar</button>
+        </div>
+      </header>
+
+      <section class="statusBar" aria-label="Estado del BI">
+        <div><span>API</span><b id="apiState">VALIDANDO</b><small id="apiVersion">--</small></div>
+        <div><span>Mercado</span><b id="marketState">VALIDANDO</b><small>Binance Spot público</small></div>
+        <div><span>Trial</span><b id="trialState">-- / 90</b><small id="trialStatus">evidencia formal</small></div>
+        <div><span>Seguridad</span><b id="safetyState">SHADOW</b><small>SPOT_ONLY · no shorts</small></div>
+      </section>
+
+      <section id="executive" class="heroGrid" aria-label="Resumen ejecutivo">
+        <article class="panel marketHero">
+          <div class="panelHeader">
+            <div><span class="eyebrow">BTC/USD ACTUAL</span><h2 id="btcPrice">Cargando…</h2></div>
+            <span class="pill neutral" id="priceChange">24h --</span>
+          </div>
+          <div class="marketSummary">
+            <div><span>Señal ejecutiva</span><strong id="executiveBias">--</strong></div>
+            <div><span>Confianza global</span><strong id="globalConfidence">--</strong></div>
+            <div><span>Calidad señal</span><strong id="globalQuality">--</strong></div>
+          </div>
+          <div class="pulseTrack" aria-label="Pulso de mercado"><i id="pulseBar"></i></div>
+          <div class="microRow"><span id="marketUpdated">Actualización pendiente</span><span id="modelName">V5.9.0-SPOT-HIGH-CONVICTION</span></div>
+        </article>
+
+        <article class="panel trialCard">
+          <div class="panelHeader"><div><span class="eyebrow">TRIAL FORMAL</span><h3>90 días auditados</h3></div><span class="pill good" id="trialBadge">VERIFICANDO</span></div>
+          <div class="trialVisual">
+            <div class="ring" id="trialRing"><div><strong id="trialPct">--%</strong><small id="trialDays">-- de 90</small></div></div>
+            <div class="trialCopy"><b id="trialRemaining">-- días restantes</b><span id="trialRange">Continuidad formal pendiente</span><small id="trialId">btc-shadow-90d-20260817T173948Z</small></div>
+          </div>
+        </article>
+
+        <article class="panel safetyCard">
+          <div class="panelHeader"><div><span class="eyebrow">CONTRATO DE SEGURIDAD</span><h3>Shadow protegido</h3></div><span class="lockIcon" aria-hidden="true">🔒</span></div>
+          <div class="safetyGrid">
+            <div><span>SHADOW_MODE</span><b id="shadowGuard">--</b></div>
+            <div><span>SPOT_ONLY</span><b id="spotGuard">--</b></div>
+            <div><span>Shorts</span><b id="shortGuard">--</b></div>
+            <div><span>Órdenes reales</span><b id="ordersGuard">--</b></div>
+          </div>
+        </article>
+      </section>
+
+      <section id="scenarios" class="sectionBlock">
+        <div class="sectionHead">
+          <div><span class="eyebrow">MATRIZ PRINCIPAL</span><h2>Escenarios y decisión</h2></div>
+          <span class="sectionNote">5m / 15m operativos · resto contexto</span>
+        </div>
+        <div class="tableCard panel" tabindex="0" role="region" aria-label="Matriz principal de escenarios">
+          <table>
+            <thead><tr><th>Horizonte</th><th>Sesgo</th><th>Decisión</th><th>Calidad</th><th>Viabilidad</th><th>BA</th><th>Brier</th><th>ECE</th><th>Activación</th><th>Invalidación</th></tr></thead>
+            <tbody id="scenarioRows"><tr><td colspan="10">Esperando datos autenticados.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="calibration" class="sectionBlock">
+        <div class="sectionHead">
+          <div><span class="eyebrow">CALIBRACIÓN EN TIEMPO REAL</span><h2>Calidad del modelo</h2></div>
+          <span class="sectionNote">Sólo lectura · sin online learning</span>
+        </div>
+        <div class="calibrationGrid" id="calibrationGrid">
+          <article class="panel calibrationCard"><span>5m</span><strong>--</strong><small>Esperando API</small></article>
+          <article class="panel calibrationCard"><span>15m</span><strong>--</strong><small>Esperando API</small></article>
+        </div>
+      </section>
+
+      <section id="paper" class="paperGrid">
+        <article class="panel">
+          <div class="panelHeader"><div><span class="eyebrow">PAPER TRADING</span><h2>Estado de simulación</h2></div><span class="pill" id="paperBadge">--</span></div>
+          <div class="metricTiles">
+            <div><span>Trades</span><strong id="paperTrades">--</strong></div>
+            <div><span>Win rate</span><strong id="paperWin">--</strong></div>
+            <div><span>P&L neto</span><strong id="paperPnl">--</strong></div>
+            <div><span>Drawdown</span><strong id="paperDd">--</strong></div>
+          </div>
+          <p class="note" id="paperNote">Las abstenciones no son trades. El BI sólo publica resultados simulados verificables.</p>
+        </article>
+
+        <article class="panel">
+          <div class="panelHeader"><div><span class="eyebrow">DISTANCE TO ELIGIBLE</span><h2>Qué falta para actuar</h2></div><span class="pill warn">read-only</span></div>
+          <div id="distanceList" class="distanceList"><div class="empty">Sin diagnóstico publicado todavía.</div></div>
+        </article>
+      </section>
+
+      <section id="system" class="sectionBlock">
+        <div class="sectionHead">
+          <div><span class="eyebrow">SALUD DEL SISTEMA</span><h2>Infraestructura y fuentes</h2></div>
+          <span class="sectionNote">Fail-closed</span>
+        </div>
+        <div class="systemGrid">
+          <article class="panel systemCard"><span>Runtime</span><strong id="runtimeReady">--</strong><small id="runtimeRevision">--</small></article>
+          <article class="panel systemCard"><span>Último ciclo</span><strong id="lastCycle">--</strong><small id="cycleAge">--</small></article>
+          <article class="panel systemCard"><span>Error state</span><strong id="errorState">--</strong><small>runtime</small></article>
+          <article class="panel systemCard"><span>Contrato API</span><strong id="contractState">--</strong><small id="generatedAt">--</small></article>
+        </div>
+      </section>
+
+      <footer>
+        <span>BTC Scenario Advisor PRO · BI Trading v1</span>
+        <span>Información probabilística · SHADOW only · no ejecuta órdenes reales.</span>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
