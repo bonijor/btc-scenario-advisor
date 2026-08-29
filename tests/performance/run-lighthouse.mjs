@@ -1,5 +1,6 @@
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, access } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
+import { chromium } from '@playwright/test';
 
 await mkdir('artifacts/lighthouse', { recursive: true });
 
@@ -19,7 +20,25 @@ const args = [
   `--output-path=${outputPath}`,
 ];
 
-const result = spawnSync('npx', args, { stdio: 'inherit', env: process.env });
+let chromePath = process.env.CHROME_PATH;
+if (!chromePath) {
+  chromePath = chromium.executablePath();
+}
+
+try {
+  await access(chromePath);
+} catch {
+  console.error(`LIGHTHOUSE_CHROME_NOT_FOUND ${chromePath}`);
+  console.error('Run: npx playwright install chromium');
+  process.exit(2);
+}
+
+console.log(`LIGHTHOUSE_CHROME_PATH ${chromePath}`);
+
+const result = spawnSync('npx', args, {
+  stdio: 'inherit',
+  env: { ...process.env, CHROME_PATH: chromePath },
+});
 if (result.status !== 0) process.exit(result.status || 1);
 
 const report = JSON.parse(await readFile(outputPath, 'utf8'));
