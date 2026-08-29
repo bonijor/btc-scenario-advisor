@@ -5,26 +5,38 @@ ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
 if ! command -v graphify >/dev/null 2>&1; then
-  echo "graphify CLI not found. Install the official 'graphifyy' package in an isolated environment first." >&2
-  echo "Example: uv tool install graphifyy" >&2
+  echo "graphify CLI not found. Install the official 'graphifyy' package in an isolated tool environment first." >&2
+  echo "Recommended: uv tool install graphifyy" >&2
   exit 2
 fi
 
-OUT="${GRAPHIFY_OUT_DIR:-graphify-out}"
+OUT="$ROOT/graphify-out"
 
-if [[ "$OUT" = /* ]] || [[ "$OUT" == *".."* ]]; then
-  echo "Refusing unsafe GRAPHIFY_OUT_DIR=$OUT" >&2
-  exit 2
-fi
-
-mkdir -p "$OUT"
+# Graphify v8 writes its default project map to graphify-out/. Keep the first
+# pass on the public web repository only. Do not pass credentials or external
+# document sources to this audit.
+rm -rf "$OUT"
 
 echo "Mapping public web repository locally..."
-echo "Output: $ROOT/$OUT"
+echo "Root: $ROOT"
+echo "Output: $OUT"
 
-# Graphify's code mapping is local-first. We intentionally scope the first pass
-# to this public website repository and do not pass GCP credentials or secrets.
-graphify . --output "$OUT"
+graphify .
+
+for required in graph.json GRAPH_REPORT.md graph.html; do
+  if [ ! -s "$OUT/$required" ]; then
+    echo "GRAPHIFY_OUTPUT_MISSING $OUT/$required" >&2
+    exit 3
+  fi
+done
 
 echo
-echo "Graphify complete. Review GRAPH_REPORT.md and graph.html manually before refactoring."
+echo "PASS_GRAPHIFY_WEB_MAP"
+echo "Generated:"
+ls -lh "$OUT/graph.json" "$OUT/GRAPH_REPORT.md" "$OUT/graph.html"
+
+echo
+echo "Suggested read-only queries:"
+echo '  graphify query "Which files define the Landing V2 visual hierarchy and responsive behavior?"'
+echo '  graphify query "What code paths connect the public landing to the existing dashboard and BI Trading?"'
+echo '  graphify query "Which files enforce safety language such as SHADOW, SPOT_ONLY and no execution?"'
