@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "qa:e2e": "playwright test",
+    "qa:landing": "playwright test tests/e2e/landing-v2.spec.mjs",
     "qa:list": "playwright test --list",
     "qa:budget": "node tests/performance/static-budget.mjs",
     "qa:lighthouse": "node tests/performance/run-lighthouse.mjs"
