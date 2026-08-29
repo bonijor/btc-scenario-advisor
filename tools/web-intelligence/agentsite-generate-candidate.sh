@@ -32,11 +32,34 @@ if [ -n "${AGENTSITE_MODEL:-}" ]; then
   MODEL_ARGS+=(--model "$AGENTSITE_MODEL")
 fi
 
+RUNNER=(agentsite)
+case "${AGENTSITE_MODEL:-}" in
+  google/*|gemini/*)
+    AGENTSITE_BIN="$(command -v agentsite)"
+    AGENTSITE_PY="$(sed -n '1s/^#!//p' "$AGENTSITE_BIN")"
+
+    if [ ! -x "$AGENTSITE_PY" ] && command -v uv >/dev/null 2>&1; then
+      UV_TOOL_DIR="$(uv tool dir 2>/dev/null || true)"
+      if [ -n "$UV_TOOL_DIR" ] && [ -x "$UV_TOOL_DIR/agentsite/bin/python" ]; then
+        AGENTSITE_PY="$UV_TOOL_DIR/agentsite/bin/python"
+      fi
+    fi
+
+    if [ ! -x "$AGENTSITE_PY" ]; then
+      echo "AGENTSITE_GOOGLE_COMPAT_PYTHON_NOT_FOUND" >&2
+      echo "Could not resolve the Python interpreter for the isolated AgentSite tool environment." >&2
+      exit 6
+    fi
+
+    RUNNER=("$AGENTSITE_PY" "$ROOT/tools/web-intelligence/agentsite-google-compat.py")
+    ;;
+esac
+
 echo "Generating isolated AgentSite candidate..."
 echo "Output: $PROJECT_OUT"
 echo "Repository source files will not be overwritten."
 
-agentsite generate \
+"${RUNNER[@]}" generate \
   "$(cat "$PROMPT_FILE")" \
   "${MODEL_ARGS[@]}" \
   --output "$PROJECT_OUT" \
