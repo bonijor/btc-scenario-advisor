@@ -12,16 +12,17 @@ fi
 
 OUT="$ROOT/graphify-out"
 
-# Graphify v8 writes its default project map to graphify-out/. Keep the first
-# pass on the public web repository only. Do not pass credentials or external
-# document sources to this audit.
+# First pass is intentionally code-only. Graphify parses code locally with
+# tree-sitter and does not require or consume LLM API keys in this mode.
+# HTML/CSS/product copy remain covered by deterministic QA + AgentSite review.
 rm -rf "$OUT"
 
-echo "Mapping public web repository locally..."
+echo "Mapping public web repository locally (code-only)..."
 echo "Root: $ROOT"
 echo "Output: $OUT"
+echo "External LLM/API keys: NOT REQUIRED"
 
-graphify .
+graphify . --code-only
 
 for required in graph.json GRAPH_REPORT.md graph.html; do
   if [ ! -s "$OUT/$required" ]; then
@@ -36,7 +37,9 @@ echo "Generated:"
 ls -lh "$OUT/graph.json" "$OUT/GRAPH_REPORT.md" "$OUT/graph.html"
 
 echo
-echo "Suggested read-only queries:"
-echo '  graphify query "Which files define the Landing V2 visual hierarchy and responsive behavior?"'
-echo '  graphify query "What code paths connect the public landing to the existing dashboard and BI Trading?"'
-echo '  graphify query "Which files enforce safety language such as SHADOW, SPOT_ONLY and no execution?"'
+echo "Suggested read-only code queries:"
+echo '  graphify query "Which JavaScript modules control dashboard data fetching, rendering and resilience?"'
+echo '  graphify query "What code paths connect market data to dashboard state and UI rendering?"'
+echo '  graphify query "Which code modules enforce fail-closed or read-only behavior in the public web app?"'
+echo
+echo "NOTE: Landing HTML/CSS are intentionally reviewed outside Graphify code-only via Playwright, Lighthouse and AgentSite."
