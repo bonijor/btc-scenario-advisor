@@ -6,6 +6,20 @@ await mkdir('artifacts/lighthouse', { recursive: true });
 
 const outputPath = 'artifacts/lighthouse/report.json';
 const url = process.env.LIGHTHOUSE_URL || 'http://127.0.0.1:4173/?qa=performance';
+
+// Cloud/CI shells commonly expose a very small /dev/shm. Chromium can launch
+// successfully and then crash the audited tab when Lighthouse starts tracing.
+// Keep these flags deterministic and overridable for diagnostics.
+const chromeFlags = process.env.LIGHTHOUSE_CHROME_FLAGS || [
+  '--headless=new',
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-gpu',
+  '--no-first-run',
+  '--no-default-browser-check',
+].join(' ');
+
 const args = [
   '--yes',
   'lighthouse@12.6.1',
@@ -14,7 +28,7 @@ const args = [
   '--no-enable-error-reporting',
   '--form-factor=mobile',
   '--only-categories=performance,accessibility,best-practices,seo',
-  '--chrome-flags=--headless --no-sandbox --disable-gpu',
+  `--chrome-flags=${chromeFlags}`,
   '--max-wait-for-load=15000',
   '--output=json',
   `--output-path=${outputPath}`,
@@ -34,6 +48,30 @@ try {
 }
 
 console.log(`LIGHTHOUSE_CHROME_PATH ${chromePath}`);
+console.log(`LIGHTHOUSE_CHROME_FLAGS ${chromeFlags}`);
+
+// Cheap browser preflight. If Chromium itself cannot survive in the shell,
+// fail before Lighthouse and make the environmental cause explicit.
+const preflight = spawnSync(chromePath, [
+  '--headless=new',
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-gpu',
+  '--dump-dom',
+  'about:blank',
+], {
+  encoding: 'utf8',
+  timeout: 15_000,
+  env: process.env,
+});
+
+if (preflight.status !== 0) {
+  console.error(`LIGHTHOUSE_CHROME_PREFLIGHT_FAILED status=${preflight.status}`);
+  if (preflight.stderr) console.error(preflight.stderr.trim());
+  process.exit(2);
+}
+console.log('PASS_LIGHTHOUSE_CHROME_PREFLIGHT');
 
 const result = spawnSync('npx', args, {
   stdio: 'inherit',
