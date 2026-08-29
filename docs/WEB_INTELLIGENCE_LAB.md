@@ -33,7 +33,7 @@ Credentials must remain outside the repository. The starter fails closed when no
 
 ### Graphify
 
-Use local code mapping to understand dependencies before refactoring. The first run maps only this public website repository and writes its map to ignored `graphify-out/`.
+Use local code mapping to understand dependencies before refactoring. The first pass is intentionally `--code-only`: supported code is parsed locally with tree-sitter AST, no LLM API key is required, and no code is sent to an external model. HTML/CSS and product copy stay outside this first graph and remain covered by Playwright, Lighthouse and AgentSite review.
 
 Starter: `tools/web-intelligence/graphify-audit.sh`.
 
@@ -45,7 +45,7 @@ Starter: `tools/web-intelligence/graphify-audit.sh`.
 4. Existing performance budget.
 5. Landing-specific performance budget.
 6. Lighthouse.
-7. Graphify architecture map.
+7. Graphify code-only architecture map.
 8. AgentSite isolated candidate review.
 9. Browser-Use exploratory QA.
 10. Human review.
