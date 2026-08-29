@@ -17,8 +17,8 @@ test.describe('Landing v2 Web Intelligence lab', () => {
   });
 
   test('keeps the lab separate from the existing dashboard', async ({ page }) => {
-    const dashboardLinks = page.getByRole('link', { name: /dashboard|BTC Scenario Advisor/i });
-    await expect(dashboardLinks.first()).toHaveAttribute('href', /index\.html/);
+    await expect(page.getByRole('link', { name: 'Abrir dashboard' })).toHaveAttribute('href', 'index.html');
+    await expect(page.getByRole('link', { name: 'Explorar dashboard' })).toHaveAttribute('href', 'index.html');
     await expect(page.getByRole('link', { name: 'Abrir BI Trading' })).toHaveAttribute('href', 'bi-trading.html');
   });
 
