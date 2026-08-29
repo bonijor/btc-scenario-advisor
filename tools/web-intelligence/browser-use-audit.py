@@ -11,7 +11,7 @@ from browser_use import Agent
 
 try:
     from browser_use import ChatBrowserUse
-except ImportError as exc:  # fail clearly on incompatible package versions
+except ImportError as exc:
     raise SystemExit("browser-use is not installed or is incompatible") from exc
 
 
@@ -44,7 +44,15 @@ site.
 
 
 async def main() -> None:
-    model = os.environ.get("BROWSER_USE_MODEL", "openai/gpt-5.5-mini")
+    model = os.environ.get("BROWSER_USE_MODEL")
+    if not model:
+        if not os.environ.get("BROWSER_USE_API_KEY"):
+            raise SystemExit(
+                "BROWSER_USE_API_KEY is not set. Keep credentials outside the repo, "
+                "export the key in the shell, then rerun this read-only audit."
+            )
+        model = "bu-2-0-mini-preview"
+
     agent = Agent(task=TASK, llm=ChatBrowserUse(model=model))
     result = await agent.run()
     print(result)
