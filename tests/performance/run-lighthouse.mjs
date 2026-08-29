@@ -10,6 +10,7 @@ const args = [
   'lighthouse@12.6.1',
   url,
   '--quiet',
+  '--no-enable-error-reporting',
   '--form-factor=mobile',
   '--only-categories=performance,accessibility,best-practices,seo',
   '--chrome-flags=--headless --no-sandbox --disable-gpu',
