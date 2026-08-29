@@ -24,10 +24,23 @@ echo "External LLM/API keys: NOT REQUIRED"
 
 graphify . --code-only
 
+if [ ! -s "$OUT/graph.json" ]; then
+  echo "GRAPHIFY_OUTPUT_MISSING $OUT/graph.json" >&2
+  exit 3
+fi
+
+# Graphify 0.9.x code-only extraction writes graph.json first and explicitly
+# asks for cluster-only to derive communities and regenerate the human-readable
+# report + interactive graph. cluster-only is local and self-contained over the
+# existing graph, so it does not need an LLM key.
+echo
+echo "Clustering local code graph and generating reports..."
+graphify cluster-only .
+
 for required in graph.json GRAPH_REPORT.md graph.html; do
   if [ ! -s "$OUT/$required" ]; then
     echo "GRAPHIFY_OUTPUT_MISSING $OUT/$required" >&2
-    exit 3
+    exit 4
   fi
 done
 
