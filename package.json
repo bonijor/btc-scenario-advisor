@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "qa:e2e": "playwright test",
-    "qa:landing": "playwright test tests/e2e/landing-v2.spec.mjs",
     "qa:list": "playwright test --list",
     "qa:budget": "node tests/performance/static-budget.mjs",
-    "qa:lighthouse": "node tests/performance/run-lighthouse.mjs"
+    "qa:lighthouse": "node tests/performance/run-lighthouse.mjs",
+    "qa:landing": "playwright test tests/e2e/landing-v2.spec.mjs",
+    "qa:landing:budget": "node tests/performance/landing-budget.mjs",
+    "qa:landing:lighthouse": "node tests/performance/run-landing-lighthouse.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1"
