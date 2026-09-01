@@ -54,9 +54,9 @@ export function normalizedPaperPayload(payload) {
 
 function ensureFunnelUi() {
   if (funnelEl('paperFunnelPanel')) return;
-  const lowerGrid = document.querySelector('#overview .lowerGrid');
-  if (!lowerGrid) return;
-  lowerGrid.insertAdjacentHTML('afterend', `
+  const paperTable = document.querySelector('#paper .tableWrap');
+  if (!paperTable) return;
+  paperTable.insertAdjacentHTML('beforebegin', `
     <article class="panel content" id="paperFunnelPanel" style="margin-top:10px">
       <div class="head"><div><div class="ey">Embudo de elegibilidad</div><h3>De observación a señal Paper elegible</h3></div><span class="chip" id="funnelStatus">sin datos</span></div>
       <p class="tiny">Cada etapa muestra cuántas observaciones siguen vivas después de aplicar los filtros del motor. Cero elegibles no significa cero datos.</p>
@@ -74,6 +74,7 @@ function ensureFunnelUi() {
 
 export function renderFunnel(funnel) {
   ensureFunnelUi();
+  if (!funnelEl('paperFunnelPanel')) return;
   const f = funnel && typeof funnel === 'object' ? funnel : null;
   if (!f) {
     ['funnelObserved', 'funnelOfficial', 'funnelBullish', 'funnelConfidence', 'funnelEligible'].forEach((id) => {

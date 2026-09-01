@@ -290,8 +290,9 @@ function renderDecisions(rows) {
 
 function renderPaper(paper) {
   const p = resilience.normalizedPaperPayload(paper);
-  $('pTrades').textContent = Number.isFinite(Number(p.simulatedTrades)) ? String(Number(p.simulatedTrades)) : '--'; $('pWin').textContent = Number.isFinite(Number(p.winRatePct)) ? fmtPct(p.winRatePct) : '--'; $('pPnl').textContent = Number.isFinite(Number(p.netPnlPct)) ? fmtPct(p.netPnlPct, 2) : '--'; $('pDd').textContent = Number.isFinite(Number(p.drawdownPct)) ? fmtPct(p.drawdownPct, 2) : '--';
-  if (p.note) $('paperNote').textContent = p.note;
+  const put = (id, value) => { if ($(id)) $(id).textContent = value; };
+  put('pTrades', Number.isFinite(Number(p.simulatedTrades)) ? String(Number(p.simulatedTrades)) : '--'); put('pWin', Number.isFinite(Number(p.winRatePct)) ? fmtPct(p.winRatePct) : '--'); put('pPnl', Number.isFinite(Number(p.netPnlPct)) ? fmtPct(p.netPnlPct, 2) : '--'); put('pDd', Number.isFinite(Number(p.drawdownPct)) ? fmtPct(p.drawdownPct, 2) : '--');
+  if (p.note) put('paperNote', p.note);
   $('tradesBody').innerHTML = p.trades.length ? p.trades.map((x) => `<tr><td>${fmtTime(x.closedAt || x.timestamp)}</td><td>${x.horizon || '--'}</td><td>${fmtUsd(x.entryPrice)}</td><td>${fmtUsd(x.exitPrice)}</td><td>${x.result || '--'}</td><td>${Number.isFinite(Number(x.netPnlPct)) ? fmtPct(x.netPnlPct, 2) : '--'}</td><td>${x.evidenceRef || '--'}</td></tr>`).join('') : '<tr><td colspan="7">Sin trades simulados verificados publicados por la API.</td></tr>';
   resilience.renderFunnel(p.funnel);
 }
@@ -347,6 +348,7 @@ async function refreshAll() {
 }
 
 function selectView(name) {
+  if (!document.getElementById(name)?.classList.contains('view')) name = 'overview';
   document.querySelectorAll('.view').forEach((view) => view.classList.toggle('active', view.id === name)); document.querySelectorAll('[data-view]').forEach((button) => button.classList.toggle('active', button.dataset.view === name)); window.scrollTo({ top: 0, behavior: 'smooth' }); if (name === 'overview') setTimeout(scheduleChartDraw, 0);
 }
 
@@ -355,6 +357,8 @@ function initNavigation() {
   document.querySelectorAll('.tfButton').forEach((button) => button.addEventListener('click', async () => { try { await loadCandles(button.dataset.interval); } catch { setClassText('marketStatus', 'ERROR VELAS', 'warnText'); } }));
   $('refresh').addEventListener('click', refreshAll);
 }
+
+window.BTCDashboardNavigation = Object.freeze({ open: selectView });
 
 async function init() {
   initNavigation(); initResponsiveChart();

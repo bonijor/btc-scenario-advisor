@@ -99,9 +99,18 @@ async function installProductAdapters(page) {
 async function openAccount(page) {
   await installProductAdapters(page);
   await page.goto('/?qa=a11y', { waitUntil: 'domcontentloaded' });
-  await page.locator('[data-view="account"]:visible').first().click();
+  await navigateToAccount(page);
   await expect(page.locator('#account')).toBeVisible();
   await expect(page.locator('#authStatus')).toHaveText('ACTIVO');
+}
+
+async function navigateToAccount(page) {
+  const account = page.locator('[data-view="account"]:visible');
+  if (await account.count()) await account.first().click();
+  else {
+    await page.locator('.mobileNav [data-view="system"]').click();
+    await page.locator('#system [data-view="account"]').click();
+  }
 }
 
 async function loginEmail(page, email = 'qa-user@example.invalid') {
@@ -175,7 +184,7 @@ test('cloud profile name persists and updates authenticated identity', async ({ 
   await expect(page.locator('#authSession')).toContainText('Jor QA');
 
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.locator('[data-view="account"]:visible').first().click();
+  await navigateToAccount(page);
   await expect(page.locator('#authStatus')).toHaveText('ACTIVO');
   await loginEmail(page, 'qa-profile@example.invalid');
   await expect(page.locator('#profileDisplayName')).toHaveValue('Jor QA');
@@ -234,7 +243,7 @@ test('preferences synchronize to cloud and survive a new authenticated session',
   await expect(page.locator('#probabilityHelp')).toContainText('No cambia');
 
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.locator('[data-view="account"]:visible').first().click();
+  await navigateToAccount(page);
   await expect(page.locator('#authStatus')).toHaveText('ACTIVO');
   await loginEmail(page, 'qa-preferences@example.invalid');
   await expect(page.locator('#pref15m')).not.toBeChecked();

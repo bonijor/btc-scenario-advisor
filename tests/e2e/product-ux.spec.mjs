@@ -8,7 +8,7 @@ test('guided product UX adds clear navigation, theme preference and scoped marke
   await expect(page.locator('link[data-scenario-favicon]')).toHaveAttribute('href', 'assets/scenario-mark.svg');
 
   const trialNav = page.locator('.nav [data-view="trial"]');
-  await expect(trialNav).toContainText('Prueba 90D');
+  await expect(trialNav).toContainText('Evidencia 90D');
   await expect(trialNav.locator('.navDesc')).toContainText('evidencia verificable');
 
   await expect(page.locator('#trial > .moduleIntro')).toContainText('no significa que ese día haya sido rentable');

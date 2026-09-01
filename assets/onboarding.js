@@ -4,7 +4,7 @@
   const TOUR_KEY = 'scenarioOnboardingV1';
   const MODE_KEY = 'scenarioReadingModeV1';
   const steps = Object.freeze([
-    { view: 'overview', title: '1. Empezá por Resumen', text: 'Acá ves el estado del mercado, del motor, las decisiones 5m/15m, el progreso 90D y el estado Paper en una sola lectura.' },
+    { view: 'overview', title: '1. Empezá por Resumen', text: 'Acá ves el precio, el estado operativo y las decisiones 5m/15m. El detalle vive en secciones complementarias para evitar información repetida.' },
     { view: 'markets', title: '2. Mirá el contexto de mercado', text: 'Mercados compara BTC, ETH y BNB con datos públicos de Binance Spot. ETH y BNB son contexto read-only: todavía no usan el modelo Quant formal de BTC.' },
     { view: 'analytics', title: '3. Revisá la calidad', text: 'Análisis explica si las probabilidades están bien calibradas. BA, Brier, BSS y ECE sirven para medir calidad; ninguna métrica aislada garantiza una operación.' },
     { view: 'paper', title: '4. Entendé por qué opera o se abstiene', text: 'Simulaciones muestra el funnel completo. Una señal bloqueada puede ser una buena decisión: sólo una entrada y salida Paper verificadas cuentan como trade.' },
@@ -50,7 +50,7 @@
   }
 
   function markTechnicalDetails() {
-    ['#overview .runtimeBanner', '#analytics .pipeline', '#system .pipeline'].forEach((selector) => {
+    ['#system .runtimeBanner', '#analytics .explainDetails'].forEach((selector) => {
       const node = $(selector);
       if (node) node.dataset.readingDetail = 'technical';
     });

@@ -46,12 +46,12 @@
 
   function syncNavigationCopy() {
     const desktop = {
-      overview: '▦ Resumen', analytics: '⌁ Análisis', paper: '◎ Simulaciones',
-      trial: '◷ Prueba 90D', system: '⚙ Sistema', account: '◉ Cuenta',
+      overview: '▦ Resumen', analytics: '⌁ Modelo', paper: '◎ Simulación',
+      trial: '◷ Evidencia 90D', system: '⚙ Sistema', account: '◉ Cuenta',
     };
     const mobile = {
-      overview: 'Inicio', analytics: 'Análisis', paper: 'Simul.',
-      trial: '90D', system: 'Sistema', account: 'Cuenta',
+      overview: 'Resumen', analytics: 'Modelo', paper: 'Simulación',
+      trial: 'Evidencia', system: 'Más', account: 'Cuenta',
     };
     document.querySelectorAll('.nav [data-view]').forEach((button) => {
       if (desktop[button.dataset.view]) button.textContent = desktop[button.dataset.view];
@@ -75,10 +75,10 @@
     setText('#paper .ey', 'Simulaciones');
     setText('#paper h2', 'Operaciones simuladas verificadas');
     setText('#paper > .content > p.tiny', 'Sólo se publica una simulación cuando existen entrada, salida, costos y evidencia. Una señal bloqueada o una abstención no cuenta como operación.');
-    setText('#analytics .ey', 'Calidad y calibración');
-    setText('#analytics h2', 'Análisis del modelo · 5m / 15m');
+    setText('#analytics .ey', 'Modelo Quant · 5m y 15m');
+    setText('#analytics h2', '¿Qué tan confiable es el modelo?');
     const analyticsIntro = document.querySelector('#analytics .content > p.tiny');
-    if (analyticsIntro) analyticsIntro.textContent = 'Métricas oficiales servidas por la API de solo lectura. BA mide acierto balanceado; BSS compara contra una referencia; ECE mide error de calibración y cuanto menor, mejor.';
+    if (analyticsIntro) analyticsIntro.textContent = 'Métricas oficiales de la API de sólo lectura. Ayudan a evaluar calidad predictiva; no representan ganancias ni modifican el modelo durante el trial.';
   }
 
   function syncPhaseCopy() {

@@ -37,16 +37,18 @@ test('Data Pulse separates official horizons from public context and aggregates 
   });
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('.dataPulse')).toBeVisible();
+  await expect(page.locator('.dataPulse')).toBeHidden();
   await expect(page.locator('.tfButton')).toHaveCount(5);
-  await expect(page.locator('#pulseQuant')).toContainText('NO ACTUAR');
-  await expect(page.locator('#pulseCloseAt')).not.toHaveText('No disponible');
 
   await page.locator('.tfButton[data-interval="1m"]').click();
+  await page.locator('[data-view="system"]:visible').first().click();
+  await expect(page.locator('.dataPulse')).toBeVisible();
   await expect(page.locator('#pulseQuant')).toHaveText('CONTEXTO PÚBLICO');
   await expect(page.locator('#pulseQuality')).toHaveText('No aplica');
 
+  await page.locator('[data-view="overview"]:visible').first().click();
   await page.locator('.tfButton[data-interval="45m"]').click();
+  await page.locator('[data-view="system"]:visible').first().click();
   await expect(page.locator('#chartTf')).toHaveText('45m');
   await expect(page.locator('#pulseCloseAt')).not.toHaveText('No disponible');
   expect(requestedIntervals).toContain('15m');
