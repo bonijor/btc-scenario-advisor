@@ -50,7 +50,7 @@
   }
 
   function markTechnicalDetails() {
-    ['#system .runtimeBanner', '#analytics .explainDetails', '#system .dataPulse'].forEach((selector) => {
+    ['#system .runtimeBanner', '#analytics .explainDetails'].forEach((selector) => {
       const node = $(selector);
       if (node) node.dataset.readingDetail = 'technical';
     });
