@@ -3,12 +3,14 @@ import { test, expect } from '@playwright/test';
 test('dashboard uses one primary experience with progressive detail', async ({ page }) => {
   await page.goto('/?qa=performance');
 
-  await expect(page.locator('a[href*="bi-trading"]')).toHaveCount(0);
+  await expect(page.locator('#overview a[href*="bi-trading"]')).toHaveCount(0);
   await expect(page.locator('#overview .statusSummaryCard')).toBeVisible();
   await expect(page.locator('#overview .runtimeBanner')).toHaveCount(0);
   await expect(page.locator('#overview .dataPulse')).toHaveCount(0);
   await expect(page.locator('#system .runtimeBanner')).toHaveCount(1);
   await expect(page.locator('#system .dataPulse')).toHaveCount(1);
+  await expect(page.locator('#system .legacyTool')).not.toHaveAttribute('open', '');
+  await expect(page.locator('#system .legacyTool a[href="bi-trading.html"]')).toHaveCount(1);
 
   const metrics = page.locator('#overview .metricDetails').first();
   await expect(metrics).not.toHaveAttribute('open', '');
