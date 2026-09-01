@@ -46,7 +46,7 @@ canvas,img,svg{max-width:100%}
 .topbar h1{font-size:clamp(24px,2.1vw,30px);margin:5px 0 3px}
 .topActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .btn{min-height:42px;border:1px solid var(--line);background:var(--panel);color:#fff;border-radius:11px;padding:9px 12px;cursor:pointer;text-decoration:none;font-weight:800;display:inline-flex;align-items:center;justify-content:center}.btn:hover{border-color:var(--line2)}.btn.primary{border:0;background:linear-gradient(135deg,#428ee8,#765fe9)}
-.btn:focus-visible,.nav button:focus-visible,.mobileNav button:focus-visible,.tfButton:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.btn:focus-visible,.nav button:focus,.mobileNav button:focus,.tfButton:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 
 .statusStrip{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,.7fr));gap:var(--gap);margin-bottom:11px}
 .statusCell{border:1px solid var(--line);background:rgba(9,22,36,.9);border-radius:13px;padding:10px 12px}.statusCell span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.09em}.statusCell b{display:block;margin-top:5px;font-size:12px}
