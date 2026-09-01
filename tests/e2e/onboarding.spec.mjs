@@ -6,7 +6,7 @@ test('first authenticated use offers guide and simple/technical reading modes', 
   await expect(page.locator('#guideToggle')).toBeVisible();
   await expect(page.locator('#readingModeToggle')).toBeVisible();
   await expect(page.locator('body')).toHaveAttribute('data-reading-mode', 'simple');
-  await expect(page.locator('#overview .runtimeBanner')).toHaveAttribute('data-reading-detail', 'technical');
+  await expect(page.locator('#system .runtimeBanner')).toHaveAttribute('data-reading-detail', 'technical');
 
   await expect(page.locator('#scenarioGuide')).toBeVisible();
   await expect(page.locator('#scenarioGuide')).toHaveAttribute('aria-modal', 'true');

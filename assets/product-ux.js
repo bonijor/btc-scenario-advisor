@@ -4,16 +4,16 @@
   const navCopy = Object.freeze({
     overview: { icon: '▦', title: 'Resumen', desc: 'Estado del mercado y del motor' },
     markets: { icon: '◈', title: 'Mercados', desc: 'BTC, ETH y BNB en Binance Spot' },
-    analytics: { icon: '⌁', title: 'Análisis', desc: 'Probabilidades y calidad predictiva' },
-    paper: { icon: '◎', title: 'Simulaciones', desc: 'Señales, filtros y operaciones Paper' },
-    trial: { icon: '◷', title: 'Prueba 90D', desc: 'Continuidad y evidencia verificable' },
+    analytics: { icon: '⌁', title: 'Modelo', desc: 'Calidad y calibración predictiva' },
+    paper: { icon: '◎', title: 'Simulación', desc: 'Operaciones Paper verificadas' },
+    trial: { icon: '◷', title: 'Evidencia 90D', desc: 'Continuidad y evidencia verificable' },
     system: { icon: '⚙', title: 'Sistema', desc: 'Salud técnica, API y runtime' },
     account: { icon: '◉', title: 'Cuenta', desc: 'Plan, alertas y preferencias' },
   });
 
   const intros = Object.freeze({
-    overview: '<b>Qué vas a encontrar:</b> precio BTC, salud del motor, decisiones 5m/15m, progreso 90D y resultados Paper. La capa Quant formal sigue siendo BTC/USDT.',
-    analytics: '<b>Cómo leer esta pantalla:</b> BA mide separación de clases; ECE mide calibración; BSS compara contra un baseline. Importa la tendencia conjunta, no una métrica aislada.',
+    overview: '<b>Lectura rápida:</b> precio BTC, estado operativo y decisiones actuales 5m/15m. Los detalles de modelo, simulación y evidencia viven en sus secciones.',
+    analytics: '<b>Cómo leer esta pantalla:</b> BA mide separación de clases; ECE mide calibración; BSS compara contra una referencia. Importa la tendencia conjunta, no una métrica aislada.',
     paper: '<b>Qué cuenta como operación:</b> sólo un Paper trade con entrada, salida, costes y evidencia verificable. Una señal bloqueada es una decisión correcta de abstención, no un trade perdido.',
     trial: '<b>Qué valida la Prueba 90D:</b> continuidad, inmutabilidad y evidencia diaria del sistema. Un día verificado confirma integridad operativa; no significa que ese día haya sido rentable.',
     system: '<b>Para qué sirve Sistema:</b> muestra conectividad, runtime, contratos y estado técnico. Ante datos incompletos el producto debe fallar cerrado antes de inventar información.',
@@ -86,24 +86,26 @@
     nav.dataset.productUx = '1';
     nav.querySelectorAll('.navGroup').forEach((node) => node.remove());
     nav.querySelectorAll('[data-view]').forEach(formatNavigationButton);
-    insertNavGroup(nav, 'Mercado', 'overview');
-    insertNavGroup(nav, 'Validación', 'paper');
-    insertNavGroup(nav, 'Plataforma', 'system');
+    insertNavGroup(nav, 'Principal', 'overview');
+    insertNavGroup(nav, 'Investigación', 'analytics');
+    insertNavGroup(nav, 'Configuración', 'system');
   }
 
-  function openView(name) {
-    document.querySelectorAll('.view').forEach((view) => {
-      const active = view.id === name;
-      view.classList.toggle('active', active);
-      view.setAttribute('aria-hidden', String(!active));
+  function openView(name, options) {
+    if (window.BTCDashboardNavigation?.open) return window.BTCDashboardNavigation.open(name, options);
+    return name;
+  }
+
+  function enableHashRouting() {
+    document.addEventListener('click', (event) => {
+      const view = event.target.closest?.('[data-view]')?.dataset.view;
+      if (view && location.hash !== `#${view}`) history.pushState({ view }, '', `#${view}`);
     });
-    document.querySelectorAll('[data-view]').forEach((button) => {
-      const active = button.dataset.view === name;
-      button.classList.toggle('active', active);
-      if (active) button.setAttribute('aria-current', 'page');
-      else button.removeAttribute('aria-current');
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.addEventListener('popstate', () => openView(location.hash.slice(1) || 'overview'));
+    const requested = location.hash.slice(1);
+    if (requested && document.getElementById(requested)?.classList.contains('view')) {
+      openView(requested);
+    }
   }
 
   function addThemeToggle() {
@@ -194,7 +196,8 @@
       systemView.insertAdjacentHTML('beforebegin', marketMarkup());
     }
     addMarketNavButton($('.nav'), { beforeSelector: '[data-view="analytics"]' });
-    addMarketNavButton($('.mobileNav'), { beforeSelector: '[data-view="analytics"]', compact: true });
+    addMarketNavButton($('.quickLinks'), { compact: true });
+    if (location.hash === '#markets') openView('markets', { updateHistory: false, smooth: false });
   }
 
   function fmtUsd(value) {
@@ -272,6 +275,7 @@
     applyBrand();
     addMarketsView();
     enhanceNavigation();
+    enableHashRouting();
     addThemeToggle();
     addModuleIntros();
     annotateMetrics();

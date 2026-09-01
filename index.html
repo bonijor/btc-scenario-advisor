@@ -23,10 +23,10 @@
       <div><strong>BTC Scenario</strong><small>Advisor PRO · Shadow Lab</small></div>
     </div>
     <nav class="nav" aria-label="Navegación principal">
-      <button class="active" data-view="overview" aria-current="page">▦ Overview</button>
-      <button data-view="analytics">⌁ Analytics</button>
-      <button data-view="paper">◎ Paper Trading</button>
-      <button data-view="trial">◷ Trial 90 días</button>
+      <button class="active" data-view="overview" aria-current="page">▦ Resumen</button>
+      <button data-view="analytics">⌁ Modelo</button>
+      <button data-view="paper">◎ Simulación</button>
+      <button data-view="trial">◷ Evidencia 90D</button>
       <button data-view="system">⚙ Sistema</button>
       <button data-view="account">◉ Cuenta</button>
     </nav>
@@ -44,7 +44,6 @@
         <div class="tiny">Trial auditado de 90 días · motor V5.9.0 · sin órdenes reales</div>
       </div>
       <div class="topActions">
-        <a class="btn" href="bi-trading.html" target="_blank" rel="noopener" aria-label="Abrir BI Trading en una pestaña nueva">Abrir BI Trading</a>
         <button class="btn primary" id="refresh" aria-label="Actualizar datos del dashboard" aria-busy="false">↻ Actualizar</button>
       </div>
     </header>
@@ -60,34 +59,22 @@
       <div class="metricGrid">
         <article class="panel assetCard">
           <div class="assetInfo"><div class="coin" aria-hidden="true">₿</div><div><div class="ey">Bitcoin · Binance Spot</div><b>BTC/USDT</b></div></div>
-          <div style="text-align:right"><div class="price" id="price">Cargando…</div><small class="tiny" id="priceMeta">Mercado público</small></div>
+          <div class="assetSnapshot">
+            <div class="price" id="price">Cargando…</div><small class="tiny" id="priceMeta">Mercado público</small>
+            <dl class="marketSnapshot" aria-label="Resumen de mercado de 24 horas">
+              <div><dt>Máximo</dt><dd id="marketHigh">--</dd></div>
+              <div><dt>Mínimo</dt><dd id="marketLow">--</dd></div>
+              <div><dt>Volumen</dt><dd id="marketVolume">--</dd></div>
+            </dl>
+          </div>
         </article>
-        <article class="panel metricCard"><span>Motor</span><strong id="engineState">--</strong><small id="engineMeta">Esperando API</small></article>
-        <article class="panel metricCard"><span>Trial</span><strong id="trialCounter">0 / 90</strong><small>Primer día: 18/08/2026</small></article>
-        <article class="panel metricCard"><span>Paper trades</span><strong id="pTrades">0</strong><small>sólo verificados</small></article>
-        <article class="panel metricCard"><span>Modo</span><strong>SHADOW</strong><small>SPOT_ONLY · no SELL · no shorts</small></article>
+        <article class="panel statusSummaryCard" aria-label="Resumen operativo">
+          <div><span>Motor</span><strong id="engineState">--</strong><small id="engineMeta">Esperando API</small></div>
+          <div><span>Evidencia 90D</span><strong id="trialCounter">0 / 90</strong><small>sólo días conciliados</small></div>
+          <div><span>Simulaciones</span><strong id="pTrades">0</strong><small>trades verificados</small></div>
+          <div><span>Modo</span><strong>SHADOW</strong><small>sin órdenes reales</small></div>
+        </article>
       </div>
-
-      <article class="panel runtimeBanner">
-        <div>
-          <span class="chip warn" id="runtimeChip" aria-live="polite">● API READ-ONLY PENDIENTE</span>
-          <h2>V5.9.0-SPOT-HIGH-CONVICTION</h2>
-          <div class="tiny" id="runtimeText">El dashboard no inventa estado. Esperando runtime validado.</div>
-        </div>
-        <div class="rMetric"><small>Contrato</small><b>2.1</b></div>
-        <div class="rMetric"><small>Runtime</small><b id="revision">--</b></div>
-        <div class="rMetric"><small>Último ciclo</small><b id="lastCycle">--</b></div>
-        <div class="rMetric"><small>Error state</small><b id="errorState">--</b></div>
-      </article>
-
-      <section class="panel dataPulse" aria-label="Procedencia y frescura de datos">
-        <div class="dataPulseTitle"><span>DATA PULSE</span><b>Una sola lectura · sin datos aproximados</b></div>
-        <article><span>Cotización BTC/USDT</span><strong id="pulsePrice">Validando…</strong><small id="pulseChange">Mercado público read-only</small></article>
-        <article><span>Fuente de velas</span><strong id="pulseSource">Binance público</strong><small>Sólo períodos cerrados</small></article>
-        <article><span>Último cierre <b id="pulseInterval">5m</b></span><strong id="pulseCloseAt">No disponible</strong><small id="pulseNextClose">Esperando velas verificables</small></article>
-        <article><span>Lectura Quant</span><strong id="pulseQuant" class="warnText">Validando</strong><small id="pulseQuantMeta">5m/15m son los únicos horizontes elegibles</small></article>
-        <article><span>Calidad / edad</span><strong id="pulseQuality">No evaluada</strong><small id="pulseAge">Falla cerrado</small></article>
-      </section>
 
       <div class="proGrid">
         <article class="panel chartPanel">
@@ -118,43 +105,33 @@
           <div class="head"><div><div class="ey">Motor Quant</div><h3>Decisión actual</h3></div><span class="chip" id="decisionSource">sin API</span></div>
           <div class="decisionGrid">
             <div class="decisionCard">
-              <div class="decisionTop"><span class="tf">5m</span><span class="chip">elegible</span></div>
+              <div class="decisionTop"><span class="tf">5m</span><span class="chip">Sólo lectura</span></div>
               <h4 id="d5">Esperando datos</h4><p class="reason" id="r5">La decisión oficial viene del runtime, no del navegador.</p>
               <div class="levels"><div><span>Activación</span><b id="a5">--</b></div><div><span>Invalidación</span><b id="i5">--</b></div></div>
-              <div class="modelMetrics"><div><span>Calidad</span><b id="q5">--</b></div><div><span>BA</span><b id="ba5">--</b></div><div><span>BSS</span><b id="bss5">--</b></div><div><span>ECE</span><b id="ece5">--</b></div></div>
+              <details class="metricDetails"><summary>Ver métricas del modelo</summary><div class="modelMetrics"><div><span>Calidad</span><b id="q5">--</b></div><div><span>BA</span><b id="ba5">--</b></div><div><span>BSS</span><b id="bss5">--</b></div><div><span>ECE</span><b id="ece5">--</b></div></div></details>
             </div>
             <div class="decisionCard">
-              <div class="decisionTop"><span class="tf">15m</span><span class="chip">elegible</span></div>
+              <div class="decisionTop"><span class="tf">15m</span><span class="chip">Sólo lectura</span></div>
               <h4 id="d15">Esperando datos</h4><p class="reason" id="r15">La decisión oficial viene del runtime, no del navegador.</p>
               <div class="levels"><div><span>Activación</span><b id="a15">--</b></div><div><span>Invalidación</span><b id="i15">--</b></div></div>
-              <div class="modelMetrics"><div><span>Calidad</span><b id="q15">--</b></div><div><span>BA</span><b id="ba15">--</b></div><div><span>BSS</span><b id="bss15">--</b></div><div><span>ECE</span><b id="ece15">--</b></div></div>
+              <details class="metricDetails"><summary>Ver métricas del modelo</summary><div class="modelMetrics"><div><span>Calidad</span><b id="q15">--</b></div><div><span>BA</span><b id="ba15">--</b></div><div><span>BSS</span><b id="bss15">--</b></div><div><span>ECE</span><b id="ece15">--</b></div></div></details>
             </div>
           </div>
         </article>
       </div>
 
-      <div class="lowerGrid">
-        <article class="panel box">
-          <div class="head"><div><div class="ey">Ensayo inmutable</div><h3>Progreso formal 90 días</h3></div><span class="chip good">BUCKET LOCK</span></div>
-          <div class="trialHero">
-            <div class="ring"><div class="ringInner"><strong id="trialPct">0%</strong><small id="trialDays">0 de 90</small></div></div>
-            <div><div class="progress"><i></i></div><p class="tiny" id="trialStatus">Sólo cuentan días completos con evidencia fail-closed.</p>
-              <div class="kv"><div><small>Trial ID</small><b id="trialId">btc-shadow-90d-20260817T173948Z</b></div><div><small>Primer día elegible</small><b id="firstDay">2026-08-18</b></div><div><small>Manifest digest</small><b id="manifest">757422db…f9fd03</b></div><div><small>Estado</small><b id="trialState">INITIALIZED · 0/90</b></div></div>
-            </div>
-          </div>
-        </article>
-        <article class="panel box">
-          <div class="ey">Paper Trading</div><h3>Resultados simulados</h3>
-          <div class="paperStats"><div><span>Win rate</span><strong id="pWin">--</strong></div><div><span>P&L neto</span><strong id="pPnl">--</strong></div><div><span>Drawdown</span><strong id="pDd">--</strong></div><div><span>24h High</span><strong id="marketHigh">--</strong></div></div>
-          <div class="bannerNote" id="paperNote">SHADOW_MODE bloquea ejecución real. Sin entrada y salida simulada verificadas no se publica P&L.</div>
-        </article>
-      </div>
+      <nav class="quickLinks panel" aria-label="Profundizar el análisis">
+        <span><b>¿Querés profundizar?</b><small>Cada sección amplía un aspecto sin repetir el resumen.</small></span>
+        <button type="button" class="btn" data-view="analytics">Calidad del modelo</button>
+        <button type="button" class="btn" data-view="paper">Resultados simulados</button>
+        <button type="button" class="btn" data-view="trial">Evidencia 90D</button>
+      </nav>
     </section>
 
-    <section class="view" id="analytics" tabindex="-1" aria-label="Analytics" aria-hidden="true">
+    <section class="view" id="analytics" tabindex="-1" aria-label="Calidad del modelo" aria-hidden="true">
       <article class="panel content">
-        <div class="ey">Calidad del modelo</div><h2>Analytics 5m / 15m</h2>
-        <p class="tiny">Estas métricas vienen de la API read-only. No se recalibran ni modifican parámetros del modelo durante el trial.</p>
+        <div class="ey">Modelo Quant · 5m y 15m</div><h2>¿Qué tan confiable es el modelo?</h2>
+        <p class="tiny">Estas métricas vienen de la API read-only. Ayudan a evaluar la calidad predictiva; no representan ganancias ni modifican el modelo durante el trial.</p>
         <div class="analyticsGrid">
           <div class="analyticsCard"><span>Balanced Accuracy media</span><strong id="analyticsBA">--</strong></div>
           <div class="analyticsCard"><span>ECE medio</span><strong id="analyticsECE">--</strong></div>
@@ -162,11 +139,10 @@
           <div class="analyticsCard"><span>Muestras evaluadas</span><strong id="analyticsSamples">--</strong></div>
         </div>
         <div class="analyticsGrid">
-          <div class="analyticsCard"><span>Execution gate</span><strong id="analyticsGate">--</strong></div>
-          <div class="analyticsCard"><span>24h Low</span><strong id="marketLow">--</strong></div>
-          <div class="analyticsCard"><span>Volumen 24h</span><strong id="marketVolume">--</strong></div>
+          <div class="analyticsCard"><span>Compuerta operativa</span><strong id="analyticsGate">--</strong></div>
           <div class="analyticsCard"><span>Modelo congelado</span><strong>V5.9.0</strong></div>
         </div>
+        <details class="explainDetails"><summary>Cómo interpretar BA, ECE y BSS</summary><p><b>BA</b> compara el acierto entre clases. <b>ECE</b> mide si las probabilidades declaradas coinciden con lo observado. <b>BSS</b> indica si el modelo supera una referencia simple. Deben evaluarse juntas y con una muestra suficiente.</p></details>
         <div class="head"><div><div class="ey">Últimas decisiones oficiales</div><h3>Historial del motor</h3></div><span class="chip">read-only</span></div>
         <div class="tableWrap" tabindex="0" role="region" aria-label="Tabla de últimas decisiones oficiales"><table><caption class="srOnly">Últimas decisiones oficiales del motor</caption><thead><tr><th>Hora</th><th>TF</th><th>Decisión</th><th>Calidad</th><th>Viabilidad</th><th>Estado modelo</th><th>Motivos</th></tr></thead><tbody id="decisionsBody"><tr><td colspan="7">Esperando API.</td></tr></tbody></table></div>
       </article>
@@ -176,6 +152,8 @@
       <article class="panel content">
         <div class="ey">Paper Trading</div><h2>Libro de operaciones simuladas verificadas</h2>
         <p class="tiny">Las abstenciones y señales bloqueadas son decisiones, no trades. Sólo aparecen operaciones cuando existe entrada, salida, costos y evidencia.</p>
+        <div class="paperStats"><div><span>Win rate</span><strong id="pWin">--</strong></div><div><span>P&amp;L neto</span><strong id="pPnl">--</strong></div><div><span>Drawdown</span><strong id="pDd">--</strong></div></div>
+        <div class="bannerNote" id="paperNote">SHADOW_MODE bloquea ejecución real. Sin entrada y salida simulada verificadas no se publica P&amp;L.</div>
         <div class="tableWrap" tabindex="0" role="region" aria-label="Tabla de operaciones simuladas verificadas"><table><caption class="srOnly">Operaciones simuladas verificadas</caption><thead><tr><th>Fecha</th><th>TF</th><th>Entrada</th><th>Salida</th><th>Resultado</th><th>P&L neto</th><th>Evidencia</th></tr></thead><tbody id="tradesBody"><tr><td colspan="7">Sin trades simulados verificados.</td></tr></tbody></table></div>
       </article>
     </section>
@@ -184,6 +162,12 @@
       <article class="panel content">
         <div class="ey">Trial 90 días</div><h2>Contrato de evidencia</h2>
         <p class="tiny">El contador formal no avanza por reloj. Debe existir continuidad verificable del ledger y evidencia del runtime. Bucket Lock mantiene retención de 180 días.</p>
+        <div class="trialHero trialDetail">
+          <div class="ring"><div class="ringInner"><strong id="trialPct">0%</strong><small id="trialDays">0 de 90</small></div></div>
+          <div><div class="progress"><i></i></div><p class="tiny" id="trialStatus">Sólo cuentan días completos con evidencia fail-closed.</p>
+            <div class="kv"><div><small>Trial ID</small><b id="trialId">btc-shadow-90d-20260817T173948Z</b></div><div><small>Primer día elegible</small><b id="firstDay">2026-08-18</b></div><div><small>Manifest digest</small><b id="manifest">757422db…f9fd03</b></div><div><small>Estado</small><b id="trialState">INITIALIZED · 0/90</b></div></div>
+          </div>
+        </div>
         <div class="pipeline"><div><b>Cloud Run</b>Motor Quant continuo</div><div><b>Google Sheets</b>Predicciones y evaluación</div><div><b>GCS</b>Ledger append-only</div><div><b>Bucket Lock</b>Evidencia inmutable</div><div><b>Dashboard</b>Sólo lectura</div></div>
       </article>
     </section>
@@ -191,19 +175,33 @@
     <section class="view" id="system" tabindex="-1" aria-label="Sistema" aria-hidden="true">
       <article class="panel content">
         <div class="ey">Arquitectura y escalado</div><h2>Sistema</h2>
+        <p class="tiny">Detalle técnico y procedencia de datos. Esta información queda fuera del Resumen para que la lectura diaria sea más clara.</p>
+        <article class="runtimeBanner">
+          <div>
+            <span class="chip warn" id="runtimeChip" aria-live="polite">● API READ-ONLY PENDIENTE</span>
+            <h3>V5.9.0-SPOT-HIGH-CONVICTION</h3>
+            <div class="tiny" id="runtimeText">El dashboard no inventa estado. Esperando runtime validado.</div>
+          </div>
+          <div class="rMetric"><small>Contrato requerido</small><b>btc-snapshot/2.0</b></div>
+          <div class="rMetric"><small>Runtime</small><b id="revision">--</b></div>
+          <div class="rMetric"><small>Último ciclo</small><b id="lastCycle">--</b></div>
+          <div class="rMetric"><small>Error state</small><b id="errorState">--</b></div>
+        </article>
+        <section class="panel dataPulse embeddedPulse" aria-label="Procedencia y frescura de datos">
+          <div class="dataPulseTitle"><span>DATA PULSE</span><b>Una sola lectura · sin datos aproximados</b></div>
+          <article><span>Cotización BTC/USDT</span><strong id="pulsePrice">Validando…</strong><small id="pulseChange">Mercado público read-only</small></article>
+          <article><span>Fuente de velas</span><strong id="pulseSource">Binance público</strong><small>Sólo períodos cerrados</small></article>
+          <article><span>Último cierre <b id="pulseInterval">5m</b></span><strong id="pulseCloseAt">No disponible</strong><small id="pulseNextClose">Esperando velas verificables</small></article>
+          <article><span>Lectura Quant</span><strong id="pulseQuant" class="warnText">Validando</strong><small id="pulseQuantMeta">5m/15m son los únicos horizontes elegibles</small></article>
+          <article><span>Calidad / edad</span><strong id="pulseQuality">No evaluada</strong><small id="pulseAge">Falla cerrado</small></article>
+        </section>
         <div class="analyticsGrid">
           <div class="analyticsCard"><span>Runtime revision</span><strong id="systemRuntime">--</strong></div>
           <div class="analyticsCard"><span>Dashboard API</span><strong id="systemApi">--</strong></div>
           <div class="analyticsCard"><span>Modo</span><strong id="systemMode">--</strong></div>
           <div class="analyticsCard"><span>Frontend</span><strong>GitHub Pages</strong></div>
         </div>
-        <h3>Próxima capa de producto</h3>
-        <div class="accountGrid">
-          <div class="lockedFeature"><b>🔐 Cuenta de usuario · Fase 2A</b><small>Shell de producto habilitado en la vista Cuenta. Identidad real permanece bloqueada hasta configurar proveedor gestionado.</small></div>
-          <div class="lockedFeature"><b>🔔 Alertas configurables</b><small>Preferencias en preview local. No envía alertas hasta implementar identidad, consentimiento y cuotas.</small></div>
-          <div class="lockedFeature"><b>💳 Membresías</b><small>Free / Pro / Premium diseñadas como fase posterior, separadas del motor Quant.</small></div>
-          <div class="lockedFeature"><b>🤖 Agentes supervisores</b><small>Auditoría, explicación y research sin acceso a ejecución, secretos o cambios del modelo congelado.</small></div>
-        </div>
+        <button class="btn systemAccountLink" type="button" data-view="account">Abrir cuenta y preferencias</button>
       </article>
     </section>
 
@@ -309,7 +307,7 @@
 </div>
 
 <nav class="mobileNav" aria-label="Navegación móvil">
-  <button class="active" data-view="overview" aria-current="page">Inicio</button><button data-view="analytics">Analytics</button><button data-view="paper">Paper</button><button data-view="trial">90D</button><button data-view="system">Sistema</button><button data-view="account">Cuenta</button>
+  <button class="active" data-view="overview" aria-current="page">Resumen</button><button data-view="analytics">Modelo</button><button data-view="paper">Simulación</button><button data-view="trial">Evidencia</button><button data-view="system">Más</button>
 </nav>
 </body>
 </html>
