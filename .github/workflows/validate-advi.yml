@@ -1,0 +1,45 @@
+name: Validate Advi
+
+on:
+  pull_request:
+    paths:
+      - 'agents/advi/**'
+      - 'tests/advi/**'
+      - '.github/workflows/validate-advi.yml'
+  push:
+    branches:
+      - 'agent/advi-*'
+    paths:
+      - 'agents/advi/**'
+      - 'tests/advi/**'
+      - '.github/workflows/validate-advi.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  safety-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: node --check agents/advi/advi.js
+      - name: Advi contract tests
+        run: node --test tests/advi/advi-contract.test.mjs
+      - name: Forbidden capability assertions
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const c = require('./agents/advi/advi-contract.json');
+          const p = c.permissions;
+          const forbidden = ['write_formal_trial_ledger','increment_trial_counter','place_orders','sell','short','mutate_quant','mutate_champion','online_learning','auto_promote_model'];
+          for (const key of forbidden) {
+            if (p[key] !== false) throw new Error(`Forbidden capability enabled: ${key}`);
+          }
+          if (c.required_runtime.shadow_mode !== true || c.required_runtime.spot_only !== true || c.required_runtime.online_learning !== false) throw new Error('Unsafe runtime contract');
+          if (c.formal_trial_effect !== 'NONE') throw new Error('Advi must not affect formal trial');
+          console.log('PASS_ADVI_FORBIDDEN_CAPABILITIES');
+          NODE
