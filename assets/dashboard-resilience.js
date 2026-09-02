@@ -1,13 +1,9 @@
 const SNAPSHOT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-
-function funnelEl(id) {
-  return document.getElementById(id);
-}
+const funnelEl = (id) => document.getElementById(id);
 
 export function snapshotIsSafe(data, trialId, requiredDays = 90) {
   if (!data || typeof data !== 'object') return false;
-  const rt = data.runtime || {};
-  const trial = data.trial || {};
+  const rt = data.runtime || {}, trial = data.trial || {}, days = Number(trial.completedDays);
   return data.mode === 'SHADOW'
     && data.spotOnly === true
     && data.automaticExecution === false
@@ -16,9 +12,9 @@ export function snapshotIsSafe(data, trialId, requiredDays = 90) {
     && rt.allowShort === false
     && trial.trialId === trialId
     && trial.status === 'VERIFIED'
-    && Number.isFinite(Number(trial.completedDays))
-    && Number(trial.completedDays) >= 0
-    && Number(trial.completedDays) <= requiredDays;
+    && Number.isFinite(days)
+    && days >= 0
+    && days <= requiredDays;
 }
 
 function cacheProjection(data) {
@@ -53,25 +49,18 @@ function cacheProjection(data) {
 
 export function saveVerifiedSnapshot(storage, key, data, trialId, requiredDays = 90) {
   if (!snapshotIsSafe(data, trialId, requiredDays)) return;
-  try {
-    storage.setItem(key, JSON.stringify({ savedAt: Date.now(), data: cacheProjection(data) }));
-  } catch {
-    // Cache is best effort only and never stores Firebase tokens or account data.
-  }
+  try { storage.setItem(key, JSON.stringify({ savedAt: Date.now(), data: cacheProjection(data) })); } catch {}
 }
 
 export function readVerifiedSnapshot(storage, key, trialId, requiredDays = 90, now = Date.now()) {
   try {
     const cached = JSON.parse(storage.getItem(key) || 'null');
     const savedAt = Number(cached?.savedAt);
-    const freshEnough = Number.isFinite(savedAt) && savedAt <= now + 60_000 && now - savedAt <= SNAPSHOT_MAX_AGE_MS;
-    if (cached && freshEnough && snapshotIsSafe(cached.data, trialId, requiredDays)) return cached.data;
+    const fresh = Number.isFinite(savedAt) && savedAt <= now + 60_000 && now - savedAt <= SNAPSHOT_MAX_AGE_MS;
+    if (cached && fresh && snapshotIsSafe(cached.data, trialId, requiredDays)) return cached.data;
     storage.removeItem(key);
-    return null;
-  } catch {
-    try { storage.removeItem(key); } catch { /* best effort */ }
-    return null;
-  }
+  } catch { try { storage.removeItem(key); } catch {} }
+  return null;
 }
 
 export function normalizedPaperPayload(payload) {
@@ -94,20 +83,7 @@ function ensureFunnelUi() {
   if (funnelEl('paperFunnelPanel')) return;
   const lowerGrid = document.querySelector('#overview .lowerGrid');
   if (!lowerGrid) return;
-  lowerGrid.insertAdjacentHTML('afterend', `
-    <article class="panel content" id="paperFunnelPanel" style="margin-top:10px">
-      <div class="head"><div><div class="ey">Embudo de elegibilidad</div><h3>De observación a señal Paper elegible</h3></div><span class="chip" id="funnelStatus">sin datos</span></div>
-      <p class="tiny">Cada etapa muestra cuántas observaciones siguen vivas después de aplicar los filtros del motor. Cero elegibles no significa cero datos.</p>
-      <div class="analyticsGrid">
-        <div class="analyticsCard"><span>Observadas</span><strong id="funnelObserved">--</strong></div>
-        <div class="analyticsCard"><span>Horizonte oficial</span><strong id="funnelOfficial">--</strong></div>
-        <div class="analyticsCard"><span>Sesgo bullish</span><strong id="funnelBullish">--</strong></div>
-        <div class="analyticsCard"><span>Alta confianza</span><strong id="funnelConfidence">--</strong></div>
-        <div class="analyticsCard"><span>Elegibles</span><strong id="funnelEligible">--</strong></div>
-      </div>
-      <div class="bannerNote" id="funnelReasons">Esperando evidencia del funnel.</div>
-    </article>
-  `);
+  lowerGrid.insertAdjacentHTML('afterend', `<article class="panel content" id="paperFunnelPanel" style="margin-top:10px"><div class="head"><div><div class="ey">Embudo de elegibilidad</div><h3>De observación a señal Paper elegible</h3></div><span class="chip" id="funnelStatus">sin datos</span></div><p class="tiny">Cada etapa muestra cuántas observaciones siguen vivas después de aplicar los filtros del motor. Cero elegibles no significa cero datos.</p><div class="analyticsGrid"><div class="analyticsCard"><span>Observadas</span><strong id="funnelObserved">--</strong></div><div class="analyticsCard"><span>Horizonte oficial</span><strong id="funnelOfficial">--</strong></div><div class="analyticsCard"><span>Sesgo bullish</span><strong id="funnelBullish">--</strong></div><div class="analyticsCard"><span>Alta confianza</span><strong id="funnelConfidence">--</strong></div><div class="analyticsCard"><span>Elegibles</span><strong id="funnelEligible">--</strong></div></div><div class="bannerNote" id="funnelReasons">Esperando evidencia del funnel.</div></article>`);
 }
 
 export function renderFunnel(funnel) {
@@ -118,8 +94,7 @@ export function renderFunnel(funnel) {
       const el = funnelEl(id);
       if (el) el.textContent = '--';
     });
-    const status = funnelEl('funnelStatus');
-    const reasons = funnelEl('funnelReasons');
+    const status = funnelEl('funnelStatus'), reasons = funnelEl('funnelReasons');
     if (status) status.textContent = 'sin datos';
     if (reasons) reasons.textContent = 'Esperando evidencia del funnel.';
     return;
@@ -134,8 +109,6 @@ export function renderFunnel(funnel) {
   funnelEl('funnelStatus').textContent = `protocolo ${f.protocol || 'read-only'}`;
   const rejected = f.rejectedByReason && typeof f.rejectedByReason === 'object' ? Object.entries(f.rejectedByReason) : [];
   const lifecycle = f.lifecycle || {};
-  const rejectionText = rejected.length
-    ? rejected.map(([reason, count]) => `${reason}: ${count}`).join(' · ')
-    : 'Sin rechazos publicados.';
+  const rejectionText = rejected.length ? rejected.map(([reason, count]) => `${reason}: ${count}`).join(' · ') : 'Sin rechazos publicados.';
   funnelEl('funnelReasons').textContent = `${rejectionText} · abiertas: ${Number(lifecycle.opened || 0)} · verificadas: ${Number(lifecycle.verified || 0)}`;
 }
