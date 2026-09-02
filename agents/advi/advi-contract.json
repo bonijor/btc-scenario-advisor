@@ -1,0 +1,33 @@
+{
+  "agent": "advi",
+  "version": "0.1",
+  "mode": "READ_ONLY_SHADOW",
+  "permissions": {
+    "read_verified_dashboard": true,
+    "read_verified_ledger_summary": true,
+    "read_closed_market_candles": true,
+    "read_public_context": true,
+    "write_agent_ledger": true,
+    "write_formal_trial_ledger": false,
+    "increment_trial_counter": false,
+    "place_orders": false,
+    "sell": false,
+    "short": false,
+    "mutate_quant": false,
+    "mutate_champion": false,
+    "online_learning": false,
+    "auto_promote_model": false
+  },
+  "required_runtime": {
+    "shadow_mode": true,
+    "spot_only": true,
+    "online_learning": false
+  },
+  "fail_closed": {
+    "on_missing_evidence": "BLOCKED",
+    "on_stale_evidence": "BLOCKED",
+    "on_trial_mismatch": "BLOCKED",
+    "on_unsafe_runtime": "BLOCKED"
+  },
+  "formal_trial_effect": "NONE"
+}
