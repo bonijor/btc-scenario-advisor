@@ -6,7 +6,7 @@
   "scripts": {
     "qa:e2e": "playwright test",
     "qa:list": "playwright test --list",
-    "qa:budget": "node tests/performance/static-budget.mjs",
+    "qa:budget": "node tests/performance/static-budget.mjs && node tests/performance/performance-qa-isolation.mjs",
     "qa:lighthouse": "node tests/performance/run-lighthouse.mjs"
   },
   "devDependencies": {
