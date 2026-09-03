@@ -7,8 +7,9 @@ const product = await readFile('assets/product.js', 'utf8');
 const resilience = await readFile('assets/dashboard-resilience.js', 'utf8');
 
 assert.match(bootstrap, /const Q=__BTC_PERF_QA__,F=fetch\.bind\(window\)/);
-assert.match(bootstrap, /Q\|\|\(G\(\),A\('link',\{rel:'stylesheet',href:'assets\/product-ux\.css'/);
-assert.match(bootstrap, /if\(Q\)return requestAnimationFrame\(k\)/);
+assert.match(bootstrap, /AUTH_DATA_GATE_LOCKED/);
+assert.match(bootstrap, /if\(Q\)return;addEventListener\('btc:auth-granted'/);
+assert.match(bootstrap, /G\(\);A\('link',\{rel:'stylesheet',href:'assets\/product-ux\.css'/);
 assert.match(bootstrap, /addEventListener\('load',z\);addEventListener\('pageshow',z\);document\.fonts/);
 
 assert.match(accessibility, /const localQaHost = \['127\.0\.0\.1', 'localhost'\]\.includes\(location\.hostname\);/);
@@ -28,4 +29,4 @@ assert.match(resilience, /if \(PERFORMANCE_QA \|\| !snapshotIsSafe/);
 assert.match(resilience, /if \(PERFORMANCE_QA\) return null;/);
 assert.match(resilience, /export function renderFunnel\(funnel\) \{\n  if \(PERFORMANCE_QA\) return;/);
 
-console.log('PASS_PERFORMANCE_QA_ISOLATION localhostOnly=1 coreDashboard=1 productBootDeferred=1 resilienceSideWorkDeferred=1 authProductionUntouched=1 lighthouseThresholdsUnchanged=1');
+console.log('PASS_PERFORMANCE_QA_ISOLATION localhostOnly=1 networkGuard=1 optionalBootstrapDeferred=1 productBootDeferred=1 resilienceSideWorkDeferred=1 authProductionUntouched=1 lighthouseThresholdsUnchanged=1');
