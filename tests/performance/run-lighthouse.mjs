@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 await mkdir('artifacts/lighthouse', { recursive: true });
 
 const outputPath = 'artifacts/lighthouse/report.json';
-const url = process.env.LIGHTHOUSE_URL || 'http://127.0.0.1:4173/?qa=performance';
+const url = process.env.LIGHTHOUSE_URL || 'http://127.0.0.1:4173/?qa=lighthouse';
 const args = [
   '--yes',
   'lighthouse@12.6.1',
