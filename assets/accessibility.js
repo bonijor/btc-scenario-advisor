@@ -50,7 +50,7 @@
       paper: { simulatedTrades: 0, trades: [], note: 'QA determinístico. Sin operaciones inferidas.' },
     };
 
-    const fixtureCandleCount = performanceQa ? 40 : 80;
+    const fixtureCandleCount = performanceQa ? 32 : 80;
     const candles = Array.from({ length: fixtureCandleCount }, (_, index) => {
       const base = 116000 + index * 4;
       return [now - (fixtureCandleCount - index) * 300000, String(base), String(base + 55), String(base - 45), String(base + 15), '10'];
@@ -108,11 +108,11 @@
   };
 
   const enhance = () => {
+    if (performanceQa) return;
     syncNavigationState();
     syncTimeframeState();
     syncRefreshState();
     syncChartSummary();
-    if (performanceQa) return;
 
     observeClasses('[data-view]', syncNavigationState);
     observeClasses('.view', syncNavigationState);
@@ -122,7 +122,7 @@
     if (refresh) new MutationObserver(syncRefreshState).observe(refresh, { attributes: true, attributeFilter: ['disabled'] });
 
     const chartObserver = new MutationObserver(syncChartSummary);
-    ['chartTf', 'candleOpen', 'candleHigh', 'candleLow', 'candleClose'].forEach((id) => {
+    ['chartTf', 'candleOpen', 'candleHigh', 'candleClose'].forEach((id) => {
       const node = document.getElementById(id);
       if (node) chartObserver.observe(node, { childList: true, characterData: true, subtree: true });
     });
