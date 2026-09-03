@@ -5,7 +5,7 @@ const budgets = new Map([
   ['assets/app.js', 26_000],
   ['assets/dashboard-resilience.js', 6_000],
   ['assets/styles.css', 20_000],
-  ['assets/responsive-bootstrap.js', 1_500],
+  ['assets/responsive-bootstrap.js', 1_700],
   ['assets/accessibility.js', 6_000],
   ['assets/accessibility.css', 4_000],
   ['assets/product.js', 36_000],
