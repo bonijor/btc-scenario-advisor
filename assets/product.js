@@ -1,6 +1,8 @@
 (() => {
   'use strict';
 
+  if (window.__BTC_PERF_QA__ === true) return;
+
   const PRODUCT = Object.freeze({
     phase: '2D',
     uxRevision: '2C',
