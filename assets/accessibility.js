@@ -2,7 +2,7 @@
   const params = new URLSearchParams(location.search);
   const qaMode = params.get('qa');
   const localQaHost = ['127.0.0.1', 'localhost'].includes(location.hostname);
-  const performanceQa = localQaHost && qaMode === 'performance';
+  const performanceQa = localQaHost && qaMode === 'lighthouse';
   window.__BTC_PERF_QA__ = performanceQa;
   if (performanceQa) document.body.classList.add('auth-granted');
 
@@ -15,7 +15,7 @@
     }
   }
 
-  if (localQaHost && (qaMode === 'performance' || qaMode === 'a11y')) {
+  if (localQaHost && (qaMode === 'performance' || qaMode === 'a11y' || qaMode === 'lighthouse')) {
     const nativeFetch = window.fetch.bind(window);
     const now = Date.now();
     const jsonResponse = (payload) => Promise.resolve(new Response(JSON.stringify(payload), {
