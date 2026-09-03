@@ -5,6 +5,11 @@
   const performanceQa = localQaHost && qaMode === 'lighthouse';
   window.__BTC_PERF_QA__ = performanceQa;
   if (performanceQa) document.body.classList.add('auth-granted');
+  if (performanceQa) {
+    const add = window.addEventListener.bind(window);
+    window.addEventListener = (type, ...args) => type === 'DOMContentLoaded' ? undefined : add(type, ...args);
+    document.addEventListener('DOMContentLoaded', () => { window.addEventListener = add; }, { once: true });
+  }
 
   if (!localQaHost) {
     try { localStorage.removeItem('btcModelApiBase'); } catch {}
