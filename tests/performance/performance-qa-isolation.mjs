@@ -13,8 +13,8 @@ assert.match(accessibility, /const localQaHost = \['127\.0\.0\.1', 'localhost'\]
 assert.match(accessibility, /const performanceQa = localQaHost && qaMode === 'performance';/);
 assert.match(accessibility, /window\.__BTC_PERF_QA__ = performanceQa;/);
 assert.match(accessibility, /if \(performanceQa\) document\.body\.classList\.add\('auth-granted'\);/);
-assert.match(accessibility, /const fixtureCandleCount = performanceQa \? 40 : 80;/);
-assert.match(accessibility, /if \(performanceQa\) return;/);
+assert.match(accessibility, /const fixtureCandleCount = performanceQa \? 32 : 80;/);
+assert.match(accessibility, /const enhance = \(\) => \{\n    if \(performanceQa\) return;/);
 assert.match(accessibility, /if \(!localQaHost\)/);
 
 console.log('PASS_PERFORMANCE_QA_ISOLATION localhostOnly=1 coreDashboard=1 authProductionUntouched=1 lighthouseThresholdsUnchanged=1');
