@@ -1,3 +1,5 @@
+const PERFORMANCE_QA = window.__BTC_PERF_QA__ === true;
+
 function funnelEl(id) {
   return document.getElementById(id);
 }
@@ -19,7 +21,7 @@ export function snapshotIsSafe(data, trialId, requiredDays = 90) {
 }
 
 export function saveVerifiedSnapshot(storage, key, data, trialId, requiredDays = 90) {
-  if (!snapshotIsSafe(data, trialId, requiredDays)) return;
+  if (PERFORMANCE_QA || !snapshotIsSafe(data, trialId, requiredDays)) return;
   try {
     storage.setItem(key, JSON.stringify({ savedAt: Date.now(), data }));
   } catch {
@@ -28,6 +30,7 @@ export function saveVerifiedSnapshot(storage, key, data, trialId, requiredDays =
 }
 
 export function readVerifiedSnapshot(storage, key, trialId, requiredDays = 90) {
+  if (PERFORMANCE_QA) return null;
   try {
     const cached = JSON.parse(storage.getItem(key) || 'null');
     return cached && snapshotIsSafe(cached.data, trialId, requiredDays) ? cached.data : null;
@@ -73,6 +76,7 @@ function ensureFunnelUi() {
 }
 
 export function renderFunnel(funnel) {
+  if (PERFORMANCE_QA) return;
   ensureFunnelUi();
   if (!funnelEl('paperFunnelPanel')) return;
   const f = funnel && typeof funnel === 'object' ? funnel : null;
