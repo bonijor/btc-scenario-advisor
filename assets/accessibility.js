@@ -23,38 +23,8 @@
   if (localQaHost && (qaMode === 'performance' || qaMode === 'a11y' || qaMode === 'lighthouse')) {
     const nativeFetch = window.fetch.bind(window);
     const now = Date.now();
-    const jsonResponse = (payload) => Promise.resolve(new Response(JSON.stringify(payload), {
-      status: 200,
-      headers: { 'content-type': 'application/json; charset=utf-8' },
-    }));
-
-    const dashboardFixture = {
-      generatedAt: new Date(now).toISOString(),
-      mode: 'SHADOW',
-      spotOnly: true,
-      automaticExecution: false,
-      runtime: {
-        ready: true,
-        shadowMode: true,
-        operationMode: 'SPOT_ONLY',
-        allowShort: false,
-        modelVersion: 'V5.9.0-SPOT-HIGH-CONVICTION',
-        revision: 'qa-deterministic',
-        lastSuccessfulCycleAt: now,
-        errorState: 'NONE',
-      },
-      trial: {
-        trialId: 'btc-shadow-90d-20260817T173948Z',
-        requiredDays: 90,
-        completedDays: 0,
-        firstCompleteDay: '2026-08-18',
-        manifestDigest: '757422dbd20fead8503f0545766f06b5df020c78eab2bf036d72c5f72ef9fd03',
-        status: 'INITIALIZED',
-      },
-      decisions: [],
-      paper: { simulatedTrades: 0, trades: [], note: 'QA determinístico. Sin operaciones inferidas.' },
-    };
-
+    const jsonResponse = (payload) => Promise.resolve(new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8' } }));
+    const dashboardFixture = { generatedAt:new Date(now).toISOString(),mode:'SHADOW',spotOnly:true,automaticExecution:false,runtime:{ready:true,shadowMode:true,operationMode:'SPOT_ONLY',allowShort:false,modelVersion:'V5.9.0-SPOT-HIGH-CONVICTION',revision:'qa-deterministic',lastSuccessfulCycleAt:now,errorState:'NONE'},trial:{trialId:'btc-shadow-90d-20260817T173948Z',requiredDays:90,completedDays:0,firstCompleteDay:'2026-08-18',manifestDigest:'757422dbd20fead8503f0545766f06b5df020c78eab2bf036d72c5f72ef9fd03',status:'INITIALIZED'},decisions:[],paper:{simulatedTrades:0,trades:[],note:'QA determinístico. Sin operaciones inferidas.'} };
     const fixtureCandleCount = performanceQa ? 32 : 80;
     const candles = Array.from({ length: fixtureCandleCount }, (_, index) => {
       const base = 116000 + index * 4;
@@ -77,7 +47,6 @@
       if (button.classList.contains('active')) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
     });
-
     document.querySelectorAll('.view').forEach((view) => {
       view.setAttribute('aria-hidden', view.classList.contains('active') ? 'false' : 'true');
     });
@@ -118,14 +87,11 @@
     syncTimeframeState();
     syncRefreshState();
     syncChartSummary();
-
     observeClasses('[data-view]', syncNavigationState);
     observeClasses('.view', syncNavigationState);
     observeClasses('.tfButton', syncTimeframeState);
-
     const refresh = document.getElementById('refresh');
     if (refresh) new MutationObserver(syncRefreshState).observe(refresh, { attributes: true, attributeFilter: ['disabled'] });
-
     const chartObserver = new MutationObserver(syncChartSummary);
     ['chartTf', 'candleOpen', 'candleHigh', 'candleLow', 'candleClose'].forEach((id) => {
       const node = document.getElementById(id);
