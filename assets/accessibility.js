@@ -3,7 +3,7 @@
   const qaMode = params.get('qa');
   const localQaHost = ['127.0.0.1', 'localhost'].includes(location.hostname);
   const performanceQa = localQaHost && qaMode === 'performance';
-  window.__BTC_PERFORMANCE_QA__ = performanceQa;
+  window.__BTC_PERF_QA__ = performanceQa;
   if (performanceQa) document.body.classList.add('auth-granted');
 
   if (!localQaHost) {
