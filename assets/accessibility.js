@@ -3,10 +3,9 @@
   const qaMode = params.get('qa');
   const localQaHost = ['127.0.0.1', 'localhost'].includes(location.hostname);
   const performanceQa = localQaHost && qaMode === 'performance';
+  window.__BTC_PERFORMANCE_QA__ = performanceQa;
+  if (performanceQa) document.body.classList.add('auth-granted');
 
-  // Production must always use the canonical Cloud Run service configured in app.js.
-  // Old canary/test overrides are allowed only on localhost so a stale browser value
-  // cannot silently keep the public GitHub Pages dashboard pointed at a retired revision.
   if (!localQaHost) {
     try { localStorage.removeItem('btcModelApiBase'); } catch {}
     if (params.has('api')) {
@@ -16,8 +15,6 @@
     }
   }
 
-  // Deterministic network fixtures are strictly local QA. A public URL parameter must
-  // never be able to replace live read-only data with fixtures.
   if (localQaHost && (qaMode === 'performance' || qaMode === 'a11y')) {
     const nativeFetch = window.fetch.bind(window);
     const now = Date.now();
@@ -53,8 +50,6 @@
       paper: { simulatedTrades: 0, trades: [], note: 'QA determinístico. Sin operaciones inferidas.' },
     };
 
-    // Lighthouse validates the responsive core dashboard with a representative
-    // mobile window, while accessibility QA keeps the larger fixture matrix.
     const fixtureCandleCount = performanceQa ? 40 : 80;
     const candles = Array.from({ length: fixtureCandleCount }, (_, index) => {
       const base = 116000 + index * 4;
@@ -117,9 +112,6 @@
     syncTimeframeState();
     syncRefreshState();
     syncChartSummary();
-
-    // The deterministic performance profile measures the core dashboard after
-    // one accessibility synchronization. Browser QA still exercises observers.
     if (performanceQa) return;
 
     observeClasses('[data-view]', syncNavigationState);
