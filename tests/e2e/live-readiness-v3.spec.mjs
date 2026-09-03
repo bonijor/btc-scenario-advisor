@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('Visual V3 exposes verified readiness without implying live execution', async ({ page }) => {
-  await page.goto('/?qa=performance');
+  await page.goto('/readiness-v3.html?qa=performance');
   const panel = page.locator('#liveReadinessV3');
   await expect(panel).toBeVisible();
   await expect(panel.locator('[data-gate="data"] strong')).toHaveText('PASS');
