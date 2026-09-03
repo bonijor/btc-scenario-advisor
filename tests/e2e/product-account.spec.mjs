@@ -106,11 +106,14 @@ async function openAccount(page) {
 
 async function navigateToAccount(page) {
   const account = page.locator('[data-view="account"]:visible');
-  if (await account.count()) await account.first().click();
-  else {
-    await page.locator('.mobileNav [data-view="system"]').click();
-    await page.locator('#system [data-view="account"]').click();
+  if (await account.count()) {
+    await account.first().click();
+    return;
   }
+  const system = page.locator('[data-view="system"]:visible');
+  await expect(system.first()).toBeVisible();
+  await system.first().click();
+  await page.locator('#system [data-view="account"]').click();
 }
 
 async function loginEmail(page, email = 'qa-user@example.invalid') {
