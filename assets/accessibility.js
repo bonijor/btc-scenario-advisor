@@ -122,7 +122,7 @@
     if (refresh) new MutationObserver(syncRefreshState).observe(refresh, { attributes: true, attributeFilter: ['disabled'] });
 
     const chartObserver = new MutationObserver(syncChartSummary);
-    ['chartTf', 'candleOpen', 'candleHigh', 'candleClose'].forEach((id) => {
+    ['chartTf', 'candleOpen', 'candleHigh', 'candleLow', 'candleClose'].forEach((id) => {
       const node = document.getElementById(id);
       if (node) chartObserver.observe(node, { childList: true, characterData: true, subtree: true });
     });
