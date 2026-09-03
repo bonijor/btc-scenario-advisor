@@ -6,6 +6,17 @@
   window.__BTC_PERF_QA__ = performanceQa;
   if (performanceQa) document.body.classList.add('auth-granted');
 
+  if (performanceQa) {
+    const nativeWindowAddEventListener = window.addEventListener.bind(window);
+    window.addEventListener = (type, listener, options) => {
+      if (type === 'DOMContentLoaded') return;
+      return nativeWindowAddEventListener(type, listener, options);
+    };
+    document.addEventListener('DOMContentLoaded', () => {
+      window.addEventListener = nativeWindowAddEventListener;
+    }, { once: true });
+  }
+
   if (!localQaHost) {
     try { localStorage.removeItem('btcModelApiBase'); } catch {}
     if (params.has('api')) {
