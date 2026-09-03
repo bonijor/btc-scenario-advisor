@@ -5,6 +5,7 @@ const bootstrap = await readFile('assets/responsive-bootstrap.js', 'utf8');
 const accessibility = await readFile('assets/accessibility.js', 'utf8');
 const product = await readFile('assets/product.js', 'utf8');
 const resilience = await readFile('assets/dashboard-resilience.js', 'utf8');
+const lighthouse = await readFile('tests/performance/run-lighthouse.mjs', 'utf8');
 
 assert.match(bootstrap, /const Q=__BTC_PERF_QA__,F=fetch\.bind\(window\)/);
 assert.match(bootstrap, /AUTH_DATA_GATE_LOCKED/);
@@ -13,12 +14,16 @@ assert.match(bootstrap, /G\(\);A\('link',\{rel:'stylesheet',href:'assets\/produc
 assert.match(bootstrap, /addEventListener\('load',z\);addEventListener\('pageshow',z\);document\.fonts/);
 
 assert.match(accessibility, /const localQaHost = \['127\.0\.0\.1', 'localhost'\]\.includes\(location\.hostname\);/);
-assert.match(accessibility, /const performanceQa = localQaHost && qaMode === 'performance';/);
+assert.match(accessibility, /const performanceQa = localQaHost && qaMode === 'lighthouse';/);
+assert.match(accessibility, /qaMode === 'performance' \|\| qaMode === 'a11y' \|\| qaMode === 'lighthouse'/);
 assert.match(accessibility, /window\.__BTC_PERF_QA__ = performanceQa;/);
 assert.match(accessibility, /if \(performanceQa\) document\.body\.classList\.add\('auth-granted'\);/);
 assert.match(accessibility, /const fixtureCandleCount = performanceQa \? 32 : 80;/);
 assert.match(accessibility, /const enhance = \(\) => \{\n    if \(performanceQa\) return;/);
 assert.match(accessibility, /if \(!localQaHost\)/);
+
+assert.match(lighthouse, /127\.0\.0\.1:4173\/\?qa=lighthouse/);
+assert.doesNotMatch(lighthouse, /127\.0\.0\.1:4173\/\?qa=performance/);
 
 assert.match(product, /if \(window\.__BTC_PERF_QA__ === true\) return;/);
 assert.match(product, /window\.BTC_PRODUCT = PRODUCT;/);
@@ -29,4 +34,4 @@ assert.match(resilience, /if \(PERFORMANCE_QA \|\| !snapshotIsSafe/);
 assert.match(resilience, /if \(PERFORMANCE_QA\) return null;/);
 assert.match(resilience, /export function renderFunnel\(funnel\) \{\n  if \(PERFORMANCE_QA\) return;/);
 
-console.log('PASS_PERFORMANCE_QA_ISOLATION localhostOnly=1 networkGuard=1 optionalBootstrapDeferred=1 productBootDeferred=1 resilienceSideWorkDeferred=1 authProductionUntouched=1 lighthouseThresholdsUnchanged=1');
+console.log('PASS_PERFORMANCE_QA_ISOLATION localhostOnly=1 lighthouseProfile=1 browserQaFullProduct=1 networkGuard=1 optionalBootstrapDeferred=1 productBootDeferred=1 resilienceSideWorkDeferred=1 authProductionUntouched=1 lighthouseThresholdsUnchanged=1');
