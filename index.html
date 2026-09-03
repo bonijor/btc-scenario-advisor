@@ -9,63 +9,310 @@
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="assets/accessibility.css">
   <link rel="stylesheet" href="assets/product.css">
-  <link rel="stylesheet" href="assets/live-readiness-v3.css">
   <script src="assets/accessibility.js" defer></script>
   <script src="assets/app.js" defer></script>
   <script src="assets/product.js" defer></script>
-  <script src="assets/live-readiness-v3.js" defer></script>
   <script src="assets/responsive-bootstrap.js" defer></script>
 </head>
 <body>
 <a class="skipLink" href="#main-content">Saltar al contenido principal</a>
 <div class="app">
   <aside class="sidebar" aria-label="Panel lateral">
-    <div class="brand"><div class="brandMark" aria-hidden="true">₿</div><div><strong>BTC Scenario</strong><small>Advisor PRO · Shadow Lab</small></div></div>
+    <div class="brand">
+      <div class="brandMark" aria-hidden="true">₿</div>
+      <div><strong>BTC Scenario</strong><small>Advisor PRO · Shadow Lab</small></div>
+    </div>
     <nav class="nav" aria-label="Navegación principal">
-      <button class="active" data-view="overview" aria-current="page">▦ Resumen</button><button data-view="analytics">⌁ Modelo</button><button data-view="paper">◎ Simulación</button><button data-view="trial">◷ Evidencia 90D</button><button data-view="system">⚙ Sistema</button><button data-view="account">◉ Cuenta</button>
+      <button class="active" data-view="overview" aria-current="page">▦ Resumen</button>
+      <button data-view="analytics">⌁ Modelo</button>
+      <button data-view="paper">◎ Simulación</button>
+      <button data-view="trial">◷ Evidencia 90D</button>
+      <button data-view="system">⚙ Sistema</button>
+      <button data-view="account">◉ Cuenta</button>
     </nav>
-    <div class="sideStatus"><div><i class="dot" id="sideDot" aria-hidden="true"></i><b id="sideConn">Mercado conectando</b></div><p class="tiny" id="sideDetail">API READ-ONLY. SHADOW y SPOT_ONLY. Sin ejecución real.</p></div>
+    <div class="sideStatus">
+      <div><i class="dot" id="sideDot" aria-hidden="true"></i><b id="sideConn">Mercado conectando</b></div>
+      <p class="tiny" id="sideDetail">API READ-ONLY. SHADOW y SPOT_ONLY. Sin ejecución real.</p>
+    </div>
   </aside>
 
   <main class="main" id="main-content" tabindex="-1">
-    <header class="topbar"><div><div class="ey">Centro de observación probabilística · SHADOW</div><h1>BTC/USDT</h1><div class="tiny">Trial auditado de 90 días · motor V5.9.0 · sin órdenes reales</div></div><div class="topActions"><button class="btn primary" id="refresh" aria-label="Actualizar datos del dashboard" aria-busy="false">↻ Actualizar</button></div></header>
-    <div class="statusStrip" aria-label="Estado del sistema"><div class="statusCell"><span>Frescura de datos</span><b class="freshness" id="dataFreshness">--</b><small class="tiny" id="freshnessDetail">esperando runtime</small></div><div class="statusCell"><span>API read-only</span><b id="apiStatus">--</b><small class="tiny" id="apiGenerated">--</small></div><div class="statusCell"><span>Trial evidence</span><b id="trialHealth">INITIALIZED</b><small class="tiny">fail-closed</small></div><div class="statusCell"><span>Mercado público</span><b id="marketStatus" aria-live="polite">--</b><small class="tiny">Binance Spot</small></div></div>
+    <header class="topbar">
+      <div>
+        <div class="ey">Centro de observación probabilística · SHADOW</div>
+        <h1>BTC/USDT</h1>
+        <div class="tiny">Trial auditado de 90 días · motor V5.9.0 · sin órdenes reales</div>
+      </div>
+      <div class="topActions">
+        <button class="btn primary" id="refresh" aria-label="Actualizar datos del dashboard" aria-busy="false">↻ Actualizar</button>
+      </div>
+    </header>
+
+    <div class="statusStrip" aria-label="Estado del sistema">
+      <div class="statusCell"><span>Frescura de datos</span><b class="freshness" id="dataFreshness">--</b><small class="tiny" id="freshnessDetail">esperando runtime</small></div>
+      <div class="statusCell"><span>API read-only</span><b id="apiStatus">--</b><small class="tiny" id="apiGenerated">--</small></div>
+      <div class="statusCell"><span>Trial evidence</span><b id="trialHealth">INITIALIZED</b><small class="tiny">fail-closed</small></div>
+      <div class="statusCell"><span>Mercado público</span><b id="marketStatus" aria-live="polite">--</b><small class="tiny">Binance Spot</small></div>
+    </div>
 
     <section class="view active" id="overview" tabindex="-1" aria-label="Resumen" aria-hidden="false">
-      <section class="readinessPanel" id="liveReadinessV3" aria-labelledby="readinessTitle">
-        <div class="readinessHead"><div><div class="ey">Visual V3 · Live Readiness</div><h3 id="readinessTitle">Qué está validado y qué impide operar.</h3><p class="tiny">La capa visual no habilita ejecución. Resume evidencia verificada y falla cerrado cuando un gate todavía no está acreditado.</p></div><div class="readinessOverall"><span>Estado global</span><strong id="readinessOverall">LIVE_READY = FALSE</strong><small>Órdenes reales bloqueadas</small></div></div>
-        <div class="readinessGrid" aria-label="Scorecard de preparación live">
-          <article class="readinessGate pass" data-gate="data"><span>DATA</span><strong>PASS</strong><small>Gate 1 conectado · trazabilidad 5m/15m validada</small></article>
-          <article class="readinessGate collecting" data-gate="economics"><span>ECONOMICS</span><strong>COLLECTING</strong><small>12 outcomes · 0 activados · calibración pendiente</small></article>
-          <article class="readinessGate verified" data-gate="formal90d"><span>FORMAL 90D</span><strong>VERIFIED 16/90</strong><small>Integridad PASS · 74 días pendientes</small></article>
-          <article class="readinessGate blocked" data-gate="risk"><span>RISK</span><strong>BLOCKED</strong><small>Sin candidato económico calibrado</small></article>
-          <article class="readinessGate blocked" data-gate="execution"><span>EXECUTION</span><strong>BLOCKED</strong><small>Cuenta live y ejecución no verificadas</small></article>
-        </div>
-        <div class="readinessMeta"><div><span>Trial formal</span><b id="readinessTrial">16 / 90</b><small>Integridad reconciliada; progreso incompleto</small></div><div><span>Gate 2</span><b id="readinessEconomics">12 outcomes · 0 activados</b><small>Mínimo contractual: 100 muestras y 50 activadas por segmento</small></div><div><span>Orden espejo</span><b id="readinessMirror">NO DISPONIBLE</b><small>Requiere candidato económico y gates posteriores</small></div><div><span>Evidencia al</span><b id="readinessEvidenceAt">03/09/2026</b><small>Snapshot operativo verificable, no contador inventado</small></div></div>
-        <p class="tiny readinessDisclaimer">SHADOW_MODE · SPOT_ONLY · online learning OFF · SELL/short bloqueados · REAL_ORDER_CREATED=false.</p>
-      </section>
-
       <div class="metricGrid">
-        <article class="panel assetCard"><div class="assetInfo"><div class="coin" aria-hidden="true">₿</div><div><div class="ey">Bitcoin · Binance Spot</div><b>BTC/USDT</b></div></div><div class="assetSnapshot"><div class="price" id="price">Cargando…</div><small class="tiny" id="priceMeta">Mercado público</small><dl class="marketSnapshot" aria-label="Resumen de mercado de 24 horas"><div><dt>Máximo</dt><dd id="marketHigh">--</dd></div><div><dt>Mínimo</dt><dd id="marketLow">--</dd></div><div><dt>Volumen</dt><dd id="marketVolume">--</dd></div></dl></div></article>
-        <article class="panel statusSummaryCard" aria-label="Resumen operativo"><div><span>Motor</span><strong id="engineState">--</strong><small id="engineMeta">Esperando API</small></div><div><span>Evidencia 90D</span><strong id="trialCounter">0 / 90</strong><small>sólo días conciliados</small></div><div><span>Simulaciones</span><strong id="pTrades">0</strong><small>trades verificados</small></div><div><span>Modo</span><strong>SHADOW</strong><small>sin órdenes reales</small></div></article>
+        <article class="panel assetCard">
+          <div class="assetInfo"><div class="coin" aria-hidden="true">₿</div><div><div class="ey">Bitcoin · Binance Spot</div><b>BTC/USDT</b></div></div>
+          <div class="assetSnapshot">
+            <div class="price" id="price">Cargando…</div><small class="tiny" id="priceMeta">Mercado público</small>
+            <dl class="marketSnapshot" aria-label="Resumen de mercado de 24 horas">
+              <div><dt>Máximo</dt><dd id="marketHigh">--</dd></div>
+              <div><dt>Mínimo</dt><dd id="marketLow">--</dd></div>
+              <div><dt>Volumen</dt><dd id="marketVolume">--</dd></div>
+            </dl>
+          </div>
+        </article>
+        <article class="panel statusSummaryCard" aria-label="Resumen operativo">
+          <div><span>Motor</span><strong id="engineState">--</strong><small id="engineMeta">Esperando API</small></div>
+          <div><span>Evidencia 90D</span><strong id="trialCounter">0 / 90</strong><small>sólo días conciliados</small></div>
+          <div><span>Simulaciones</span><strong id="pTrades">0</strong><small>trades verificados</small></div>
+          <div><span>Modo</span><strong>SHADOW</strong><small>sin órdenes reales</small></div>
+        </article>
       </div>
 
-      <div class="proGrid"><article class="panel chartPanel"><div class="head"><div><div class="ey">Mercado en vivo</div><h3>BTC/USDT · velas públicas</h3></div><div class="tfButtons" aria-label="Timeframe del gráfico"><button class="tfButton" data-interval="1m" aria-pressed="false">1m</button><button class="tfButton active" data-interval="5m" aria-pressed="true">5m</button><button class="tfButton" data-interval="15m" aria-pressed="false">15m</button><button class="tfButton" data-interval="45m" aria-pressed="false">45m</button><button class="tfButton" data-interval="1d" aria-pressed="false">1d</button></div></div><div class="chartWrap"><canvas id="priceChart" role="img" aria-label="Gráfico de velas BTCUSDT" aria-describedby="chartA11y">Gráfico de velas BTC/USDT. Los valores numéricos se muestran debajo del gráfico.</canvas><p class="srOnly" id="chartA11y">Gráfico BTC/USDT 5m. Esperando valores de la última vela.</p><div class="chartOverlay"><span class="marketBadge">TF <b id="chartTf">5m</b></span><span class="marketBadge">Fuente: Binance pública</span></div></div><div class="chartFooter"><div class="chartStat"><span>Open</span><b id="candleOpen">--</b></div><div class="chartStat"><span>High</span><b id="candleHigh">--</b></div><div class="chartStat"><span>Low</span><b id="candleLow">--</b></div><div class="chartStat"><span>Close</span><b id="candleClose">--</b></div></div></article>
-        <article class="panel decisionPanel"><div class="head"><div><div class="ey">Motor Quant</div><h3>Decisión actual</h3></div><span class="chip" id="decisionSource">sin API</span></div><div class="decisionGrid"><div class="decisionCard"><div class="decisionTop"><span class="tf">5m</span><span class="chip">Sólo lectura</span></div><h4 id="d5">Esperando datos</h4><p class="reason" id="r5">La decisión oficial viene del runtime, no del navegador.</p><div class="levels"><div><span>Activación</span><b id="a5">--</b></div><div><span>Invalidación</span><b id="i5">--</b></div></div><details class="metricDetails"><summary>Ver métricas del modelo</summary><div class="modelMetrics"><div><span>Calidad</span><b id="q5">--</b></div><div><span>BA</span><b id="ba5">--</b></div><div><span>BSS</span><b id="bss5">--</b></div><div><span>ECE</span><b id="ece5">--</b></div></div></details></div><div class="decisionCard"><div class="decisionTop"><span class="tf">15m</span><span class="chip">Sólo lectura</span></div><h4 id="d15">Esperando datos</h4><p class="reason" id="r15">La decisión oficial viene del runtime, no del navegador.</p><div class="levels"><div><span>Activación</span><b id="a15">--</b></div><div><span>Invalidación</span><b id="i15">--</b></div></div><details class="metricDetails"><summary>Ver métricas del modelo</summary><div class="modelMetrics"><div><span>Calidad</span><b id="q15">--</b></div><div><span>BA</span><b id="ba15">--</b></div><div><span>BSS</span><b id="bss15">--</b></div><div><span>ECE</span><b id="ece15">--</b></div></div></details></div></div></article></div>
-      <nav class="quickLinks panel" aria-label="Profundizar el análisis"><span><b>¿Querés profundizar?</b><small>Cada sección amplía un aspecto sin repetir el resumen.</small></span><button type="button" class="btn" data-view="analytics">Calidad del modelo</button><button type="button" class="btn" data-view="paper">Resultados simulados</button><button type="button" class="btn" data-view="trial">Evidencia 90D</button></nav>
+      <div class="proGrid">
+        <article class="panel chartPanel">
+          <div class="head">
+            <div><div class="ey">Mercado en vivo</div><h3>BTC/USDT · velas públicas</h3></div>
+            <div class="tfButtons" aria-label="Timeframe del gráfico">
+              <button class="tfButton" data-interval="1m" aria-pressed="false">1m</button>
+              <button class="tfButton active" data-interval="5m" aria-pressed="true">5m</button>
+              <button class="tfButton" data-interval="15m" aria-pressed="false">15m</button>
+              <button class="tfButton" data-interval="45m" aria-pressed="false">45m</button>
+              <button class="tfButton" data-interval="1d" aria-pressed="false">1d</button>
+            </div>
+          </div>
+          <div class="chartWrap">
+            <canvas id="priceChart" role="img" aria-label="Gráfico de velas BTCUSDT" aria-describedby="chartA11y">Gráfico de velas BTC/USDT. Los valores numéricos se muestran debajo del gráfico.</canvas>
+            <p class="srOnly" id="chartA11y">Gráfico BTC/USDT 5m. Esperando valores de la última vela.</p>
+            <div class="chartOverlay"><span class="marketBadge">TF <b id="chartTf">5m</b></span><span class="marketBadge">Fuente: Binance pública</span></div>
+          </div>
+          <div class="chartFooter">
+            <div class="chartStat"><span>Open</span><b id="candleOpen">--</b></div>
+            <div class="chartStat"><span>High</span><b id="candleHigh">--</b></div>
+            <div class="chartStat"><span>Low</span><b id="candleLow">--</b></div>
+            <div class="chartStat"><span>Close</span><b id="candleClose">--</b></div>
+          </div>
+        </article>
+
+        <article class="panel decisionPanel">
+          <div class="head"><div><div class="ey">Motor Quant</div><h3>Decisión actual</h3></div><span class="chip" id="decisionSource">sin API</span></div>
+          <div class="decisionGrid">
+            <div class="decisionCard">
+              <div class="decisionTop"><span class="tf">5m</span><span class="chip">Sólo lectura</span></div>
+              <h4 id="d5">Esperando datos</h4><p class="reason" id="r5">La decisión oficial viene del runtime, no del navegador.</p>
+              <div class="levels"><div><span>Activación</span><b id="a5">--</b></div><div><span>Invalidación</span><b id="i5">--</b></div></div>
+              <details class="metricDetails"><summary>Ver métricas del modelo</summary><div class="modelMetrics"><div><span>Calidad</span><b id="q5">--</b></div><div><span>BA</span><b id="ba5">--</b></div><div><span>BSS</span><b id="bss5">--</b></div><div><span>ECE</span><b id="ece5">--</b></div></div></details>
+            </div>
+            <div class="decisionCard">
+              <div class="decisionTop"><span class="tf">15m</span><span class="chip">Sólo lectura</span></div>
+              <h4 id="d15">Esperando datos</h4><p class="reason" id="r15">La decisión oficial viene del runtime, no del navegador.</p>
+              <div class="levels"><div><span>Activación</span><b id="a15">--</b></div><div><span>Invalidación</span><b id="i15">--</b></div></div>
+              <details class="metricDetails"><summary>Ver métricas del modelo</summary><div class="modelMetrics"><div><span>Calidad</span><b id="q15">--</b></div><div><span>BA</span><b id="ba15">--</b></div><div><span>BSS</span><b id="bss15">--</b></div><div><span>ECE</span><b id="ece15">--</b></div></div></details>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <nav class="quickLinks panel" aria-label="Profundizar el análisis">
+        <span><b>¿Querés profundizar?</b><small>Cada sección amplía un aspecto sin repetir el resumen.</small></span>
+        <button type="button" class="btn" data-view="analytics">Calidad del modelo</button>
+        <button type="button" class="btn" data-view="paper">Resultados simulados</button>
+        <button type="button" class="btn" data-view="trial">Evidencia 90D</button>
+      </nav>
     </section>
 
-    <section class="view" id="analytics" tabindex="-1" aria-label="Calidad del modelo" aria-hidden="true"><article class="panel content"><div class="ey">Modelo Quant · 5m y 15m</div><h2>¿Qué tan confiable es el modelo?</h2><p class="tiny">Estas métricas vienen de la API read-only. Ayudan a evaluar la calidad predictiva; no representan ganancias ni modifican el modelo durante el trial.</p><div class="analyticsGrid"><div class="analyticsCard"><span>Balanced Accuracy media</span><strong id="analyticsBA">--</strong></div><div class="analyticsCard"><span>ECE medio</span><strong id="analyticsECE">--</strong></div><div class="analyticsCard"><span>Brier Skill Score medio</span><strong id="analyticsBSS">--</strong></div><div class="analyticsCard"><span>Muestras evaluadas</span><strong id="analyticsSamples">--</strong></div></div><div class="analyticsGrid"><div class="analyticsCard"><span>Compuerta operativa</span><strong id="analyticsGate">--</strong></div><div class="analyticsCard"><span>Modelo congelado</span><strong>V5.9.0</strong></div></div><details class="explainDetails"><summary>Cómo interpretar BA, ECE y BSS</summary><p><b>BA</b> compara el acierto entre clases. <b>ECE</b> mide si las probabilidades declaradas coinciden con lo observado. <b>BSS</b> indica si el modelo supera una referencia simple. Deben evaluarse juntas y con una muestra suficiente.</p></details><div class="head"><div><div class="ey">Últimas decisiones oficiales</div><h3>Historial del motor</h3></div><span class="chip">read-only</span></div><div class="tableWrap" tabindex="0" role="region" aria-label="Tabla de últimas decisiones oficiales"><table><caption class="srOnly">Últimas decisiones oficiales del motor</caption><thead><tr><th>Hora</th><th>TF</th><th>Decisión</th><th>Calidad</th><th>Viabilidad</th><th>Estado modelo</th><th>Motivos</th></tr></thead><tbody id="decisionsBody"><tr><td colspan="7">Esperando API.</td></tr></tbody></table></div></article></section>
+    <section class="view" id="analytics" tabindex="-1" aria-label="Calidad del modelo" aria-hidden="true">
+      <article class="panel content">
+        <div class="ey">Modelo Quant · 5m y 15m</div><h2>¿Qué tan confiable es el modelo?</h2>
+        <p class="tiny">Estas métricas vienen de la API read-only. Ayudan a evaluar la calidad predictiva; no representan ganancias ni modifican el modelo durante el trial.</p>
+        <div class="analyticsGrid">
+          <div class="analyticsCard"><span>Balanced Accuracy media</span><strong id="analyticsBA">--</strong></div>
+          <div class="analyticsCard"><span>ECE medio</span><strong id="analyticsECE">--</strong></div>
+          <div class="analyticsCard"><span>Brier Skill Score medio</span><strong id="analyticsBSS">--</strong></div>
+          <div class="analyticsCard"><span>Muestras evaluadas</span><strong id="analyticsSamples">--</strong></div>
+        </div>
+        <div class="analyticsGrid">
+          <div class="analyticsCard"><span>Compuerta operativa</span><strong id="analyticsGate">--</strong></div>
+          <div class="analyticsCard"><span>Modelo congelado</span><strong>V5.9.0</strong></div>
+        </div>
+        <details class="explainDetails"><summary>Cómo interpretar BA, ECE y BSS</summary><p><b>BA</b> compara el acierto entre clases. <b>ECE</b> mide si las probabilidades declaradas coinciden con lo observado. <b>BSS</b> indica si el modelo supera una referencia simple. Deben evaluarse juntas y con una muestra suficiente.</p></details>
+        <div class="head"><div><div class="ey">Últimas decisiones oficiales</div><h3>Historial del motor</h3></div><span class="chip">read-only</span></div>
+        <div class="tableWrap" tabindex="0" role="region" aria-label="Tabla de últimas decisiones oficiales"><table><caption class="srOnly">Últimas decisiones oficiales del motor</caption><thead><tr><th>Hora</th><th>TF</th><th>Decisión</th><th>Calidad</th><th>Viabilidad</th><th>Estado modelo</th><th>Motivos</th></tr></thead><tbody id="decisionsBody"><tr><td colspan="7">Esperando API.</td></tr></tbody></table></div>
+      </article>
+    </section>
 
-    <section class="view" id="paper" tabindex="-1" aria-label="Paper Trading" aria-hidden="true"><article class="panel content"><div class="ey">Paper Trading</div><h2>Libro de operaciones simuladas verificadas</h2><p class="tiny">Las abstenciones y señales bloqueadas son decisiones, no trades. Sólo aparecen operaciones cuando existe entrada, salida, costos y evidencia.</p><div class="paperStats"><div><span>Win rate</span><strong id="pWin">--</strong></div><div><span>P&amp;L neto</span><strong id="pPnl">--</strong></div><div><span>Drawdown</span><strong id="pDd">--</strong></div></div><div class="bannerNote" id="paperNote">SHADOW_MODE bloquea ejecución real. Sin entrada y salida simulada verificadas no se publica P&amp;L.</div><div class="tableWrap" tabindex="0" role="region" aria-label="Tabla de operaciones simuladas verificadas"><table><caption class="srOnly">Operaciones simuladas verificadas</caption><thead><tr><th>Fecha</th><th>TF</th><th>Entrada</th><th>Salida</th><th>Resultado</th><th>P&amp;L neto</th><th>Evidencia</th></tr></thead><tbody id="tradesBody"><tr><td colspan="7">Sin trades simulados verificados.</td></tr></tbody></table></div></article></section>
+    <section class="view" id="paper" tabindex="-1" aria-label="Paper Trading" aria-hidden="true">
+      <article class="panel content">
+        <div class="ey">Paper Trading</div><h2>Libro de operaciones simuladas verificadas</h2>
+        <p class="tiny">Las abstenciones y señales bloqueadas son decisiones, no trades. Sólo aparecen operaciones cuando existe entrada, salida, costos y evidencia.</p>
+        <div class="paperStats"><div><span>Win rate</span><strong id="pWin">--</strong></div><div><span>P&amp;L neto</span><strong id="pPnl">--</strong></div><div><span>Drawdown</span><strong id="pDd">--</strong></div></div>
+        <div class="bannerNote" id="paperNote">SHADOW_MODE bloquea ejecución real. Sin entrada y salida simulada verificadas no se publica P&amp;L.</div>
+        <div class="tableWrap" tabindex="0" role="region" aria-label="Tabla de operaciones simuladas verificadas"><table><caption class="srOnly">Operaciones simuladas verificadas</caption><thead><tr><th>Fecha</th><th>TF</th><th>Entrada</th><th>Salida</th><th>Resultado</th><th>P&L neto</th><th>Evidencia</th></tr></thead><tbody id="tradesBody"><tr><td colspan="7">Sin trades simulados verificados.</td></tr></tbody></table></div>
+      </article>
+    </section>
 
-    <section class="view" id="trial" tabindex="-1" aria-label="Trial de 90 días" aria-hidden="true"><article class="panel content"><div class="ey">Trial 90 días</div><h2>Contrato de evidencia</h2><p class="tiny">El contador formal no avanza por reloj. Debe existir continuidad verificable del ledger y evidencia del runtime. Bucket Lock mantiene retención de 180 días.</p><div class="trialHero trialDetail"><div class="ring"><div class="ringInner"><strong id="trialPct">0%</strong><small id="trialDays">0 de 90</small></div></div><div><div class="progress"><i></i></div><p class="tiny" id="trialStatus">Sólo cuentan días completos con evidencia fail-closed.</p><div class="kv"><div><small>Trial ID</small><b id="trialId">btc-shadow-90d-20260817T173948Z</b></div><div><small>Primer día elegible</small><b id="firstDay">2026-08-18</b></div><div><small>Manifest digest</small><b id="manifest">757422db…f9fd03</b></div><div><small>Estado</small><b id="trialState">INITIALIZED · 0/90</b></div></div></div></div><div class="pipeline"><div><b>Cloud Run</b>Motor Quant continuo</div><div><b>Google Sheets</b>Predicciones y evaluación</div><div><b>GCS</b>Ledger append-only</div><div><b>Bucket Lock</b>Evidencia inmutable</div><div><b>Dashboard</b>Sólo lectura</div></div></article></section>
+    <section class="view" id="trial" tabindex="-1" aria-label="Trial de 90 días" aria-hidden="true">
+      <article class="panel content">
+        <div class="ey">Trial 90 días</div><h2>Contrato de evidencia</h2>
+        <p class="tiny">El contador formal no avanza por reloj. Debe existir continuidad verificable del ledger y evidencia del runtime. Bucket Lock mantiene retención de 180 días.</p>
+        <div class="trialHero trialDetail">
+          <div class="ring"><div class="ringInner"><strong id="trialPct">0%</strong><small id="trialDays">0 de 90</small></div></div>
+          <div><div class="progress"><i></i></div><p class="tiny" id="trialStatus">Sólo cuentan días completos con evidencia fail-closed.</p>
+            <div class="kv"><div><small>Trial ID</small><b id="trialId">btc-shadow-90d-20260817T173948Z</b></div><div><small>Primer día elegible</small><b id="firstDay">2026-08-18</b></div><div><small>Manifest digest</small><b id="manifest">757422db…f9fd03</b></div><div><small>Estado</small><b id="trialState">INITIALIZED · 0/90</b></div></div>
+          </div>
+        </div>
+        <div class="pipeline"><div><b>Cloud Run</b>Motor Quant continuo</div><div><b>Google Sheets</b>Predicciones y evaluación</div><div><b>GCS</b>Ledger append-only</div><div><b>Bucket Lock</b>Evidencia inmutable</div><div><b>Dashboard</b>Sólo lectura</div></div>
+      </article>
+    </section>
 
-    <section class="view" id="system" tabindex="-1" aria-label="Sistema" aria-hidden="true"><article class="panel content"><div class="ey">Arquitectura y escalado</div><h2>Sistema</h2><p class="tiny">Detalle técnico y procedencia de datos. Guardrails: sin órdenes reales, no SELL y no shorts.</p><article class="runtimeBanner"><div><span class="chip warn" id="runtimeChip" aria-live="polite">● API READ-ONLY PENDIENTE</span><h3>V5.9.0-SPOT-HIGH-CONVICTION</h3><div class="tiny" id="runtimeText">El dashboard no inventa estado. Esperando runtime validado.</div></div><div class="rMetric"><small>Contrato requerido</small><b>btc-snapshot/2.0</b></div><div class="rMetric"><small>Runtime</small><b id="revision">--</b></div><div class="rMetric"><small>Último ciclo</small><b id="lastCycle">--</b></div><div class="rMetric"><small>Error state</small><b id="errorState">--</b></div></article><section class="panel dataPulse" aria-label="Procedencia y frescura de datos"><div class="dataPulseTitle"><span>DATA PULSE</span><b>Una sola lectura · sin datos aproximados</b></div><article><span>Cotización BTC/USDT</span><strong id="pulsePrice">Validando…</strong><small id="pulseChange">Mercado público read-only</small></article><article><span>Fuente de velas</span><strong id="pulseSource">Binance público</strong><small>Sólo períodos cerrados</small></article><article><span>Último cierre <b id="pulseInterval">5m</b></span><strong id="pulseCloseAt">No disponible</strong><small id="pulseNextClose">Esperando velas verificables</small></article><article><span>Lectura Quant</span><strong id="pulseQuant" class="warnText">Validando</strong><small id="pulseQuantMeta">5m/15m son los únicos horizontes elegibles</small></article><article><span>Calidad / edad</span><strong id="pulseQuality">No evaluada</strong><small id="pulseAge">Falla cerrado</small></article></section><div class="analyticsGrid"><div class="analyticsCard"><span>Runtime revision</span><strong id="systemRuntime">--</strong></div><div class="analyticsCard"><span>Dashboard API</span><strong id="systemApi">--</strong></div><div class="analyticsCard"><span>Modo</span><strong id="systemMode">--</strong></div><div class="analyticsCard"><span>Frontend</span><strong>GitHub Pages</strong></div></div><button class="btn systemAccountLink" type="button" data-view="account">Abrir cuenta y preferencias</button><details class="explainDetails legacyTool"><summary>Herramienta técnica complementaria</summary><p>BI Trading conserva la vista técnica histórica para consulta avanzada. No habilita operaciones reales.</p><a href="bi-trading.html">Abrir BI Trading avanzado</a></details></article></section>
+    <section class="view" id="system" tabindex="-1" aria-label="Sistema" aria-hidden="true">
+      <article class="panel content">
+        <div class="ey">Arquitectura y escalado</div><h2>Sistema</h2>
+        <p class="tiny">Detalle técnico y procedencia de datos. Esta información queda fuera del Resumen para que la lectura diaria sea más clara. Guardrails: sin órdenes reales, no SELL y no shorts.</p>
+        <article class="runtimeBanner">
+          <div>
+            <span class="chip warn" id="runtimeChip" aria-live="polite">● API READ-ONLY PENDIENTE</span>
+            <h3>V5.9.0-SPOT-HIGH-CONVICTION</h3>
+            <div class="tiny" id="runtimeText">El dashboard no inventa estado. Esperando runtime validado.</div>
+          </div>
+          <div class="rMetric"><small>Contrato requerido</small><b>btc-snapshot/2.0</b></div>
+          <div class="rMetric"><small>Runtime</small><b id="revision">--</b></div>
+          <div class="rMetric"><small>Último ciclo</small><b id="lastCycle">--</b></div>
+          <div class="rMetric"><small>Error state</small><b id="errorState">--</b></div>
+        </article>
+        <section class="panel dataPulse" aria-label="Procedencia y frescura de datos">
+          <div class="dataPulseTitle"><span>DATA PULSE</span><b>Una sola lectura · sin datos aproximados</b></div>
+          <article><span>Cotización BTC/USDT</span><strong id="pulsePrice">Validando…</strong><small id="pulseChange">Mercado público read-only</small></article>
+          <article><span>Fuente de velas</span><strong id="pulseSource">Binance público</strong><small>Sólo períodos cerrados</small></article>
+          <article><span>Último cierre <b id="pulseInterval">5m</b></span><strong id="pulseCloseAt">No disponible</strong><small id="pulseNextClose">Esperando velas verificables</small></article>
+          <article><span>Lectura Quant</span><strong id="pulseQuant" class="warnText">Validando</strong><small id="pulseQuantMeta">5m/15m son los únicos horizontes elegibles</small></article>
+          <article><span>Calidad / edad</span><strong id="pulseQuality">No evaluada</strong><small id="pulseAge">Falla cerrado</small></article>
+        </section>
+        <div class="analyticsGrid">
+          <div class="analyticsCard"><span>Runtime revision</span><strong id="systemRuntime">--</strong></div>
+          <div class="analyticsCard"><span>Dashboard API</span><strong id="systemApi">--</strong></div>
+          <div class="analyticsCard"><span>Modo</span><strong id="systemMode">--</strong></div>
+          <div class="analyticsCard"><span>Frontend</span><strong>GitHub Pages</strong></div>
+        </div>
+        <button class="btn systemAccountLink" type="button" data-view="account">Abrir cuenta y preferencias</button>
+        <details class="explainDetails legacyTool">
+          <summary>Herramienta técnica complementaria</summary>
+          <p>BI Trading conserva la vista técnica histórica para consulta avanzada. No es el recorrido principal ni habilita operaciones reales.</p>
+          <a href="bi-trading.html">Abrir BI Trading avanzado</a>
+        </details>
+      </article>
+    </section>
 
-    <section class="view" id="account" tabindex="-1" aria-label="Cuenta y preferencias" aria-hidden="true"><article class="panel content"><div class="ey">Cuenta</div><h2>Cuenta y preferencias</h2><p class="tiny">La capa de identidad permanece separada del motor Quant y no concede autoridad de ejecución.</p><div class="productStatusGrid"><div class="productStatus"><span>Identidad</span><strong id="authStatus">PENDIENTE</strong><small id="authProvider">Firebase Authentication</small></div><div class="productStatus"><span>Perfil</span><strong id="profileState">PREVIEW LOCAL</strong><small>sin datos sensibles</small></div><div class="productStatus"><span>Membresías</span><strong id="membershipState">DISEÑO</strong><small>sin cobros</small></div><div class="productStatus"><span>Alertas</span><strong id="deliveryState">BLOQUEADO</strong><small>sin envíos</small></div></div></article></section>
+    <section class="view" id="account" tabindex="-1" aria-label="Cuenta y preferencias" aria-hidden="true">
+      <div class="productHero">
+        <article class="panel content">
+          <span class="productBadge pending"><span aria-hidden="true">●</span> <span id="productPhase">FASE 2A</span></span>
+          <div class="ey" style="margin-top:12px">Producto autenticado</div>
+          <h2>Cuenta, perfil y preferencias</h2>
+          <p class="productNote">Esta capa prepara BTC Scenario Advisor para usuarios y membresías sin dar acceso de escritura al motor Quant. La identidad real permanece fail-closed hasta conectar el proveedor gestionado.</p>
+        </article>
+        <article class="panel content">
+          <div class="productStatusGrid">
+            <div class="productStatus"><span>Identidad</span><strong id="authStatus">PENDIENTE</strong><small id="authProvider">Firebase Authentication</small></div>
+            <div class="productStatus"><span>Perfil</span><strong id="profileState">PREVIEW LOCAL</strong><small>sin datos sensibles</small></div>
+            <div class="productStatus"><span>Membresías</span><strong id="membershipState">DISEÑO</strong><small>sin cobros</small></div>
+            <div class="productStatus"><span>Alertas</span><strong id="deliveryState">BLOQUEADO</strong><small>sin envíos</small></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="accountLayout">
+        <article class="panel content authCard">
+          <div class="ey">Identidad</div><h3>Ingresar o crear cuenta</h3>
+          <div class="authTabs" role="tablist" aria-label="Acceso a cuenta">
+            <button type="button" class="active" data-auth-tab="login" role="tab" aria-selected="true">Ingresar</button>
+            <button type="button" data-auth-tab="register" role="tab" aria-selected="false">Crear cuenta</button>
+          </div>
+
+          <form class="authForm" data-auth-form="login" aria-label="Formulario de ingreso">
+            <div class="field"><label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="email" inputmode="email" placeholder="tu@email.com"></div>
+            <div class="field"><label for="loginPassword">Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+            <div class="authActions"><button class="btn primary" type="submit" data-requires-auth disabled>Ingresar</button></div>
+          </form>
+
+          <form class="authForm" data-auth-form="register" aria-label="Formulario de registro" hidden aria-hidden="true">
+            <div class="field"><label for="registerName">Nombre</label><input id="registerName" type="text" autocomplete="name" placeholder="Tu nombre"></div>
+            <div class="field"><label for="registerEmail">Email</label><input id="registerEmail" type="email" autocomplete="email" inputmode="email" placeholder="tu@email.com"></div>
+            <div class="field"><label for="registerPassword">Contraseña</label><input id="registerPassword" type="password" autocomplete="new-password" placeholder="mínimo según política del proveedor"></div>
+            <div class="authActions"><button class="btn primary" type="submit" data-requires-auth disabled>Crear cuenta</button></div>
+          </form>
+
+          <p id="authFormStatus" class="tiny" aria-live="polite"></p>
+          <div class="authGate" id="authGateMessage">Identidad todavía no conectada.</div>
+        </article>
+
+        <article class="panel content preferencesCard">
+          <div class="ey">Perfil</div><h3>Preferencias de alertas</h3>
+          <div class="profilePreview">
+            <div class="profileAvatar" aria-hidden="true">👤</div>
+            <div><b>Perfil preview</b><small class="productNote">Las preferencias se guardan únicamente en este navegador durante Fase 2A. No se almacenan credenciales ni modifican parámetros del modelo.</small></div>
+          </div>
+
+          <form id="preferencesForm">
+            <div class="fieldLegend">Horizontes que querés seguir</div>
+            <div class="prefsGrid">
+              <label class="prefItem"><input id="pref5m" type="checkbox" checked><span><b>5 minutos</b><small>Decisiones oficiales del runtime 5m.</small></span></label>
+              <label class="prefItem"><input id="pref15m" type="checkbox" checked><span><b>15 minutos</b><small>Decisiones oficiales del runtime 15m.</small></span></label>
+            </div>
+
+            <div class="fieldLegend">Canales deseados</div>
+            <div class="prefsGrid">
+              <label class="prefItem"><input id="prefWeb" type="checkbox" checked><span><b>Web</b><small>Centro de alertas futuro.</small></span></label>
+              <label class="prefItem"><input id="prefEmail" type="checkbox"><span><b>Email</b><small>Requiere identidad verificada.</small></span></label>
+              <label class="prefItem"><input id="prefWhatsapp" type="checkbox"><span><b>WhatsApp</b><small>Requiere teléfono y consentimiento.</small></span></label>
+              <label class="prefItem"><input id="prefQuiet" type="checkbox"><span><b>Horario silencioso</b><small>Preparado para ventana configurable.</small></span></label>
+            </div>
+
+            <div class="fieldLegend">Umbral personal de notificación</div>
+            <div class="rangeRow"><input id="prefProbability" type="range" min="50" max="99" step="1" value="72" aria-describedby="probabilityHelp"><output id="prefProbabilityValue" for="prefProbability">72%</output></div>
+            <p class="tiny" id="probabilityHelp">Filtra tus futuras notificaciones. No cambia el umbral, pesos ni calibración de V5.9.0.</p>
+            <button class="btn" type="submit">Guardar preview</button>
+            <p id="preferencesStatus" class="tiny" aria-live="polite"></p>
+          </form>
+        </article>
+      </div>
+
+      <div class="lowerGrid">
+        <article class="panel content membershipCard">
+          <div class="ey">Membresías</div><h3>Arquitectura comercial preparada</h3>
+          <div class="membershipGrid">
+            <div class="planCard"><strong>Free</strong><small>Dashboard público, estado del trial y lectura básica.</small></div>
+            <div class="planCard recommended"><strong>Pro</strong><small>Alertas configurables, historial ampliado y analytics personales.</small></div>
+            <div class="planCard"><strong>Premium</strong><small>Research, explicaciones avanzadas y funciones futuras con cuotas.</small></div>
+          </div>
+          <p class="tiny">Planes en diseño. No existen cobros ni checkout en Fase 2A.</p>
+        </article>
+
+        <article class="panel content securityCard">
+          <div class="ey">Contrato de seguridad</div><h3>Lo que una cuenta nunca podrá hacer</h3>
+          <ul class="securityList">
+            <li>Modificar el modelo congelado durante el trial.</li>
+            <li>Enviar órdenes de compra o venta a un exchange.</li>
+            <li>Habilitar SELL, shorts o ejecución automática.</li>
+            <li>Acceder a secretos del runtime o credenciales de mercado.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer">BTC Scenario Advisor PRO · información probabilística · SHADOW only · no ejecuta órdenes reales.</footer>
   </main>
 </div>
-<nav class="mobileNav" aria-label="Navegación móvil"><button class="active" data-view="overview">Resumen</button><button data-view="analytics">Modelo</button><button data-view="paper">Simulación</button><button data-view="trial">90D</button><button data-view="system">Más</button></nav>
+
+<nav class="mobileNav" aria-label="Navegación móvil">
+  <button class="active" data-view="overview" aria-current="page">Resumen</button><button data-view="analytics">Modelo</button><button data-view="paper">Simulación</button><button data-view="trial">Evidencia</button><button data-view="system">Más</button>
+</nav>
 </body>
 </html>
