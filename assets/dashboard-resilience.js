@@ -3,7 +3,11 @@ const MAX_AGE=864e5,FUTURE=6e4,$=id=>document.getElementById(id);
 export function snapshotIsSafe(d,trialId,requiredDays=90){
   if(!d||typeof d!=='object')return false;
   const r=d.runtime||{},t=d.trial||{},n=Number(t.completedDays);
-  return d.mode==='SHADOW'&&d.spotOnly===true&&d.automaticExecution===false&&r.shadowMode===true&&r.operationMode==='SPOT_ONLY'&&r.allowShort===false&&t.trialId===trialId&&t.status==='VERIFIED'&&Number.isFinite(n)&&n>=0&&n<=requiredDays;
+  return d.mode==='SHADOW'&&d.spotOnly===true&&d.automaticExecution===false&&r.shadowMode===true&&r.operationMode==='SPOT_ONLY'&&r.allowShort===false&&t.trialId===trialId&&Number.isFinite(n)&&n>=0&&n<=requiredDays;
+}
+
+function verifiedForCache(d,trialId,requiredDays=90){
+  return snapshotIsSafe(d,trialId,requiredDays)&&d?.trial?.status==='VERIFIED';
 }
 
 function project(d){
@@ -12,12 +16,12 @@ function project(d){
 }
 
 export function saveVerifiedSnapshot(s,k,d,trialId,requiredDays=90,now=Date.now()){
-  if(!snapshotIsSafe(d,trialId,requiredDays))return false;
+  if(!verifiedForCache(d,trialId,requiredDays))return false;
   try{s.setItem(k,JSON.stringify({savedAt:now,data:project(d)}));return true}catch{return false}
 }
 
 export function readVerifiedSnapshot(s,k,trialId,requiredDays=90,now=Date.now()){
-  try{const c=JSON.parse(s.getItem(k)||'null'),a=Number(c?.savedAt),fresh=Number.isFinite(a)&&a<=now+FUTURE&&now-a<=MAX_AGE;if(c&&fresh&&snapshotIsSafe(c.data,trialId,requiredDays))return c.data;s.removeItem(k)}catch{try{s.removeItem(k)}catch{}}return null;
+  try{const c=JSON.parse(s.getItem(k)||'null'),a=Number(c?.savedAt),fresh=Number.isFinite(a)&&a<=now+FUTURE&&now-a<=MAX_AGE;if(c&&fresh&&verifiedForCache(c.data,trialId,requiredDays))return c.data;s.removeItem(k)}catch{try{s.removeItem(k)}catch{}}return null;
 }
 
 export function normalizedPaperPayload(payload){
