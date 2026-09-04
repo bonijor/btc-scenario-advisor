@@ -1,104 +1,43 @@
-function funnelEl(id) {
-  return document.getElementById(id);
+const MAX_AGE=864e5,FUTURE=6e4,$=id=>document.getElementById(id);
+
+export function snapshotIsSafe(d,trialId,requiredDays=90){
+  if(!d||typeof d!=='object')return false;
+  const r=d.runtime||{},t=d.trial||{},n=Number(t.completedDays);
+  return d.mode==='SHADOW'&&d.spotOnly===true&&d.automaticExecution===false&&r.shadowMode===true&&r.operationMode==='SPOT_ONLY'&&r.allowShort===false&&t.trialId===trialId&&Number.isFinite(n)&&n>=0&&n<=requiredDays;
 }
 
-export function snapshotIsSafe(data, trialId, requiredDays = 90) {
-  if (!data || typeof data !== 'object') return false;
-  const rt = data.runtime || {};
-  const trial = data.trial || {};
-  return data.mode === 'SHADOW'
-    && data.spotOnly === true
-    && data.automaticExecution === false
-    && rt.shadowMode === true
-    && rt.operationMode === 'SPOT_ONLY'
-    && rt.allowShort === false
-    && trial.trialId === trialId
-    && Number.isFinite(Number(trial.completedDays))
-    && Number(trial.completedDays) >= 0
-    && Number(trial.completedDays) <= requiredDays;
+function verifiedForCache(d,trialId,requiredDays=90){
+  return snapshotIsSafe(d,trialId,requiredDays)&&d?.trial?.status==='VERIFIED';
 }
 
-export function saveVerifiedSnapshot(storage, key, data, trialId, requiredDays = 90) {
-  if (!snapshotIsSafe(data, trialId, requiredDays)) return;
-  try {
-    storage.setItem(key, JSON.stringify({ savedAt: Date.now(), data }));
-  } catch {
-    // Cache is best effort only.
-  }
+function project(d){
+  const p=d.paper&&typeof d.paper==='object'?d.paper:null,q=p?.paper;
+  return{apiVersion:d.apiVersion,generatedAt:d.generatedAt,mode:d.mode,spotOnly:d.spotOnly,automaticExecution:d.automaticExecution,runtime:d.runtime,trial:d.trial,decisions:Array.isArray(d.decisions)?d.decisions.slice(0,15):[],paper:p?{status:p.status,funnel:p.funnel,paper:q?{activeOpen:q.activeOpen,verified:q.verified,metrics:q.metrics,trades:Array.isArray(q.trades)?q.trades.slice(0,20):[]}:undefined,simulatedTrades:p.simulatedTrades,winRatePct:p.winRatePct,netPnlPct:p.netPnlPct,drawdownPct:p.drawdownPct,trades:Array.isArray(p.trades)?p.trades.slice(0,20):undefined,note:p.note}:null};
 }
 
-export function readVerifiedSnapshot(storage, key, trialId, requiredDays = 90) {
-  try {
-    const cached = JSON.parse(storage.getItem(key) || 'null');
-    return cached && snapshotIsSafe(cached.data, trialId, requiredDays) ? cached.data : null;
-  } catch {
-    return null;
-  }
+export function saveVerifiedSnapshot(s,k,d,trialId,requiredDays=90,now=Date.now()){
+  if(!verifiedForCache(d,trialId,requiredDays))return false;
+  try{s.setItem(k,JSON.stringify({savedAt:now,data:project(d)}));return true}catch{return false}
 }
 
-export function normalizedPaperPayload(payload) {
-  const root = payload && typeof payload === 'object' ? payload : {};
-  const book = root.paper && typeof root.paper === 'object' ? root.paper : root;
-  const metrics = book.metrics && typeof book.metrics === 'object' ? book.metrics : {};
-  const trades = Array.isArray(book.trades) ? book.trades : Array.isArray(root.trades) ? root.trades : [];
-  return {
-    simulatedTrades: root.simulatedTrades ?? book.verified ?? metrics.verifiedTrades ?? 0,
-    winRatePct: root.winRatePct ?? metrics.winRatePct ?? null,
-    netPnlPct: root.netPnlPct ?? metrics.netReturnPct ?? null,
-    drawdownPct: root.drawdownPct ?? metrics.maxDrawdownPct ?? null,
-    trades,
-    note: root.note || (root.status ? `Estado Paper: ${root.status}. Sólo se publican operaciones con entrada, salida y evidencia verificadas.` : ''),
-    funnel: root.funnel || null,
-  };
+export function readVerifiedSnapshot(s,k,trialId,requiredDays=90,now=Date.now()){
+  try{const c=JSON.parse(s.getItem(k)||'null'),a=Number(c?.savedAt),fresh=Number.isFinite(a)&&a<=now+FUTURE&&now-a<=MAX_AGE;if(c&&fresh&&verifiedForCache(c.data,trialId,requiredDays))return c.data;s.removeItem(k)}catch{try{s.removeItem(k)}catch{}}return null;
 }
 
-function ensureFunnelUi() {
-  if (funnelEl('paperFunnelPanel')) return;
-  const paperTable = document.querySelector('#paper .tableWrap');
-  if (!paperTable) return;
-  paperTable.insertAdjacentHTML('beforebegin', `
-    <article class="panel content" id="paperFunnelPanel" style="margin-top:10px">
-      <div class="head"><div><div class="ey">Embudo de elegibilidad</div><h3>De observación a señal Paper elegible</h3></div><span class="chip" id="funnelStatus">sin datos</span></div>
-      <p class="tiny">Cada etapa muestra cuántas observaciones siguen vivas después de aplicar los filtros del motor. Cero elegibles no significa cero datos.</p>
-      <div class="analyticsGrid">
-        <div class="analyticsCard"><span>Observadas</span><strong id="funnelObserved">--</strong></div>
-        <div class="analyticsCard"><span>Horizonte oficial</span><strong id="funnelOfficial">--</strong></div>
-        <div class="analyticsCard"><span>Sesgo bullish</span><strong id="funnelBullish">--</strong></div>
-        <div class="analyticsCard"><span>Alta confianza</span><strong id="funnelConfidence">--</strong></div>
-        <div class="analyticsCard"><span>Elegibles</span><strong id="funnelEligible">--</strong></div>
-      </div>
-      <div class="bannerNote" id="funnelReasons">Esperando evidencia del funnel.</div>
-    </article>
-  `);
+export function normalizedPaperPayload(payload){
+  const r=payload&&typeof payload==='object'?payload:{},b=r.paper&&typeof r.paper==='object'?r.paper:r,m=b.metrics&&typeof b.metrics==='object'?b.metrics:{},tr=Array.isArray(b.trades)?b.trades:Array.isArray(r.trades)?r.trades:[];
+  return{simulatedTrades:r.simulatedTrades??b.verified??m.verifiedTrades??0,winRatePct:r.winRatePct??m.winRatePct??null,netPnlPct:r.netPnlPct??m.netReturnPct??null,drawdownPct:r.drawdownPct??m.maxDrawdownPct??null,trades:tr,note:r.note||(r.status?`Estado Paper: ${r.status}. Sólo se publican operaciones con entrada, salida y evidencia verificadas.`:''),funnel:r.funnel||null};
 }
 
-export function renderFunnel(funnel) {
-  ensureFunnelUi();
-  if (!funnelEl('paperFunnelPanel')) return;
-  const f = funnel && typeof funnel === 'object' ? funnel : null;
-  if (!f) {
-    ['funnelObserved', 'funnelOfficial', 'funnelBullish', 'funnelConfidence', 'funnelEligible'].forEach((id) => {
-      const el = funnelEl(id);
-      if (el) el.textContent = '--';
-    });
-    const status = funnelEl('funnelStatus');
-    const reasons = funnelEl('funnelReasons');
-    if (status) status.textContent = 'sin datos';
-    if (reasons) reasons.textContent = 'Esperando evidencia del funnel.';
-    return;
-  }
-  const counts = f.counts || {};
-  const value = (key) => Number.isFinite(Number(counts[key])) ? String(Number(counts[key])) : '--';
-  funnelEl('funnelObserved').textContent = value('observed');
-  funnelEl('funnelOfficial').textContent = value('officialHorizon');
-  funnelEl('funnelBullish').textContent = value('bullishBias');
-  funnelEl('funnelConfidence').textContent = value('highConfidence');
-  funnelEl('funnelEligible').textContent = value('eligible');
-  funnelEl('funnelStatus').textContent = `protocolo ${f.protocol || 'read-only'}`;
-  const rejected = f.rejectedByReason && typeof f.rejectedByReason === 'object' ? Object.entries(f.rejectedByReason) : [];
-  const lifecycle = f.lifecycle || {};
-  const rejectionText = rejected.length
-    ? rejected.map(([reason, count]) => `${reason}: ${count}`).join(' · ')
-    : 'Sin rechazos publicados.';
-  funnelEl('funnelReasons').textContent = `${rejectionText} · abiertas: ${Number(lifecycle.opened || 0)} · verificadas: ${Number(lifecycle.verified || 0)}`;
+function ensureFunnelUi(){
+  if($('paperFunnelPanel'))return;const t=document.querySelector('#paper .tableWrap');if(!t)return;
+  t.insertAdjacentHTML('beforebegin','<article class="panel content" id="paperFunnelPanel" style="margin-top:10px"><div class="head"><div><div class="ey">Embudo de elegibilidad</div><h3>De observación a señal Paper elegible</h3></div><span class="chip" id="funnelStatus">sin datos</span></div><p class="tiny">Cada etapa muestra cuántas observaciones siguen vivas después de aplicar los filtros del motor. Cero elegibles no significa cero datos.</p><div class="analyticsGrid"><div class="analyticsCard"><span>Observadas</span><strong id="funnelObserved">--</strong></div><div class="analyticsCard"><span>Horizonte oficial</span><strong id="funnelOfficial">--</strong></div><div class="analyticsCard"><span>Sesgo bullish</span><strong id="funnelBullish">--</strong></div><div class="analyticsCard"><span>Alta confianza</span><strong id="funnelConfidence">--</strong></div><div class="analyticsCard"><span>Elegibles</span><strong id="funnelEligible">--</strong></div></div><div class="bannerNote" id="funnelReasons">Esperando evidencia del funnel.</div></article>');
+}
+
+export function renderFunnel(funnel){
+  ensureFunnelUi();if(!$('paperFunnelPanel'))return;const f=funnel&&typeof funnel==='object'?funnel:null;
+  if(!f){for(const id of['funnelObserved','funnelOfficial','funnelBullish','funnelConfidence','funnelEligible']){const e=$(id);if(e)e.textContent='--'}const s=$('funnelStatus'),r=$('funnelReasons');if(s)s.textContent='sin datos';if(r)r.textContent='Esperando evidencia del funnel.';return}
+  const c=f.counts||{},v=k=>Number.isFinite(Number(c[k]))?String(Number(c[k])):'--';
+  $('funnelObserved').textContent=v('observed');$('funnelOfficial').textContent=v('officialHorizon');$('funnelBullish').textContent=v('bullishBias');$('funnelConfidence').textContent=v('highConfidence');$('funnelEligible').textContent=v('eligible');$('funnelStatus').textContent=`protocolo ${f.protocol||'read-only'}`;
+  const x=f.rejectedByReason&&typeof f.rejectedByReason==='object'?Object.entries(f.rejectedByReason):[],l=f.lifecycle||{},r=x.length?x.map(([k,n])=>`${k}: ${n}`).join(' · '):'Sin rechazos publicados.';$('funnelReasons').textContent=`${r} · abiertas: ${Number(l.opened||0)} · verificadas: ${Number(l.verified||0)}`;
 }
