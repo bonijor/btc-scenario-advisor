@@ -1,3 +1,6 @@
+const SNAPSHOT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const SNAPSHOT_FUTURE_TOLERANCE_MS = 60 * 1000;
+
 function funnelEl(id) {
   return document.getElementById(id);
 }
@@ -6,6 +9,7 @@ export function snapshotIsSafe(data, trialId, requiredDays = 90) {
   if (!data || typeof data !== 'object') return false;
   const rt = data.runtime || {};
   const trial = data.trial || {};
+  const days = Number(trial.completedDays);
   return data.mode === 'SHADOW'
     && data.spotOnly === true
     && data.automaticExecution === false
@@ -13,27 +17,65 @@ export function snapshotIsSafe(data, trialId, requiredDays = 90) {
     && rt.operationMode === 'SPOT_ONLY'
     && rt.allowShort === false
     && trial.trialId === trialId
-    && Number.isFinite(Number(trial.completedDays))
-    && Number(trial.completedDays) >= 0
-    && Number(trial.completedDays) <= requiredDays;
+    && trial.status === 'VERIFIED'
+    && Number.isFinite(days)
+    && days >= 0
+    && days <= requiredDays;
 }
 
-export function saveVerifiedSnapshot(storage, key, data, trialId, requiredDays = 90) {
-  if (!snapshotIsSafe(data, trialId, requiredDays)) return;
+function cacheProjection(data) {
+  const paper = data.paper && typeof data.paper === 'object' ? data.paper : null;
+  return {
+    apiVersion: data.apiVersion,
+    generatedAt: data.generatedAt,
+    mode: data.mode,
+    spotOnly: data.spotOnly,
+    automaticExecution: data.automaticExecution,
+    runtime: data.runtime,
+    trial: data.trial,
+    decisions: Array.isArray(data.decisions) ? data.decisions.slice(0, 15) : [],
+    paper: paper ? {
+      status: paper.status,
+      funnel: paper.funnel,
+      paper: paper.paper ? {
+        activeOpen: paper.paper.activeOpen,
+        verified: paper.paper.verified,
+        metrics: paper.paper.metrics,
+        trades: Array.isArray(paper.paper.trades) ? paper.paper.trades.slice(0, 20) : [],
+      } : undefined,
+      simulatedTrades: paper.simulatedTrades,
+      winRatePct: paper.winRatePct,
+      netPnlPct: paper.netPnlPct,
+      drawdownPct: paper.drawdownPct,
+      trades: Array.isArray(paper.trades) ? paper.trades.slice(0, 20) : undefined,
+      note: paper.note,
+    } : null,
+  };
+}
+
+export function saveVerifiedSnapshot(storage, key, data, trialId, requiredDays = 90, now = Date.now()) {
+  if (!snapshotIsSafe(data, trialId, requiredDays)) return false;
   try {
-    storage.setItem(key, JSON.stringify({ savedAt: Date.now(), data }));
+    storage.setItem(key, JSON.stringify({ savedAt: now, data: cacheProjection(data) }));
+    return true;
   } catch {
-    // Cache is best effort only.
+    return false;
   }
 }
 
-export function readVerifiedSnapshot(storage, key, trialId, requiredDays = 90) {
+export function readVerifiedSnapshot(storage, key, trialId, requiredDays = 90, now = Date.now()) {
   try {
     const cached = JSON.parse(storage.getItem(key) || 'null');
-    return cached && snapshotIsSafe(cached.data, trialId, requiredDays) ? cached.data : null;
+    const savedAt = Number(cached?.savedAt);
+    const fresh = Number.isFinite(savedAt)
+      && savedAt <= now + SNAPSHOT_FUTURE_TOLERANCE_MS
+      && now - savedAt <= SNAPSHOT_MAX_AGE_MS;
+    if (cached && fresh && snapshotIsSafe(cached.data, trialId, requiredDays)) return cached.data;
+    storage.removeItem(key);
   } catch {
-    return null;
+    try { storage.removeItem(key); } catch {}
   }
+  return null;
 }
 
 export function normalizedPaperPayload(payload) {
