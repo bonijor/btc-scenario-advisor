@@ -229,30 +229,29 @@ function drawChart() {
   ctx.font = `${profile.fontSize}px system-ui`;
   ctx.textBaseline = 'middle';
   for (let i = 0; i <= profile.gridLines; i += 1) {
-    const gy = pad.top + (plotH / profile.gridLines) * i, price = maxPrice - (span / profile.gridLines) * i;
-    ctx.strokeStyle = 'rgba(42,74,108,.35)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(width - pad.right, gy); ctx.stroke();
-    ctx.fillStyle = '#7891ad'; ctx.fillText(fmtUsd(price), width - pad.right + 6, gy);
+    const gy = pad.top + (plotH / profile.gridLines) * i;
+    const price = maxPrice - (span / profile.gridLines) * i;
+    ctx.strokeStyle = 'rgba(148,163,184,.12)'; ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(width - pad.right + 4, gy); ctx.stroke();
+    ctx.fillStyle = 'rgba(203,213,225,.75)'; ctx.fillText(fmtUsd(price), width - pad.right + 8, gy);
   }
-  candles.forEach((c, i) => {
-    const x = pad.left + step * i + step / 2, up = c.close >= c.open;
-    ctx.strokeStyle = up ? '#29d391' : '#ff6678'; ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.moveTo(x, y(c.high)); ctx.lineTo(x, y(c.low)); ctx.stroke();
-    ctx.fillRect(x - bodyW / 2, Math.min(y(c.open), y(c.close)), bodyW, Math.max(1, Math.abs(y(c.open) - y(c.close))));
+  candles.forEach((c, idx) => {
+    const cx = pad.left + idx * step + step / 2, up = c.close >= c.open, color = up ? '#22c55e' : '#ef4444';
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(cx, y(c.high)); ctx.lineTo(cx, y(c.low)); ctx.stroke();
+    const top = y(Math.max(c.open, c.close)), bottom = y(Math.min(c.open, c.close)); ctx.fillRect(cx - bodyW / 2, top, bodyW, Math.max(1, bottom - top));
   });
-  const last = candles.at(-1);
-  if (last) { const ly = y(last.close); ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(88,168,255,.75)'; ctx.beginPath(); ctx.moveTo(pad.left, ly); ctx.lineTo(width - pad.right, ly); ctx.stroke(); ctx.setLineDash([]); }
+  const last = candles.at(-1); if (last) { const ly = y(last.close); ctx.strokeStyle = 'rgba(245,158,11,.55)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(pad.left, ly); ctx.lineTo(width - pad.right + 4, ly); ctx.stroke(); ctx.setLineDash([]); }
 }
 
 function scheduleChartDraw() {
-  if (chartResizeRaf) cancelAnimationFrame(chartResizeRaf);
-  chartResizeRaf = requestAnimationFrame(() => { chartResizeRaf = 0; drawChart(); });
+  cancelAnimationFrame(chartResizeRaf); chartResizeRaf = requestAnimationFrame(drawChart);
 }
 
 function initResponsiveChart() {
-  const wrap = document.querySelector('.chartWrap');
-  if (wrap && 'ResizeObserver' in window) { chartResizeObserver = new ResizeObserver(() => scheduleChartDraw()); chartResizeObserver.observe(wrap); }
-  window.addEventListener('resize', scheduleChartDraw, { passive: true });
-  window.addEventListener('orientationchange', () => setTimeout(scheduleChartDraw, 120), { passive: true });
-  if (window.visualViewport) { visualViewportHandler = () => scheduleChartDraw(); window.visualViewport.addEventListener('resize', visualViewportHandler, { passive: true }); }
+  const canvas = $('priceChart');
+  if (!canvas) return;
+  if ('ResizeObserver' in window) { chartResizeObserver = new ResizeObserver(scheduleChartDraw); chartResizeObserver.observe(canvas); }
+  else window.addEventListener('resize', scheduleChartDraw, { passive: true });
+  visualViewportHandler = () => scheduleChartDraw(); window.visualViewport?.addEventListener('resize', visualViewportHandler, { passive: true });
 }
 
 function decisionPill(value) {
@@ -297,6 +296,14 @@ function renderPaper(paper) {
   resilience.renderFunnel(p.funnel);
 }
 
+function renderGridEvidence(g) {
+  const n=(v)=>Number.isFinite(Number(v))?Number(v):null, total=n(g?.totalDecisions), target=n(g?.targetDecisions)||100, blocked=!g||g.status==='BLOCKED'||total===null;
+  const put=(id,v)=>{if($(id))$(id).textContent=v};
+  put('gridEvidenceCount',blocked?`-- / ${target}`:`${total} / ${target}`); put('gridEvidenceStatus',blocked?'BLOCKED':g.status||'COLLECTING');
+  put('gridEvidenceRemaining',blocked?'--':String(n(g.remainingDecisions)??Math.max(0,target-total))); put('gridActiveCount',blocked?'--':String(n(g.modes?.gridActive)??0)); put('gridDefensiveCount',blocked?'--':String(n(g.modes?.gridDefensive)??0)); put('gridAbstainCount',blocked?'--':String(n(g.modes?.abstain)??0)); put('gridOutcomeCount',blocked?'--':String(n(g.maturedOutcomes)??0)); put('gridCycleCount',blocked?'--':String(n(g.completedCycles)??0)); put('gridNetPnl',blocked?'--':fmtUsd(g.netPnl,2));
+  const bar=$('gridEvidenceProgress'); if(bar) bar.style.width=`${blocked?0:Math.max(0,Math.min(100,n(g.progressPct)??total/target*100))}%`;
+}
+
 function updateFreshness() {
   updatePulseClock();
   const rt = modelState?.runtime;
@@ -314,13 +321,13 @@ function renderModelData(data, { stale = false } = {}) {
   else { setClassText('engineState', ready ? 'ONLINE' : 'NOT READY', ready ? 'goodText' : 'badText'); $('engineMeta').textContent = ready ? 'runtime validado' : 'fail-closed'; setClassText('apiStatus', 'ONLINE', 'goodText'); $('runtimeChip').className = `chip ${ready ? 'good' : 'bad'}`; $('runtimeChip').textContent = ready ? '● MOTOR ONLINE' : '● MOTOR NOT READY'; }
   $('runtimeText').textContent = stale ? `${rt.modelVersion || CONFIG.modelVersion} · ${rt.operationMode || '--'} · último snapshot local verificado` : `${rt.modelVersion || CONFIG.modelVersion} · ${rt.operationMode || '--'} · SHADOW=${rt.shadowMode === true ? 'true' : '--'}`;
   $('revision').textContent = rt.revision || '--'; $('lastCycle').textContent = fmtTime(rt.lastSuccessfulCycleAt); $('errorState').textContent = rt.errorState || 'NONE'; $('apiGenerated').textContent = fmtTime(data.generatedAt); $('systemRuntime').textContent = rt.revision || '--'; $('systemApi').textContent = data.apiRevision || data.serviceRevision || data.apiVersion || '--'; $('systemMode').textContent = `${data.mode || '--'} / ${data.spotOnly ? 'SPOT_ONLY' : '--'}`;
-  setTrial(data.trial, { stale }); renderDecisions(data.decisions); renderPaper(data.paper); updatePulseModel(data, { stale }); updateFreshness();
+  setTrial(data.trial, { stale }); renderDecisions(data.decisions); renderPaper(data.paper); renderGridEvidence(data.adaptiveGrid); updatePulseModel(data, { stale }); updateFreshness();
   $('sideDetail').textContent = stale ? 'API temporalmente offline. Se conserva el último snapshot verificado; no se inventan datos nuevos.' : 'Motor, trial y funnel servidos por API sanitizada sólo lectura.';
 }
 
 function renderUnavailableState() {
   setClassText('engineState', 'SIN API', 'badText'); $('engineMeta').textContent = 'fail-closed'; setClassText('apiStatus', 'OFFLINE', 'badText'); $('runtimeChip').className = 'chip bad'; $('runtimeChip').textContent = '● API READ-ONLY OFFLINE'; $('runtimeText').textContent = 'No hay snapshot verificado disponible. El dashboard no sustituye datos faltantes por cero.'; $('sideDetail').textContent = 'La API read-only no respondió y todavía no existe un snapshot local verificado.';
-  setTrial(BASE_TRIAL); resilience?.renderFunnel(null); $('pTrades').textContent = '--'; updatePulseModel(null); updateFreshness();
+  setTrial(BASE_TRIAL); resilience?.renderFunnel(null); renderGridEvidence(null); $('pTrades').textContent = '--'; updatePulseModel(null); updateFreshness();
 }
 
 async function loadModel() {
