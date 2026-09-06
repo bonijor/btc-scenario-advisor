@@ -163,9 +163,9 @@
   async function start() {
     if ($('authGate')) return;
     installDashboardBearer();
-    document.body.insertAdjacentHTML('beforeend', gateMarkup()); document.body.classList.add('auth-gate-ready'); document.body.style.overflow = 'hidden'; setProtectedLocked(true); bindUi();
     const localQa = ['127.0.0.1', 'localhost'].includes(location.hostname) && new URLSearchParams(location.search).get('gate') !== '1';
     if (localQa) { grant({ uid: 'local-qa', email: 'local-qa@example.invalid', emailVerified: true, providerIds: ['qa'] }); return; }
+    document.body.insertAdjacentHTML('beforeend', gateMarkup()); document.body.classList.add('auth-gate-ready'); document.body.style.overflow = 'hidden'; setProtectedLocked(true); bindUi();
     try {
       const testFactory = window.__BTC_AUTH_TEST_ADAPTER_FACTORY__;
       if (typeof testFactory === 'function') state.adapter = await testFactory({ onState: handleAuthState });
