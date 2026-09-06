@@ -6,7 +6,8 @@
   "scripts": {
     "qa:e2e": "playwright test",
     "qa:list": "playwright test --list",
-    "qa:budget": "node tests/performance/static-budget.mjs",
+    "qa:readiness": "node --test tests/unit/readiness-module.test.mjs",
+    "qa:budget": "node tests/performance/static-budget.mjs && npm run qa:readiness",
     "qa:lighthouse": "node tests/performance/run-lighthouse.mjs"
   },
   "devDependencies": {
