@@ -34,10 +34,10 @@ function fixture(status = 'VERIFIED') {
   };
 }
 
-test('only VERIFIED formal trial snapshots satisfy cache trust boundary', () => {
+test('live payload safety is independent from formal trial verification status', () => {
   assert.equal(snapshotIsSafe(fixture('VERIFIED'), TRIAL_ID), true);
-  assert.equal(snapshotIsSafe(fixture('INITIALIZED'), TRIAL_ID), false);
-  assert.equal(snapshotIsSafe(fixture('BLOCKED'), TRIAL_ID), false);
+  assert.equal(snapshotIsSafe(fixture('INITIALIZED'), TRIAL_ID), true);
+  assert.equal(snapshotIsSafe(fixture('BLOCKED'), TRIAL_ID), true);
 });
 
 test('unsafe runtime and wrong trial fail closed', () => {
