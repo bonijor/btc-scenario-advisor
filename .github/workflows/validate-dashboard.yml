@@ -44,6 +44,7 @@ jobs:
           test -s tests/e2e/dashboard-accessibility.spec.mjs
           test -s tests/e2e/data-pulse.spec.mjs
           test -s tests/e2e/product-account.spec.mjs
+          test -s tests/dashboard-resilience-cache.test.mjs
           test -s tests/performance/static-budget.mjs
           test -s tests/performance/run-lighthouse.mjs
           test -s tests/serve.mjs
@@ -68,9 +69,13 @@ jobs:
           node --check tests/e2e/dashboard-accessibility.spec.mjs
           node --check tests/e2e/data-pulse.spec.mjs
           node --check tests/e2e/product-account.spec.mjs
+          node --check tests/dashboard-resilience-cache.test.mjs
           node --check tests/performance/static-budget.mjs
           node --check tests/performance/run-lighthouse.mjs
           node --check tests/serve.mjs
+
+      - name: Validate verified snapshot cache contract
+        run: node --test tests/dashboard-resilience-cache.test.mjs
 
       - name: Validate DOM contract
         shell: python
