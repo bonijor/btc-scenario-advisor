@@ -1,0 +1,27 @@
+name: Verified snapshot cache contract
+
+on:
+  pull_request:
+    paths:
+      - 'assets/dashboard-resilience.js'
+      - 'tests/dashboard-resilience-cache.test.mjs'
+      - '.github/workflows/verified-snapshot-cache.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  cache-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: |
+          node --check assets/dashboard-resilience.js
+          node --check tests/dashboard-resilience-cache.test.mjs
+      - name: Verify fail-closed cache and Adaptive Grid projection
+        run: node --test tests/dashboard-resilience-cache.test.mjs
