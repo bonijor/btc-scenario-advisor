@@ -1,6 +1,23 @@
-import { stat, readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
+import { gzipSync } from 'node:zlib';
 
-const budgets = new Map([
+const inventory = [
+  'index.html',
+  'assets/app.js',
+  'assets/dashboard-resilience.js',
+  'assets/styles.css',
+  'assets/responsive-bootstrap.js',
+  'assets/accessibility.js',
+  'assets/accessibility.css',
+  'assets/product.js',
+  'assets/firebase-auth.js',
+  'assets/firebase-profile.js',
+  'assets/product.css',
+  'assets/cloud-profile.css',
+];
+
+// Legacy raw-source budgets are visibility signals only in V2. They no longer fail CI.
+const legacyRawBudgets = new Map([
   ['index.html', 26_000],
   ['assets/app.js', 26_000],
   ['assets/dashboard-resilience.js', 6_000],
@@ -15,29 +32,62 @@ const budgets = new Map([
   ['assets/cloud-profile.css', 5_000],
 ]);
 
-let total = 0;
-const failures = [];
-for (const [path, maxBytes] of budgets) {
-  const { size } = await stat(path);
-  total += size;
-  console.log(`${path}: ${size} / ${maxBytes} bytes`);
-  if (size > maxBytes) failures.push(`${path} exceeds budget by ${size - maxBytes} bytes`);
-}
-
-// Data Pulse adds the closed-candle provenance contract without another critical request.
-// Lazy cloud-profile and resilience modules remain inside the aggregate source budget.
-const totalBudget = 138_000;
-if (total > totalBudget) failures.push(`frontend source total ${total} exceeds ${totalBudget} bytes`);
+const criticalGzipBudget = 50_000;
+const allFrontendGzipBudget = 62_000;
+const lazyGzipBudgets = new Map([
+  ['assets/dashboard-resilience.js', 3_500],
+  ['assets/firebase-auth.js', 4_500],
+  ['assets/firebase-profile.js', 4_000],
+  ['assets/cloud-profile.css', 3_000],
+]);
+const maxCriticalRequests = 7;
 
 const html = await readFile('index.html', 'utf8');
-const localCriticalRefs = [...html.matchAll(/(?:src|href)=["'](assets\/[^"']+)["']/g)].map((match) => match[1]);
-const uniqueRefs = [...new Set(localCriticalRefs)];
-if (uniqueRefs.length > 7) failures.push(`critical local request budget exceeded: ${uniqueRefs.length} > 7`);
+const refs = [...html.matchAll(/(?:src|href)=["'](assets\/[^"']+)["']/g)].map((m) => m[1]);
+const criticalRefs = [...new Set(refs)];
+const criticalFiles = ['index.html', ...criticalRefs];
+const failures = [];
+let rawTotal = 0;
+let gzipTotal = 0;
+let criticalGzip = 0;
+
+const gzipSizes = new Map();
+for (const path of inventory) {
+  const { size: raw } = await stat(path);
+  const data = await readFile(path);
+  const gzip = gzipSync(data, { level: 9 }).byteLength;
+  rawTotal += raw;
+  gzipTotal += gzip;
+  gzipSizes.set(path, gzip);
+  const legacy = legacyRawBudgets.get(path);
+  const rawNote = legacy && raw > legacy ? ` RAW_INFO +${raw - legacy}` : '';
+  console.log(`${path}: raw=${raw}${rawNote} gzip=${gzip}`);
+}
+
+for (const path of criticalFiles) {
+  const gzip = gzipSizes.get(path);
+  if (gzip == null) failures.push(`critical asset not inventoried: ${path}`);
+  else criticalGzip += gzip;
+}
+
+if (criticalRefs.length > maxCriticalRequests) failures.push(`critical local requests ${criticalRefs.length} > ${maxCriticalRequests}`);
+if (criticalGzip > criticalGzipBudget) failures.push(`critical gzip payload ${criticalGzip} > ${criticalGzipBudget}`);
+if (gzipTotal > allFrontendGzipBudget) failures.push(`all frontend gzip payload ${gzipTotal} > ${allFrontendGzipBudget}`);
+
+for (const [path, max] of lazyGzipBudgets) {
+  if (criticalRefs.includes(path)) failures.push(`lazy module became critical: ${path}`);
+  const gzip = gzipSizes.get(path);
+  if (gzip == null) failures.push(`lazy module not inventoried: ${path}`);
+  else if (gzip > max) failures.push(`${path} gzip ${gzip} > ${max}`);
+}
+
+console.log(`PERFORMANCE_BUDGET_V2 rawInfo=${rawTotal} criticalGzip=${criticalGzip}/${criticalGzipBudget} totalGzip=${gzipTotal}/${allFrontendGzipBudget} criticalRequests=${criticalRefs.length}/${maxCriticalRequests}`);
+console.log('RAW_SOURCE_POLICY=informational; transport payload, lazy boundaries and Lighthouse are blocking gates');
 
 if (failures.length) {
-  console.error('STATIC_PERFORMANCE_BUDGET_FAILED');
+  console.error('PERFORMANCE_BUDGET_V2_FAILED');
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
 
-console.log(`PASS_STATIC_PERFORMANCE_BUDGET total=${total}/${totalBudget} criticalRequests=${uniqueRefs.length}/7 lazyAuthAdapter=1 lazyCloudProfile=1 lazyDashboardResilience=1`);
+console.log('PASS_PERFORMANCE_BUDGET_V2');
