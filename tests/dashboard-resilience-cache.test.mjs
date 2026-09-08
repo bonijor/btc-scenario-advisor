@@ -34,6 +34,15 @@ test('V1 is historical 100/100 and cannot imply V2 readiness',()=>{
   assert.notEqual(view.v2.state,'READY_FOR_GATE80_RECONSIDERATION');
 });
 
+test('V2 counters remain valid after crossing minimum evidence targets',()=>{
+  const f=fixture();f.adaptiveGridV2.activatedSamples=51;f.adaptiveGridV2.completedTpCycles=67;f.adaptiveGridV2.status='AUDIT_OR_MATURITY_PENDING';
+  const view=adaptiveGridDisplay(f.adaptiveGrid,f.adaptiveGridV2);
+  assert.equal(view.v2.valid,true);
+  assert.equal(view.v2.activated,'51 / 50');
+  assert.equal(view.v2.tp,'67 / 50');
+  assert.equal(view.v2.state,'AUDIT_OR_MATURITY_PENDING');
+});
+
 test('V2 fails closed without authoritative source or verified evidence basis',()=>{
   const f=fixture();f.adaptiveGridV2.source.authoritative=false;
   let view=adaptiveGridDisplay(f.adaptiveGrid,f.adaptiveGridV2);assert.equal(view.v2.valid,false);assert.equal(view.v2.activated,'-- / 50');
