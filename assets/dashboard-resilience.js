@@ -11,7 +11,7 @@ export function adaptiveGridDisplay(v1,v2){
   const total=Number(v1?.totalDecisions);
   const v1Valid=v1?.protocol===V1_PROTOCOL&&v1?.evidenceBasis===V1_EVIDENCE&&Number(v1?.targetDecisions)===100&&Number.isInteger(total)&&total===100&&safeV1(v1?.safety);
   const a=Number(v2?.activatedSamples),tp=Number(v2?.completedTpCycles);
-  const v2Valid=v2?.protocol===V2_PROTOCOL&&v2?.evidenceRole==='V2_PROSPECTIVE_ONLY'&&v2?.evidenceBasis===V2_EVIDENCE&&Number(v2?.targetActivatedSamples)===50&&Number(v2?.targetCompletedTpCycles)===50&&Number.isInteger(a)&&a>=0&&a<=50&&Number.isInteger(tp)&&tp>=0&&safeV2(v2?.safety)&&v2?.source?.authoritative===true;
+  const v2Valid=v2?.protocol===V2_PROTOCOL&&v2?.evidenceRole==='V2_PROSPECTIVE_ONLY'&&v2?.evidenceBasis===V2_EVIDENCE&&Number(v2?.targetActivatedSamples)===50&&Number(v2?.targetCompletedTpCycles)===50&&Number.isInteger(a)&&a>=0&&Number.isInteger(tp)&&tp>=0&&safeV2(v2?.safety)&&v2?.source?.authoritative===true;
   return {
     v1:v1Valid?{counter:'100 / 100',state:'HISTÓRICO CERRADO',valid:true}:{counter:'-- / 100',state:'HISTÓRICO NO VERIFICADO',valid:false},
     v2:v2Valid?{activated:`${a} / 50`,tp:`${tp} / 50`,state:v2.status||'COLLECTING',valid:true}:{activated:'-- / 50',tp:'-- / 50',state:'BLOQUEADO · sin evidencia V2 autoritativa',valid:false}
