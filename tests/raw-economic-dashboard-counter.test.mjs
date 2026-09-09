@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rawEconomicDisplay, saveVerifiedSnapshot, readVerifiedSnapshot } from '../assets/dashboard-resilience.js';
+import { rawEconomicDisplay } from '../assets/raw-economic-resilience.js';
+import { saveVerifiedSnapshot, readVerifiedSnapshot } from '../assets/dashboard-resilience.js';
 
 const TRIAL_ID='btc-shadow-90d-20260817T173948Z';
 const safe={shadowMode:true,spotOnly:true,readOnly:true,sendToExchange:false,exchangeCredentials:false,realOrdersAllowed:false,formalTrialMutation:false,countsTowardFormal90D:false,countsTowardCurrentV2:false,automaticPromotion:false,canAuthorizeTrading:false};
@@ -11,4 +12,4 @@ function storage(){const x=new Map();return{getItem:k=>x.has(k)?x.get(k):null,se
 test('renders authoritative raw beta counters without implying trading authority',()=>{const v=rawEconomicDisplay(raw());assert.equal(v.outcomes,'8 / 20');assert.equal(v.buys,'12 / 20');assert.equal(v.tp,'6 / 10');assert.equal(v.pnl,'1.2346 USDT');assert.equal(v.authority,'NO AUTORIZA TRADING');assert.equal(v.valid,true)});
 test('fails closed on raw source or authority drift',()=>{for(const mutate of [r=>r.source.authoritative=false,r=>r.canAuthorizeTrading=true,r=>r.safety.sendToExchange=true,r=>r.maturedActivatedOutcomes=null,r=>r.targetTpSellCycles=9]){const r=raw();mutate(r);const v=rawEconomicDisplay(r);assert.equal(v.valid,false);assert.equal(v.outcomes,'-- / 20');assert.equal(v.authority,'NO AUTORIZA TRADING')}});
 test('sufficient raw evidence still cannot authorize trading',()=>{const r=raw();Object.assign(r,{status:'SUFFICIENT_FOR_INDEPENDENT_REVIEW',maturedActivatedOutcomes:20,buyFills:25,tpSellCycles:12,rawSufficiencyReady:true});const v=rawEconomicDisplay(r);assert.equal(v.valid,true);assert.equal(v.authority,'NO AUTORIZA TRADING')});
-test('verified cache preserves bounded raw projection only',()=>{const s=storage(),p=payload();p.rawEconomic.untrustedDetail='must-not-persist';assert.equal(saveVerifiedSnapshot(s,'k',p,TRIAL_ID,90,1000),true);const text=s.getItem('k');assert.equal(text.includes('must-not-persist'),false);const cached=readVerifiedSnapshot(s,'k',TRIAL_ID,90,1001);assert.equal(cached.rawEconomic.maturedActivatedOutcomes,8);assert.equal(cached.rawEconomic.activation.baselineDecisionSequence,186);assert.equal(cached.rawEconomic.canAuthorizeTrading,false)});
+test('verified local cache deliberately excludes raw beta evidence',()=>{const s=storage(),p=payload();assert.equal(saveVerifiedSnapshot(s,'k',p,TRIAL_ID,90,1000),true);const text=s.getItem('k');assert.equal(text.includes('rawEconomic'),false);assert.equal(text.includes('raw-beta-da4ba8a994edd86deec80741'),false);const cached=readVerifiedSnapshot(s,'k',TRIAL_ID,90,1001);assert.equal(cached.rawEconomic,undefined)});
