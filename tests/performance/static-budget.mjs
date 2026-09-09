@@ -5,6 +5,7 @@ const inventory = [
   'index.html',
   'assets/app.js',
   'assets/dashboard-resilience.js',
+  'assets/paper-resilience.js',
   'assets/styles.css',
   'assets/responsive-bootstrap.js',
   'assets/accessibility.js',
@@ -21,6 +22,7 @@ const legacyRawBudgets = new Map([
   ['index.html', 26_000],
   ['assets/app.js', 26_000],
   ['assets/dashboard-resilience.js', 6_000],
+  ['assets/paper-resilience.js', 4_000],
   ['assets/styles.css', 20_000],
   ['assets/responsive-bootstrap.js', 1_500],
   ['assets/accessibility.js', 6_000],
@@ -36,6 +38,7 @@ const criticalGzipBudget = 50_000;
 const allFrontendGzipBudget = 62_000;
 const lazyGzipBudgets = new Map([
   ['assets/dashboard-resilience.js', 3_500],
+  ['assets/paper-resilience.js', 1_800],
   ['assets/firebase-auth.js', 4_500],
   ['assets/firebase-profile.js', 4_000],
   ['assets/cloud-profile.css', 3_000],

@@ -18,61 +18,14 @@ function fixture(status='VERIFIED'){
   }
 }
 
-test('live payload safety is independent from formal trial verification status',()=>{
-  assert.equal(snapshotIsSafe(fixture('VERIFIED'),TRIAL_ID),true);
-  const initialized=fixture('INITIALIZED');initialized.trial.completedDays=null;
-  const blocked=fixture('BLOCKED');blocked.trial.completedDays=null;
-  assert.equal(snapshotIsSafe(initialized,TRIAL_ID),true);
-  assert.equal(snapshotIsSafe(blocked,TRIAL_ID),true);
-});
-
+test('live payload safety is independent from formal trial verification status',()=>{assert.equal(snapshotIsSafe(fixture('VERIFIED'),TRIAL_ID),true);const initialized=fixture('INITIALIZED');initialized.trial.completedDays=null;const blocked=fixture('BLOCKED');blocked.trial.completedDays=null;assert.equal(snapshotIsSafe(initialized,TRIAL_ID),true);assert.equal(snapshotIsSafe(blocked,TRIAL_ID),true)});
 test('unsafe runtime and wrong trial fail closed',()=>{const unsafe=fixture();unsafe.runtime.allowShort=true;assert.equal(snapshotIsSafe(unsafe,TRIAL_ID),false);assert.equal(snapshotIsSafe(fixture(),'wrong-trial'),false)});
-
-test('V1 is historical 100/100 and cannot imply V2 readiness',()=>{
-  const view=adaptiveGridDisplay(fixture().adaptiveGrid,fixture().adaptiveGridV2);
-  assert.deepEqual(view.v1,{counter:'100 / 100',state:'HISTÓRICO CERRADO',valid:true});
-  assert.equal(view.v2.activated,'7 / 50');assert.equal(view.v2.tp,'5 / 50');assert.equal(view.v2.valid,true);
-  assert.notEqual(view.v2.state,'READY_FOR_GATE80_RECONSIDERATION');
-});
-
-test('SHADOW X/100 is informational and cannot authorize trading',()=>{
-  const view=shadowValidationDisplay(fixture().shadowValidation);
-  assert.equal(view.counter,'44.2 / 100');
-  assert.equal(view.authority,'NO AUTORIZA TRADING');
-  assert.equal(view.valid,true);
-  const full=fixture().shadowValidation;full.verifiedScore=100;full.status='EVIDENCE_COMPLETE_NOT_LIVE_AUTHORIZED';
-  const complete=shadowValidationDisplay(full);assert.equal(complete.counter,'100 / 100');assert.equal(complete.authority,'NO AUTORIZA TRADING');
-});
-
-test('SHADOW X/100 fails closed when authority flags drift',()=>{
-  const bad=fixture().shadowValidation;bad.canAuthorizeTrading=true;
-  const view=shadowValidationDisplay(bad);assert.equal(view.valid,false);assert.equal(view.counter,'-- / 100');assert.equal(view.authority,'NO AUTORIZA TRADING');
-});
-
-test('V2 counters remain valid after crossing minimum evidence targets',()=>{
-  const f=fixture();f.adaptiveGridV2.activatedSamples=51;f.adaptiveGridV2.completedTpCycles=67;f.adaptiveGridV2.status='AUDIT_OR_MATURITY_PENDING';
-  const view=adaptiveGridDisplay(f.adaptiveGrid,f.adaptiveGridV2);
-  assert.equal(view.v2.valid,true);
-  assert.equal(view.v2.activated,'51 / 50');
-  assert.equal(view.v2.tp,'67 / 50');
-  assert.equal(view.v2.state,'AUDIT_OR_MATURITY_PENDING');
-});
-
-test('V2 fails closed without authoritative source or verified evidence basis',()=>{
-  const f=fixture();f.adaptiveGridV2.source.authoritative=false;
-  let view=adaptiveGridDisplay(f.adaptiveGrid,f.adaptiveGridV2);assert.equal(view.v2.valid,false);assert.equal(view.v2.activated,'-- / 50');
-  const g=fixture();g.adaptiveGridV2.source.authoritative=true;g.adaptiveGridV2.evidenceBasis='STATIC_READINESS';
-  view=adaptiveGridDisplay(g.adaptiveGrid,g.adaptiveGridV2);assert.equal(view.v2.valid,false);
-});
-
-test('cache persists bounded projection and V1/V2/SHADOW evidence blocks',()=>{
-  const s=storage();assert.equal(saveVerifiedSnapshot(s,'k',fixture(),TRIAL_ID,90,1000),true);
-  const raw=s.getItem('k');assert.ok(raw);assert.equal(raw.includes('must-not-persist'),false);assert.equal(raw.includes('recentRuns'),false);
-  const cached=JSON.parse(raw);assert.equal(cached.data.decisions.length,15);assert.equal(cached.data.adaptiveGrid.totalDecisions,100);assert.equal(cached.data.adaptiveGridV2.activatedSamples,7);assert.equal(cached.data.adaptiveGridV2.targetActivatedSamples,50);assert.equal(cached.data.adaptiveGridV2.legacyV1.countsTowardV2,false);assert.equal(cached.data.adaptiveGridV2.safety.countsTowardFormal90D,false);assert.equal(cached.data.shadowValidation.verifiedScore,44.2);assert.equal(cached.data.shadowValidation.canAuthorizeTrading,false);
-});
-
+test('V1 is historical 100/100 and cannot imply V2 readiness',()=>{const view=adaptiveGridDisplay(fixture().adaptiveGrid,fixture().adaptiveGridV2);assert.deepEqual(view.v1,{counter:'100 / 100',state:'HISTÓRICO CERRADO',valid:true});assert.equal(view.v2.activated,'7 / 50');assert.equal(view.v2.tp,'5 / 50');assert.equal(view.v2.valid,true);assert.notEqual(view.v2.state,'READY_FOR_GATE80_RECONSIDERATION')});
+test('SHADOW X/100 is informational and cannot authorize trading',()=>{const view=shadowValidationDisplay(fixture().shadowValidation);assert.equal(view.counter,'44.2 / 100');assert.equal(view.authority,'NO AUTORIZA TRADING');assert.equal(view.valid,true);const full=fixture().shadowValidation;full.verifiedScore=100;full.remainingVerifiedPoints=0;full.status='EVIDENCE_COMPLETE_NOT_LIVE_AUTHORIZED';const complete=shadowValidationDisplay(full);assert.equal(complete.counter,'100 / 100');assert.equal(complete.authority,'NO AUTORIZA TRADING')});
+test('SHADOW X/100 fails closed on authority drift or incomplete semantics',()=>{for(const mutate of [v=>v.canAuthorizeTrading=true,v=>v.verifiedScore=null,v=>v.verifiedScore=false,v=>v.verifiedScore='',v=>v.scoreMeaning='TRADING_READINESS',v=>v.authorityCoveragePct=null,v=>v.remainingVerifiedPoints=null,v=>v.remainingVerifiedPoints=1]){const bad=fixture().shadowValidation;mutate(bad);const view=shadowValidationDisplay(bad);assert.equal(view.valid,false);assert.equal(view.counter,'-- / 100');assert.equal(view.authority,'NO AUTORIZA TRADING')}});
+test('V2 counters remain valid after crossing minimum evidence targets',()=>{const f=fixture();f.adaptiveGridV2.activatedSamples=51;f.adaptiveGridV2.completedTpCycles=67;f.adaptiveGridV2.status='AUDIT_OR_MATURITY_PENDING';const view=adaptiveGridDisplay(f.adaptiveGrid,f.adaptiveGridV2);assert.equal(view.v2.valid,true);assert.equal(view.v2.activated,'51 / 50');assert.equal(view.v2.tp,'67 / 50');assert.equal(view.v2.state,'AUDIT_OR_MATURITY_PENDING')});
+test('V2 fails closed without authoritative source or verified evidence basis',()=>{const f=fixture();f.adaptiveGridV2.source.authoritative=false;let view=adaptiveGridDisplay(f.adaptiveGrid,f.adaptiveGridV2);assert.equal(view.v2.valid,false);assert.equal(view.v2.activated,'-- / 50');const g=fixture();g.adaptiveGridV2.source.authoritative=true;g.adaptiveGridV2.evidenceBasis='STATIC_READINESS';view=adaptiveGridDisplay(g.adaptiveGrid,g.adaptiveGridV2);assert.equal(view.v2.valid,false)});
+test('cache persists bounded projection and V1/V2/SHADOW evidence blocks',()=>{const s=storage();assert.equal(saveVerifiedSnapshot(s,'k',fixture(),TRIAL_ID,90,1000),true);const raw=s.getItem('k');assert.ok(raw);assert.equal(raw.includes('must-not-persist'),false);assert.equal(raw.includes('recentRuns'),false);const cached=JSON.parse(raw);assert.equal(cached.data.decisions.length,15);assert.equal(cached.data.adaptiveGrid.totalDecisions,100);assert.equal(cached.data.adaptiveGridV2.activatedSamples,7);assert.equal(cached.data.adaptiveGridV2.targetActivatedSamples,50);assert.equal(cached.data.adaptiveGridV2.legacyV1.countsTowardV2,false);assert.equal(cached.data.adaptiveGridV2.safety.countsTowardFormal90D,false);assert.equal(cached.data.shadowValidation.verifiedScore,44.2);assert.equal(cached.data.shadowValidation.authorityCoveragePct,100);assert.equal(cached.data.shadowValidation.remainingVerifiedPoints,55.8);assert.equal(cached.data.shadowValidation.scoreMeaning,'SHADOW_VALIDATION_EVIDENCE_PROGRESS_NOT_TRADING_READINESS')});
 test('non-verified formal trial snapshots are never written to cache',()=>{const s=storage();const f=fixture('INITIALIZED');f.trial.completedDays=null;assert.equal(saveVerifiedSnapshot(s,'k',f,TRIAL_ID,90,1000),false);assert.equal(s.getItem('k'),null)});
-
 test('expired, future-dated, corrupt, or unsafe cache is rejected and removed',()=>{const now=2_000_000_000,cases=[JSON.stringify({savedAt:now-(24*60*60*1000)-1,data:fixture()}),JSON.stringify({savedAt:now+60_001,data:fixture()}),'{bad json',JSON.stringify({savedAt:now-1000,data:fixture('BLOCKED')})];for(const value of cases){const s=storage();s.setItem('k',value);assert.equal(readVerifiedSnapshot(s,'k',TRIAL_ID,90,now),null);assert.equal(s.getItem('k'),null)}});
-
 test('fresh VERIFIED cache remains readable',()=>{const now=2_000_000_000,s=storage();s.setItem('k',JSON.stringify({savedAt:now-1000,data:fixture()}));const cached=readVerifiedSnapshot(s,'k',TRIAL_ID,90,now);assert.equal(cached?.trial.completedDays,16);assert.equal(cached?.adaptiveGrid.totalDecisions,100);assert.equal(cached?.adaptiveGridV2.activatedSamples,7);assert.equal(cached?.shadowValidation.verifiedScore,44.2)});
