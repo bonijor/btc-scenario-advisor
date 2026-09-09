@@ -5,6 +5,7 @@ on:
     paths:
       - 'assets/dashboard-resilience.js'
       - 'tests/dashboard-resilience-cache.test.mjs'
+      - 'tests/raw-economic-dashboard-counter.test.mjs'
       - '.github/workflows/verified-snapshot-cache.yml'
 
 permissions:
@@ -23,5 +24,6 @@ jobs:
         run: |
           node --check assets/dashboard-resilience.js
           node --check tests/dashboard-resilience-cache.test.mjs
-      - name: Verify fail-closed cache and Adaptive Grid projection
-        run: node --test tests/dashboard-resilience-cache.test.mjs
+          node --check tests/raw-economic-dashboard-counter.test.mjs
+      - name: Verify fail-closed cache and operational evidence projections
+        run: node --test tests/dashboard-resilience-cache.test.mjs tests/raw-economic-dashboard-counter.test.mjs
