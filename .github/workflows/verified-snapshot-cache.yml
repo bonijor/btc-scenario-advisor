@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'assets/dashboard-resilience.js'
+      - 'assets/raw-economic-resilience.js'
       - 'tests/dashboard-resilience-cache.test.mjs'
       - 'tests/raw-economic-dashboard-counter.test.mjs'
       - '.github/workflows/verified-snapshot-cache.yml'
@@ -23,6 +24,7 @@ jobs:
       - name: Syntax check
         run: |
           node --check assets/dashboard-resilience.js
+          node --check assets/raw-economic-resilience.js
           node --check tests/dashboard-resilience-cache.test.mjs
           node --check tests/raw-economic-dashboard-counter.test.mjs
       - name: Verify fail-closed cache and operational evidence projections
