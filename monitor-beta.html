@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#050a12">
+  <meta name="description" content="Monitor operacional read-only de BTC Scenario Advisor para V2 #83 y raw beta #96.">
+  <title>BTC Scenario Advisor · Monitor Beta</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/accessibility.css">
+  <style>
+    .betaShell{max-width:1120px;margin:0 auto;padding:24px}.betaTop{display:flex;gap:16px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:20px}.betaTop a{text-decoration:none}.betaGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.betaCard{padding:18px}.betaCard span,.betaCard small{display:block}.betaCard strong{display:block;font-size:clamp(1.4rem,3vw,2.2rem);margin:.35rem 0}.betaMeta{margin-top:16px}.betaMeta .kv{word-break:break-word}.betaSafety{margin-top:16px}.betaSafety strong{display:block}.betaFooter{margin-top:18px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem}@media(max-width:760px){.betaShell{padding:14px}.betaGrid{grid-template-columns:1fr 1fr}}@media(max-width:480px){.betaGrid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<a class="skipLink" href="#beta-main">Saltar al monitor</a>
+<main class="betaShell" id="beta-main" tabindex="-1">
+  <header class="betaTop">
+    <div><div class="ey">BTC Scenario Advisor · SHADOW</div><h1>Monitor beta #83 + #96</h1><p class="tiny">Datos autoritativos read-only. Sin órdenes reales, sin credenciales de exchange y sin promoción automática.</p></div>
+    <div><a class="btn" href="index.html">← Dashboard</a> <button class="btn primary" id="refreshBeta" type="button" aria-busy="false">↻ Actualizar</button></div>
+  </header>
+
+  <section class="statusStrip" aria-label="Estado del monitor">
+    <div class="statusCell"><span>Estado</span><b id="monitorState">CARGANDO</b><small class="tiny">fail-closed</small></div>
+    <div class="statusCell"><span>Autoridad</span><b id="authority">NO AUTORIZA TRADING</b><small class="tiny">Gate #80 separado</small></div>
+    <div class="statusCell"><span>Última lectura</span><b id="updatedAt">--</b><small class="tiny">API read-only 2.2</small></div>
+  </section>
+
+  <h2>V2 prospectivo · #83</h2>
+  <section class="betaGrid" aria-label="Contadores V2">
+    <article class="panel betaCard"><span>Activaciones</span><strong id="v2Activated">-- / 50</strong><small>objetivo Gate #80</small></article>
+    <article class="panel betaCard"><span>TP completados</span><strong id="v2Tp">-- / 50</strong><small>ciclos prospectivos</small></article>
+    <article class="panel betaCard"><span>Outcomes maduros</span><strong id="v2Matured">--</strong><small>evidencia reconciliada</small></article>
+    <article class="panel betaCard"><span>P&amp;L neto V2</span><strong id="v2Pnl">--</strong><small>después de costos modelados</small></article>
+  </section>
+
+  <h2>Raw economic beta · #96</h2>
+  <section class="betaGrid" aria-label="Contadores raw beta">
+    <article class="panel betaCard"><span>Outcomes raw</span><strong id="rawOutcomes">-- / 20</strong><small>maduros post-baseline</small></article>
+    <article class="panel betaCard"><span>BUY fills</span><strong id="rawBuys">-- / 20</strong><small>válidos y vinculados</small></article>
+    <article class="panel betaCard"><span>TP SELL raw</span><strong id="rawTp">-- / 10</strong><small>ciclos reproducidos</small></article>
+    <article class="panel betaCard"><span>P&amp;L raw</span><strong id="rawPnl">--</strong><small>cashflow reproducible</small></article>
+    <article class="panel betaCard"><span>Hash chain</span><strong id="rawChain">--</strong><small>append-only</small></article>
+    <article class="panel betaCard"><span>Paridad económica</span><strong id="rawParity">--</strong><small>raw == source V2</small></article>
+    <article class="panel betaCard"><span>Violaciones provenance</span><strong id="rawProvenance">--</strong><small>objetivo 0</small></article>
+  </section>
+
+  <section class="panel content betaMeta" aria-label="Lineage de activación">
+    <div class="ey">Lineage raw vigente</div><h2>Activación inmutable</h2>
+    <div class="kv"><div><small>Activation ID</small><b class="mono" id="activationId">--</b></div><div><small>Baseline event sequence</small><b id="baseline">--</b></div><div><small>Source commit</small><b class="mono" id="sourceCommit">--</b></div></div>
+  </section>
+
+  <section class="bannerNote betaSafety" aria-label="Guardrails">
+    <strong>SHADOW · SPOT_ONLY · READ-ONLY</strong>
+    <span>Este monitor no puede autorizar trading, enviar órdenes, usar credenciales de exchange, mutar el trial formal 90D ni promover modelos automáticamente.</span>
+  </section>
+  <p class="tiny betaFooter">Si API 2.2, lineage o autoridad no pueden verificarse, los contadores quedan en <b>--</b> y el monitor se bloquea.</p>
+</main>
+<script type="module" src="assets/operational-beta.js"></script>
+</body>
+</html>
