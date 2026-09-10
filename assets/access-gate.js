@@ -3,7 +3,7 @@
 
   const state = { adapter: null, user: null, mode: 'pending', busy: false };
   const $ = (id) => document.getElementById(id);
-  const protectedNodes = () => [document.querySelector('.app'), document.querySelector('.mobileNav'), document.querySelector('.skipLink')].filter(Boolean);
+  const protectedNodes = () => [document.querySelector('.app'), document.querySelector('.mobileNav'), document.querySelector('#beta-main'), document.querySelector('.skipLink')].filter(Boolean);
   let dashboardBearerInstalled = false;
 
   function gateMarkup() {
