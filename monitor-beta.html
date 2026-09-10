@@ -8,6 +8,7 @@
   <title>BTC Scenario Advisor · Monitor Beta</title>
   <link rel="stylesheet" href="assets/styles.css">
   <link rel="stylesheet" href="assets/accessibility.css">
+  <link rel="stylesheet" href="assets/access-gate.css">
   <style>
     .betaShell{max-width:1120px;margin:0 auto;padding:24px}.betaTop{display:flex;gap:16px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:20px}.betaTop a{text-decoration:none}.betaGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.betaCard{padding:18px}.betaCard span,.betaCard small{display:block}.betaCard strong{display:block;font-size:clamp(1.4rem,3vw,2.2rem);margin:.35rem 0}.betaMeta{margin-top:16px}.betaMeta .kv{word-break:break-word}.betaSafety{margin-top:16px}.betaSafety strong{display:block}.betaFooter{margin-top:18px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem}@media(max-width:760px){.betaShell{padding:14px}.betaGrid{grid-template-columns:1fr 1fr}}@media(max-width:480px){.betaGrid{grid-template-columns:1fr}}
   </style>
@@ -54,8 +55,9 @@
     <strong>SHADOW · SPOT_ONLY · READ-ONLY</strong>
     <span>Este monitor no puede autorizar trading, enviar órdenes, usar credenciales de exchange, mutar el trial formal 90D ni promover modelos automáticamente.</span>
   </section>
-  <p class="tiny betaFooter">Si API 2.2, lineage o autoridad no pueden verificarse, los contadores quedan en <b>--</b> y el monitor se bloquea.</p>
+  <p class="tiny betaFooter">Si API 2.2, lineage, autenticación o autoridad no pueden verificarse, los contadores quedan en <b>--</b> y el monitor se bloquea.</p>
 </main>
+<script src="assets/access-gate.js"></script>
 <script type="module" src="assets/operational-beta.js"></script>
 </body>
 </html>

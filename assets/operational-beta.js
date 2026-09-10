@@ -7,8 +7,10 @@ const $=id=>document.getElementById(id);
 const set=(id,value)=>{const el=$(id);if(el)el.textContent=value};
 const bool=v=>v===true?'OK':v===false?'NO':'--';
 let timer=null;
+let started=false;
 
 async function fetchDashboard(){
+  if(!document.body.classList.contains('auth-granted'))throw new Error('AUTH_REQUIRED');
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),12000);
   try{
@@ -49,13 +51,22 @@ function render(data){
 }
 
 async function refresh(){
+  if(!document.body.classList.contains('auth-granted')){blocked('AUTH_REQUIRED');return}
   const button=$('refreshBeta');if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
   try{render(await fetchDashboard())}catch(error){blocked(String(error?.message||'READ_ONLY_DATA_UNAVAILABLE').slice(0,80))}
   finally{if(button){button.disabled=false;button.setAttribute('aria-busy','false')}}
 }
 
-$('refreshBeta')?.addEventListener('click',refresh);
-refresh();
-timer=setInterval(refresh,30000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+function start(){
+  if(started||!document.body.classList.contains('auth-granted'))return;
+  started=true;
+  $('refreshBeta')?.addEventListener('click',refresh);
+  void refresh();
+  timer=setInterval(refresh,30000);
+}
+
+blocked('AUTH_REQUIRED');
+window.addEventListener('btc:auth-granted',start);
+if(document.body.classList.contains('auth-granted'))start();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&started)void refresh()});
 window.addEventListener('pagehide',()=>{if(timer)clearInterval(timer)},{once:true});
