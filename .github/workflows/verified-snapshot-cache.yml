@@ -3,8 +3,12 @@ name: Verified snapshot cache contract
 on:
   pull_request:
     paths:
+      - 'monitor-beta.html'
       - 'assets/dashboard-resilience.js'
+      - 'assets/raw-economic-resilience.js'
+      - 'assets/operational-beta.js'
       - 'tests/dashboard-resilience-cache.test.mjs'
+      - 'tests/raw-economic-dashboard-counter.test.mjs'
       - '.github/workflows/verified-snapshot-cache.yml'
 
 permissions:
@@ -22,6 +26,23 @@ jobs:
       - name: Syntax check
         run: |
           node --check assets/dashboard-resilience.js
+          node --check assets/raw-economic-resilience.js
+          node --check assets/operational-beta.js
           node --check tests/dashboard-resilience-cache.test.mjs
-      - name: Verify fail-closed cache and Adaptive Grid projection
-        run: node --test tests/dashboard-resilience-cache.test.mjs
+          node --check tests/raw-economic-dashboard-counter.test.mjs
+      - name: Verify fail-closed cache and operational evidence projections
+        run: node --test tests/dashboard-resilience-cache.test.mjs tests/raw-economic-dashboard-counter.test.mjs
+      - name: Verify monitor remains read-only and on-demand
+        shell: bash
+        run: |
+          test -s monitor-beta.html
+          grep -q 'assets/operational-beta.js' monitor-beta.html
+          grep -q 'NO AUTORIZA TRADING' monitor-beta.html
+          grep -q 'monitor-beta.html' assets/dashboard-resilience.js
+          grep -q "apiVersion==='btc-shadow-dashboard-readonly/2.2'" assets/operational-beta.js
+          grep -q "cache:'no-store'" assets/operational-beta.js
+          if grep -nE -- "method:[[:space:]]*['\"](POST|PUT|PATCH|DELETE)['\"]|/api/v3/order|BINANCE_API_SECRET|EXCHANGE_API_SECRET" assets/operational-beta.js assets/raw-economic-resilience.js monitor-beta.html; then
+            echo 'Ruta de escritura o secreto detectado en monitor beta.'
+            exit 1
+          fi
+          echo 'PASS_ON_DEMAND_RAW_BETA_MONITOR_READ_ONLY'
